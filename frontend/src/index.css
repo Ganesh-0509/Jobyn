@@ -4295,7 +4295,7 @@ a {
 .not-found-page__code {
   font-size: clamp(80px, 15vw, 160px); font-weight: 900; letter-spacing: -4px;
   background: linear-gradient(135deg, var(--blue), var(--cyan));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
   line-height: 1;
 }
 .not-found-page__title { font-size: 24px; font-weight: 700; }
@@ -5492,7 +5492,7 @@ a {
 .role-match-score { font-size: 12px; font-weight: 700; color: var(--text-primary); text-align: right; }
 
 /* ── Skills DNA card ───────────────────────────────────────────────────────── */
-.skills-dna-card { }
+.skills-dna-card { display: block; }
 .skills-dna-groups { display: flex; flex-direction: column; gap: 14px; }
 .skills-dna-group__label {
   font-size: 10px; font-weight: 700; text-transform: uppercase;
