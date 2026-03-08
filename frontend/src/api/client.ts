@@ -117,6 +117,14 @@ async function cachedFetch<T>(path: string, ttlMs: number): Promise<T> {
     return data
 }
 
+export interface RoleMatch {
+    role: string
+    score: number
+    core_coverage: number
+    matched_core: number
+    total_core: number
+}
+
 export interface UploadResult {
     role: string
     final_score: number
@@ -138,6 +146,8 @@ export interface UploadResult {
     filename: string
     db_warning?: string
     privacy_active?: boolean
+    role_matches?: RoleMatch[]
+    auto_detected?: boolean
 }
 
 export interface PredictResult {
@@ -161,7 +171,7 @@ export interface HealthResult {
 }
 
 // ── Upload resume ─────────────────────────────────────────────
-export async function uploadResume(file: File, role: string, privacyMode: boolean = false, userEmail?: string): Promise<UploadResult> {
+export async function uploadResume(file: File, role: string = 'auto', privacyMode: boolean = false, userEmail?: string): Promise<UploadResult> {
     const fd = new FormData()
     fd.append('file', file)
     fd.append('role', role)
@@ -311,6 +321,18 @@ export async function getSmartPlan(
     })
 }
 
+export interface LeetCodeProblem {
+    title: string
+    number: number
+    difficulty: string
+    url: string
+    pattern?: string
+    hint?: string
+    description?: string
+    example_input?: string
+    example_output?: string
+}
+
 export interface DetailedContent {
     subheading: string
     explanation: string
@@ -319,6 +341,8 @@ export interface DetailedContent {
     key_takeaway?: string
     try_it?: string
     complexity?: string
+    leetcode_problems?: LeetCodeProblem[]
+    is_fallback?: boolean
 }
 
 export interface StudySection {
@@ -334,6 +358,7 @@ export interface StudyNotesResult {
     estimated_study_time: string
     sub_roadmap?: Array<{ title: string; duration: string }>
     detailed_content?: DetailedContent[]
+    total_sections?: number
 }
 
 export interface QuizQuestion {
@@ -353,6 +378,11 @@ export interface QuizResult {
 export async function getStudyNotes(skill: string, masteredSkills: string[] = []): Promise<StudyNotesResult> {
     const skills = masteredSkills.join(',')
     return apiFetch<StudyNotesResult>(`/ai/study/notes?skill=${encodeURIComponent(skill)}&existing_skills=${encodeURIComponent(skills)}`, { noAuth: true, retries: 1 })
+}
+
+export async function getStudySection(skill: string, sectionIdx: number, masteredSkills: string[] = []): Promise<DetailedContent> {
+    const skills = masteredSkills.join(',')
+    return apiFetch<DetailedContent>(`/ai/study/section?skill=${encodeURIComponent(skill)}&section_idx=${sectionIdx}&existing_skills=${encodeURIComponent(skills)}`, { noAuth: true, retries: 1 })
 }
 
 export async function getStudyQuiz(skill: string): Promise<QuizResult> {

@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, Suspense, lazy } from 'react'
-import { X, BookOpen, CheckCircle2, ChevronRight, BrainCircuit, Lightbulb, Clock, MessageSquare, Send, Sparkles, Pin, Sun, Moon, Target, Zap, RotateCcw, AlertCircle, Code2 } from 'lucide-react'
-import { getStudyNotes, getStudyQuiz, studyChat, submitContribution, type StudyNotesResult, type QuizResult } from '../api/client'
+import { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react'
+import { X, BookOpen, CheckCircle2, ChevronRight, ChevronLeft, BrainCircuit, Lightbulb, Clock, MessageSquare, Send, Sparkles, Pin, Sun, Moon, Target, Zap, RotateCcw, AlertCircle, Code2, ExternalLink, Loader2 } from 'lucide-react'
+import { getStudyNotes, getStudyQuiz, getStudySection, studyChat, type StudyNotesResult, type QuizResult, type DetailedContent } from '../api/client'
 const ReactMarkdown = lazy(() => import('react-markdown'))
 import remarkGfm from 'remark-gfm'
 import { useResume } from '../context/ResumeContext'
@@ -24,6 +24,12 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
     const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState('')
 
+    // Paginated section state
+    const [activeSectionIdx, setActiveSectionIdx] = useState(0)
+    const [sections, setSections] = useState<Record<number, DetailedContent>>({})
+    const [sectionLoading, setSectionLoading] = useState<number | null>(null)
+    const totalSections = notes?.total_sections || 5
+
     // Quiz state
     const [currentQ, setCurrentQ] = useState(0)
     const [answers, setAnswers] = useState<number[]>([])
@@ -31,6 +37,21 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
     const [score, setScore] = useState(0)
     const [showExplanation, setShowExplanation] = useState(false)
     const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
+
+    // Section completion tracking
+    const [visitedSections, setVisitedSections] = useState<Set<number>>(new Set([0]))
+    const allSectionsRead = visitedSections.size >= totalSections
+    const PASS_THRESHOLD = 0.8 // 80% to pass (4/5)
+    const quizPassed = quizFinished && quiz ? score >= Math.ceil(quiz.questions.length * PASS_THRESHOLD) : false
+
+    // Auto-trigger mastery when both conditions become true
+    const [masteryAwarded, setMasteryAwarded] = useState(false)
+    useEffect(() => {
+        if (quizPassed && allSectionsRead && !masteryAwarded) {
+            setMasteryAwarded(true)
+            onVerified(skill)
+        }
+    }, [quizPassed, allSectionsRead, masteryAwarded, onVerified, skill])
 
     // Interactive notes state
     const [expandedTryIt, setExpandedTryIt] = useState<Record<number, boolean>>({})
@@ -70,7 +91,16 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
             if (cancelled) return
             setNotes(n)
             setQuiz(q)
-            // If both are fallback, show a warning but still display
+            // Populate section map from any detailed_content returned with overview
+            // SKIP section index 4 (LeetCode) — it must always load from the
+            // dedicated section endpoint so the LeetCode-specific prompt is used.
+            if (n?.detailed_content?.length) {
+                const sMap: Record<number, DetailedContent> = {}
+                n.detailed_content.forEach((s, i) => {
+                    if (i !== 4) sMap[i] = s
+                })
+                setSections(sMap)
+            }
             if ((n as any)?.is_fallback && (q as any)?.is_fallback) {
                 setLoadError('AI service returned limited content. Some sections may be incomplete.')
             }
@@ -87,6 +117,49 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
+
+    // ── Section loader: fetches a section on demand ──
+    const loadSection = useCallback(async (idx: number) => {
+        if (sections[idx] || sectionLoading === idx) return // already loaded or loading
+        setSectionLoading(idx)
+        try {
+            const skills = skillsKey ? skillsKey.split(',') : []
+            const section = await getStudySection(skill, idx, skills)
+            setSections(prev => ({ ...prev, [idx]: section }))
+        } catch (err) {
+            console.error(`Failed to load section ${idx}:`, err)
+            setSections(prev => ({
+                ...prev,
+                [idx]: {
+                    subheading: `Section ${idx + 1}`,
+                    explanation: 'Failed to load this section. Please try again.',
+                    example: '',
+                    is_fallback: true,
+                }
+            }))
+        } finally {
+            setSectionLoading(null)
+        }
+    }, [sections, sectionLoading, skill, skillsKey])
+
+    // Preload next section when user views current one
+    useEffect(() => {
+        const nextIdx = activeSectionIdx + 1
+        if (nextIdx < totalSections && !sections[nextIdx]) {
+            // Small delay to not compete with current section load
+            const timer = setTimeout(() => loadSection(nextIdx), 1500)
+            return () => clearTimeout(timer)
+        }
+    }, [activeSectionIdx, totalSections, sections, loadSection])
+
+    const goToSection = (idx: number) => {
+        if (idx < 0 || idx >= totalSections) return
+        setActiveSectionIdx(idx)
+        setVisitedSections(prev => new Set(prev).add(idx))
+        if (!sections[idx]) {
+            loadSection(idx)
+        }
+    }
 
     const togglePin = () => {
         const pinned = JSON.parse(localStorage.getItem('pinned_notes') || '[]')
@@ -141,23 +214,11 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
             const totalCorrect = finalAnswers.filter((a, i) => a === quiz.questions[i]?.correct_index).length
             setScore(totalCorrect)
             setQuizFinished(true)
-            if (totalCorrect === quiz.questions.length) {
-                onVerified(skill)
-            }
+            // Mastery is auto-triggered by the useEffect when both conditions are met
         }
     }
 
-    const [suggested, setSuggested] = useState(false)
-    const handleSuggest = async () => {
-        if (!personalNotes.trim()) return
-        try {
-            await submitContribution(skill, user?.name || 'Anonymous', { suggested_notes: personalNotes })
-            setSuggested(true)
-            setTimeout(() => setSuggested(false), 3000)
-        } catch (err) {
-            console.error(err)
-        }
-    }
+
 
     if (loading) return (
         <div className="study-modal" role="dialog" aria-label="Loading study materials">
@@ -195,10 +256,24 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
 
                     <div className="sidebar-mastery-card">
                         <p>Mastery Progress</p>
-                        <div className="progress-track" style={{ height: 6, margin: '8px 0' }}>
-                            <div className="progress-fill" style={{ width: `${quizFinished ? score === (quiz?.questions?.length || 0) ? '100%' : '50%' : '15%'}` }} />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div style={{ width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, background: allSectionsRead ? 'var(--green)' : 'rgba(255,255,255,0.08)', color: allSectionsRead ? '#fff' : 'var(--text-muted)', flexShrink: 0 }}>
+                                    {allSectionsRead ? '✓' : `${visitedSections.size}`}
+                                </div>
+                                <span style={{ fontSize: 12, color: allSectionsRead ? 'var(--green)' : 'var(--text-secondary)' }}>
+                                    Read all {totalSections} sections {allSectionsRead ? '' : `(${visitedSections.size}/${totalSections})`}
+                                </span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div style={{ width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, background: quizPassed ? 'var(--green)' : 'rgba(255,255,255,0.08)', color: quizPassed ? '#fff' : 'var(--text-muted)', flexShrink: 0 }}>
+                                    {quizPassed ? '✓' : '○'}
+                                </div>
+                                <span style={{ fontSize: 12, color: quizPassed ? 'var(--green)' : 'var(--text-secondary)' }}>
+                                    Pass quiz (≥80%)
+                                </span>
+                            </div>
                         </div>
-                        <small>{isPinned ? 'Pinned for Review' : 'Learning Phase'}</small>
                     </div>
 
                     <div className="workspace-nav-group">
@@ -241,24 +316,22 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                             value={personalNotes}
                             onChange={(e) => setPersonalNotes(e.target.value)}
                         />
-                        <button
-                            className="btn btn--outline btn--sm"
-                            style={{ marginTop: 8, width: '100%' }}
-                            onClick={handleSuggest}
-                            disabled={!personalNotes.trim() || suggested}
-                        >
-                            {suggested ? <><CheckCircle2 size={14} /> Submitted</> : 'Suggest to Course'}
-                        </button>
                     </div>
 
                     {notes?.sub_roadmap && (
                         <div className="workspace-nav-group">
                             <h6>Mastery Curriculum</h6>
                             {notes.sub_roadmap.map((step, idx) => (
-                                <div key={idx} className="curriculum-item">
-                                    <div className="item-dot" />
+                                <button
+                                    key={idx}
+                                    className={`curriculum-item ${idx === activeSectionIdx && tab === 'notes' ? 'curriculum-item--active' : ''} ${sections[idx] ? 'curriculum-item--loaded' : ''} ${visitedSections.has(idx) ? 'curriculum-item--visited' : ''}`}
+                                    onClick={() => { setTab('notes'); goToSection(idx) }}
+                                >
+                                    <div className={`item-dot ${visitedSections.has(idx) ? 'visited' : sections[idx] ? 'loaded' : ''}`}>
+                                        {visitedSections.has(idx) && <CheckCircle2 size={10} />}
+                                    </div>
                                     <span>{step.title}</span>
-                                </div>
+                                </button>
                             ))}
                         </div>
                     )}
@@ -300,132 +373,215 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                         )}
                         {tab === 'notes' && notes && (
                             <div className="workspace-pane fade-in">
+                                {/* Hero Summary */}
                                 <div className="notes-hero">
                                     <p>{notes.quick_summary}</p>
                                     <div className="time-est"><Clock size={16} />{notes.estimated_study_time} est. focus time</div>
                                 </div>
 
-                                {notes.sub_roadmap && notes.sub_roadmap.length > 0 && (
-                                    <div className="roadmap-path">
-                                        <div className="path-header">
-                                            <Sparkles size={16} /> Hierarchical Mastery Path
+                                {/* Section progress bar */}
+                                <div className="section-progress-bar">
+                                    {Array.from({ length: totalSections }).map((_, i) => (
+                                        <button
+                                            key={i}
+                                            className={`section-dot ${i === activeSectionIdx ? 'active' : ''} ${sections[i] ? 'loaded' : ''} ${visitedSections.has(i) ? 'visited' : ''}`}
+                                            onClick={() => goToSection(i)}
+                                            title={notes.sub_roadmap?.[i]?.title || `Section ${i + 1}`}
+                                        >
+                                            {i + 1}
+                                        </button>
+                                    ))}
+                                    <div className="section-progress-label">
+                                        Section {activeSectionIdx + 1} of {totalSections}
+                                    </div>
+                                </div>
+
+                                {/* Active Section Content */}
+                                {sectionLoading === activeSectionIdx && !sections[activeSectionIdx] ? (
+                                    <div className="section-loading-state">
+                                        <div className="section-loading-spinner">
+                                            <Loader2 size={32} className="spin-animation" />
                                         </div>
-                                        <div className="path-items">
-                                            {notes.sub_roadmap?.map((step: { title: string; duration: string }, idx: number) => (
-                                                <div key={idx} className="path-node">
-                                                    <div className="node-marker">{idx + 1}</div>
-                                                    <div className="node-info">
-                                                        <div className="node-title">{step.title}</div>
-                                                        <div className="node-meta">{step.duration} focus</div>
+                                        <h3>Preparing {notes.sub_roadmap?.[activeSectionIdx]?.title || `Section ${activeSectionIdx + 1}`}...</h3>
+                                        <p>AI is generating detailed content with code examples. Please wait a few seconds.</p>
+                                        <div className="section-loading-bar">
+                                            <div className="section-loading-fill" />
+                                        </div>
+                                    </div>
+                                ) : sections[activeSectionIdx] ? (
+                                    <div className="section-content-page fade-in">
+                                        <div className="focus-card detailed-card">
+                                            <div className="card-num">{activeSectionIdx + 1}</div>
+                                            <h3>{sections[activeSectionIdx].subheading}</h3>
+                                            <div className="content-prose">
+                                                <Suspense fallback={<p>{sections[activeSectionIdx].explanation}</p>}>
+                                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                        {sections[activeSectionIdx].explanation}
+                                                    </ReactMarkdown>
+                                                </Suspense>
+
+                                                {sections[activeSectionIdx].algorithm && (
+                                                    <div className="algo-block" style={{ marginBottom: 16 }}>
+                                                        <strong style={{ display: 'block', color: 'var(--cyan)', marginBottom: 4 }}>Algorithm / Steps:</strong>
+                                                        <div style={{ fontSize: 13, background: 'rgba(34, 211, 238, 0.05)', padding: 12, borderRadius: 8, borderLeft: '2px solid var(--cyan)' }}>
+                                                            <Suspense fallback={<p style={{ whiteSpace: 'pre-line' }}>{sections[activeSectionIdx].algorithm}</p>}>
+                                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                                    {sections[activeSectionIdx].algorithm!}
+                                                                </ReactMarkdown>
+                                                            </Suspense>
+                                                        </div>
                                                     </div>
-                                                    {notes.sub_roadmap && idx < notes.sub_roadmap.length - 1 && <div className="node-line" />}
-                                                </div>
-                                            ))}
+                                                )}
+
+                                                {sections[activeSectionIdx].example && (
+                                                    <div className="example-block">
+                                                        <div className="example-label"><Code2 size={14} /> Code Example</div>
+                                                        <div className="example-content">
+                                                            <Suspense fallback={<pre>{sections[activeSectionIdx].example}</pre>}>
+                                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                                    {sections[activeSectionIdx].example.includes('```') ? sections[activeSectionIdx].example : `\`\`\`\n${sections[activeSectionIdx].example}\n\`\`\``}
+                                                                </ReactMarkdown>
+                                                            </Suspense>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {sections[activeSectionIdx].key_takeaway && (
+                                                    <div className="takeaway-box">
+                                                        <Zap size={16} />
+                                                        <div>
+                                                            <strong>Key Takeaway</strong>
+                                                            <p>{sections[activeSectionIdx].key_takeaway}</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {sections[activeSectionIdx].try_it && (
+                                                    <div className="try-it-box">
+                                                        <button
+                                                            className="try-it-toggle"
+                                                            onClick={() => setExpandedTryIt(prev => ({ ...prev, [activeSectionIdx]: !prev[activeSectionIdx] }))}
+                                                        >
+                                                            <Target size={16} />
+                                                            <span>Try It Yourself</span>
+                                                            <ChevronRight size={16} className={expandedTryIt[activeSectionIdx] ? 'rotated' : ''} />
+                                                        </button>
+                                                        {expandedTryIt[activeSectionIdx] && (
+                                                            <div className="try-it-content">
+                                                                <p>{sections[activeSectionIdx].try_it}</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {sections[activeSectionIdx].complexity && sections[activeSectionIdx].complexity !== 'N/A' && (
+                                                    <div style={{ marginTop: 16, display: 'flex', gap: 6, alignItems: 'center', fontSize: 13 }}>
+                                                        <strong style={{ color: 'var(--orange)' }}>Complexity:</strong> <span>{sections[activeSectionIdx].complexity}</span>
+                                                    </div>
+                                                )}
+
+                                                {/* LeetCode Problems (section 4) */}
+                                                {sections[activeSectionIdx].leetcode_problems && sections[activeSectionIdx].leetcode_problems!.length > 0 && (
+                                                    <div className="leetcode-section">
+                                                        <h4 className="leetcode-header">
+                                                            <Code2 size={18} /> LeetCode Practice Problems
+                                                        </h4>
+                                                        <div className="leetcode-grid">
+                                                            {sections[activeSectionIdx].leetcode_problems!.map((p, pi) => (
+                                                                <div
+                                                                    key={pi}
+                                                                    className={`leetcode-card leetcode-card--${p.difficulty?.toLowerCase()}`}
+                                                                >
+                                                                    <div className="leetcode-card-top">
+                                                                        <span className="leetcode-num">#{p.number}</span>
+                                                                        <span className={`leetcode-diff leetcode-diff--${p.difficulty?.toLowerCase()}`}>
+                                                                            {p.difficulty}
+                                                                        </span>
+                                                                    </div>
+                                                                    <h5 className="leetcode-title">{p.title}</h5>
+                                                                    {p.description && <p className="leetcode-desc">{p.description}</p>}
+                                                                    {(p.example_input || p.example_output) && (
+                                                                        <div className="leetcode-io">
+                                                                            {p.example_input && (
+                                                                                <div className="leetcode-io-row">
+                                                                                    <span className="leetcode-io-label">Input:</span>
+                                                                                    <code>{p.example_input}</code>
+                                                                                </div>
+                                                                            )}
+                                                                            {p.example_output && (
+                                                                                <div className="leetcode-io-row">
+                                                                                    <span className="leetcode-io-label">Output:</span>
+                                                                                    <code>{p.example_output}</code>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                    {p.pattern && <span className="leetcode-pattern">{p.pattern}</span>}
+                                                                    {p.hint && <p className="leetcode-hint">💡 {p.hint}</p>}
+                                                                    <a
+                                                                        className="leetcode-link"
+                                                                        href={p.url}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        onClick={e => e.stopPropagation()}
+                                                                    >
+                                                                        Solve on LeetCode <ExternalLink size={12} />
+                                                                    </a>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
+                                    </div>
+                                ) : (
+                                    <div className="section-loading-state" style={{ cursor: 'pointer' }} onClick={() => loadSection(activeSectionIdx)}>
+                                        <BrainCircuit size={40} style={{ opacity: 0.3 }} />
+                                        <h3>Click to load {notes.sub_roadmap?.[activeSectionIdx]?.title || `Section ${activeSectionIdx + 1}`}</h3>
+                                        <p>Content will be generated by AI</p>
                                     </div>
                                 )}
 
-                                {notes.detailed_content && notes.detailed_content.length > 0 ? (
-                                    <div className="concept-sections">
-                                        {notes.detailed_content.map((c, i) => (
-                                            <div key={i} className="focus-card detailed-card">
-                                                <div className="card-num">{i + 1}</div>
-                                                <h3>{c.subheading}</h3>
-                                                <div className="content-prose">
-                                                    <Suspense fallback={<p>{c.explanation}</p>}>
-                                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                                            {c.explanation}
-                                                        </ReactMarkdown>
-                                                    </Suspense>
-
-                                                    {c.algorithm && (
-                                                        <div className="algo-block" style={{ marginBottom: 16 }}>
-                                                            <strong style={{ display: 'block', color: 'var(--cyan)', marginBottom: 4 }}>Algorithm / Steps:</strong>
-                                                            <div style={{ fontSize: 13, background: 'rgba(34, 211, 238, 0.05)', padding: 12, borderRadius: 8, borderLeft: '2px solid var(--cyan)' }}>
-                                                                <Suspense fallback={<p style={{ whiteSpace: 'pre-line' }}>{c.algorithm}</p>}>
-                                                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                                                        {c.algorithm}
-                                                                    </ReactMarkdown>
-                                                                </Suspense>
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    {c.example && (
-                                                        <div className="example-block">
-                                                            <div className="example-label"><Code2 size={14} /> Code Example</div>
-                                                            <div className="example-content">
-                                                                <Suspense fallback={<pre>{c.example}</pre>}>
-                                                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                                                        {c.example.includes('```') ? c.example : `\`\`\`\n${c.example}\n\`\`\``}
-                                                                    </ReactMarkdown>
-                                                                </Suspense>
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    {c.key_takeaway && (
-                                                        <div className="takeaway-box">
-                                                            <Zap size={16} />
-                                                            <div>
-                                                                <strong>Key Takeaway</strong>
-                                                                <p>{c.key_takeaway}</p>
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    {c.try_it && (
-                                                        <div className="try-it-box">
-                                                            <button
-                                                                className="try-it-toggle"
-                                                                onClick={() => setExpandedTryIt(prev => ({ ...prev, [i]: !prev[i] }))}
-                                                            >
-                                                                <Target size={16} />
-                                                                <span>Try It Yourself</span>
-                                                                <ChevronRight size={16} className={expandedTryIt[i] ? 'rotated' : ''} />
-                                                            </button>
-                                                            {expandedTryIt[i] && (
-                                                                <div className="try-it-content">
-                                                                    <p>{c.try_it}</p>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-
-                                                    {c.complexity && c.complexity !== 'N/A' && (
-                                                        <div style={{ marginTop: 16, display: 'flex', gap: 6, alignItems: 'center', fontSize: 13 }}>
-                                                            <strong style={{ color: 'var(--orange)' }}>Complexity:</strong> <span>{c.complexity}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : notes.key_concepts && notes.key_concepts.length > 0 ? (
-                                    <div className="concept-sections">
-                                        {notes.key_concepts.map((c, i) => (
-                                            <div key={i} className="focus-card">
-                                                <div className="card-num">{i + 1}</div>
-                                                <h3>{c.title}</h3>
-                                                <p>{c.description}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : null}
-
-                                <div className="pro-zone">
-                                    <div className="zone-icon"><Lightbulb size={24} /></div>
-                                    <div className="zone-text">
-                                        <h4>Industry Insight</h4>
-                                        <p>{notes.pro_tip}</p>
-                                    </div>
-                                </div>
-
-                                <div className="ws-actions">
-                                    <button className="btn btn--primary" onClick={() => setTab('quiz')}>
-                                        I'm ready for a Challenge <ChevronRight size={18} />
+                                {/* Section Navigation Arrows */}
+                                <div className="section-nav-arrows">
+                                    <button
+                                        className="section-arrow section-arrow--prev"
+                                        onClick={() => goToSection(activeSectionIdx - 1)}
+                                        disabled={activeSectionIdx === 0}
+                                    >
+                                        <ChevronLeft size={20} /> Previous
                                     </button>
+                                    <div className="section-nav-info">
+                                        {notes.sub_roadmap?.[activeSectionIdx]?.title || `Section ${activeSectionIdx + 1}`}
+                                    </div>
+                                    {activeSectionIdx < totalSections - 1 ? (
+                                        <button
+                                            className="section-arrow section-arrow--next"
+                                            onClick={() => goToSection(activeSectionIdx + 1)}
+                                        >
+                                            Next <ChevronRight size={20} />
+                                        </button>
+                                    ) : (
+                                        <button
+                                            className="section-arrow section-arrow--next section-arrow--quiz"
+                                            onClick={() => setTab('quiz')}
+                                        >
+                                            Take Quiz <ChevronRight size={20} />
+                                        </button>
+                                    )}
                                 </div>
+
+                                {/* Industry Insight */}
+                                {notes.pro_tip && (
+                                    <div className="pro-zone">
+                                        <div className="zone-icon"><Lightbulb size={24} /></div>
+                                        <div className="zone-text">
+                                            <h4>Industry Insight</h4>
+                                            <p>{notes.pro_tip}</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -554,20 +710,41 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                     </div>
                                 ) : (
                                     <div className="quiz-results">
-                                        <div className={`quiz-score-ring ${score === quiz.questions.length ? 'perfect' : score >= quiz.questions.length * 0.6 ? 'pass' : 'fail'}`}>
-                                            <div className="quiz-score-num">{score}/{quiz.questions.length}</div>
-                                            <div className="quiz-score-label">{score === quiz.questions.length ? 'Perfect!' : score >= quiz.questions.length * 0.6 ? 'Good Job' : 'Keep Learning'}</div>
-                                        </div>
+                                        {(() => {
+                                            const needed = Math.ceil(quiz.questions.length * PASS_THRESHOLD)
+                                            const mastered = quizPassed && allSectionsRead
+                                            return (
+                                                <>
+                                                    <div className={`quiz-score-ring ${mastered ? 'perfect' : quizPassed ? 'pass' : score >= quiz.questions.length * 0.5 ? 'pass' : 'fail'}`}>
+                                                        <div className="quiz-score-num">{score}/{quiz.questions.length}</div>
+                                                        <div className="quiz-score-label">{mastered ? 'Mastered!' : quizPassed ? 'Passed!' : 'Keep Learning'}</div>
+                                                    </div>
 
-                                        <h2 style={{ textAlign: 'center', marginBottom: 8 }}>
-                                            {score === quiz.questions.length ? 'Mastery Verified!' : 'Review & Retry'}
-                                        </h2>
-                                        <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: 24, fontSize: 14 }}>
-                                            {score === quiz.questions.length
-                                                ? `Outstanding! You've demonstrated mastery of ${skill}. Your skill is now verified.`
-                                                : `You got ${score} out of ${quiz.questions.length} correct. Review the explanations below, then give it another shot.`
-                                            }
-                                        </p>
+                                                    <h2 style={{ textAlign: 'center', marginBottom: 8 }}>
+                                                        {mastered ? 'Mastery Verified!' : quizPassed ? 'Quiz Passed!' : 'Review & Retry'}
+                                                    </h2>
+                                                    <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: 12, fontSize: 14 }}>
+                                                        {mastered
+                                                            ? `Outstanding! You've demonstrated mastery of ${skill}. Your skill is now verified.`
+                                                            : quizPassed && !allSectionsRead
+                                                                ? `Great score! But you still need to read all ${totalSections} sections to unlock mastery. (${visitedSections.size}/${totalSections} read)`
+                                                                : `You got ${score} out of ${quiz.questions.length} correct (need ${needed} to pass). Review the explanations below, then give it another shot.`
+                                                        }
+                                                    </p>
+
+                                                    {quizPassed && !allSectionsRead && (
+                                                        <div style={{
+                                                            display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
+                                                            borderRadius: 10, background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)',
+                                                            marginBottom: 16, fontSize: 13, color: '#fbbf24'
+                                                        }}>
+                                                            <AlertCircle size={16} />
+                                                            <span>Complete all study sections first, then your skill will be marked as mastered.</span>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )
+                                        })()}
 
                                         {/* Question review */}
                                         <div className="quiz-review-list">
@@ -595,28 +772,37 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                             })}
                                         </div>
 
-                                        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 24 }}>
-                                            {score === quiz.questions.length ? (
-                                                <button className="btn btn--primary" onClick={onClose}>
-                                                    <CheckCircle2 size={18} /> Finish & Earn Credits
-                                                </button>
-                                            ) : (
-                                                <>
-                                                    <button className="btn btn--ghost" onClick={() => setTab('notes')}>
-                                                        <BookOpen size={16} /> Review Notes
-                                                    </button>
-                                                    <button className="btn btn--primary" onClick={() => {
-                                                        setQuizFinished(false)
-                                                        setCurrentQ(0)
-                                                        setAnswers([])
-                                                        setSelectedAnswer(null)
-                                                        setShowExplanation(false)
-                                                    }}>
-                                                        <RotateCcw size={16} /> Retry Quiz
-                                                    </button>
-                                                </>
-                                            )}
-                                        </div>
+                                        {(() => {
+                                            const mastered = quizPassed && allSectionsRead
+                                            return (
+                                                <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 24 }}>
+                                                    {mastered ? (
+                                                        <button className="btn btn--primary" onClick={onClose}>
+                                                            <CheckCircle2 size={18} /> Finish & Earn Credits
+                                                        </button>
+                                                    ) : quizPassed && !allSectionsRead ? (
+                                                        <button className="btn btn--primary" onClick={() => { setTab('notes'); goToSection(Array.from({ length: totalSections }, (_, i) => i).find(i => !visitedSections.has(i)) ?? 0) }}>
+                                                            <BookOpen size={16} /> Go to Unread Section
+                                                        </button>
+                                                    ) : (
+                                                        <>
+                                                            <button className="btn btn--ghost" onClick={() => setTab('notes')}>
+                                                                <BookOpen size={16} /> Review Notes
+                                                            </button>
+                                                            <button className="btn btn--primary" onClick={() => {
+                                                                setQuizFinished(false)
+                                                                setCurrentQ(0)
+                                                                setAnswers([])
+                                                                setSelectedAnswer(null)
+                                                                setShowExplanation(false)
+                                                            }}>
+                                                                <RotateCcw size={16} /> Retry Quiz
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            )
+                                        })()}
                                     </div>
                                 )}
                             </div>

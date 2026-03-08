@@ -4,11 +4,11 @@ import { useResume } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
 import { getAnalytics } from '../api/client'
 import { loadHistory, getHistoryOrDemo } from '../utils/history'
-import { Upload, AlertCircle, Lightbulb, Activity, TrendingUp } from 'lucide-react'
+import { Upload, AlertCircle, Lightbulb, Activity, TrendingUp, Trophy } from 'lucide-react'
 import { ErrorState } from '../components/StateDisplay'
 
 export default function Dashboard() {
-    const { analysis, prediction, bestFit, loading } = useResume()
+    const { analysis, prediction, bestFit, masteredSkills, loading } = useResume()
     const { user } = useAuth()
     const navigate = useNavigate()
     const [analytics, setAnalytics] = useState<any>(null)
@@ -26,12 +26,26 @@ export default function Dashboard() {
     const chartHistory = useMemo(() => getHistoryOrDemo(loadHistory(user?.email)), [user?.email])
 
     const score = analysis?.final_score ?? 0
-    const corePct = analysis?.core_coverage_percent ?? 0
-    const missingCount = analysis ? (analysis.missing_core_skills?.length ?? 0) + (analysis.missing_optional_skills?.length ?? 0) : 0
     const readiness = analysis?.readiness_category ?? 'Unknown'
-    const skills = analysis?.detected_skills ?? []
+    // Merge resume skills + mastered skills for accurate coverage
+    const masteredLower = useMemo(() => new Set(masteredSkills.map(s => s.toLowerCase())), [masteredSkills])
+    const skills = useMemo(() => {
+        const base = analysis?.detected_skills ?? []
+        const extra = masteredSkills.filter(s => !base.some(b => b.toLowerCase() === s.toLowerCase()))
+        return [...base, ...extra]
+    }, [analysis, masteredSkills])
+    // Filter out mastered skills from missing counts
+    const missingCore = useMemo(() => (analysis?.missing_core_skills ?? []).filter(s => !masteredLower.has(s.toLowerCase())), [analysis, masteredLower])
+    const missingOpt = useMemo(() => (analysis?.missing_optional_skills ?? []).filter(s => !masteredLower.has(s.toLowerCase())), [analysis, masteredLower])
+    const missingCount = missingCore.length + missingOpt.length
+    // Core coverage: original % boosted by each mastered core skill
+    const originalCorePct = analysis?.core_coverage_percent ?? 0
+    const totalCoreSkills = (analysis?.detected_skills?.length ?? 0) + (analysis?.missing_core_skills?.length ?? 0)
+    const newlyMasteredCore = (analysis?.missing_core_skills ?? []).filter(s => masteredLower.has(s.toLowerCase())).length
+    const corePct = analysis ? Math.min(100, Math.round(originalCorePct + (totalCoreSkills > 0 ? (newlyMasteredCore / totalCoreSkills) * 100 : 0))) : 0
 
     // Memoize expensive skill coverage computation (avoids O(n²) on every render)
+    // Now includes masteredSkills so coverage updates reactively
     const { SKILL_COVERAGE, TOP_MISSING } = useMemo(() => {
         const skillsLower = new Set(skills.map(x => x.toLowerCase()))
         const hasSkill = (list: string[]) => list.filter(s => skillsLower.has(s)).length
@@ -43,13 +57,14 @@ export default function Dashboard() {
             { label: 'Tools & Platforms', pct: analysis ? Math.min(100, Math.round(hasSkill(['docker', 'aws', 'gcp', 'kubernetes', 'linux', 'git', 'ci/cd', 'terraform']) / 8 * 100)) : 0, cls: 'purple' },
         ]
 
+        // Filter out mastered skills from the gap list
         const missing = analysis ? [
-            ...(analysis.missing_core_skills || []).slice(0, 3).map(s => ({ skill: s, priority: 'Critical' })),
-            ...(analysis.missing_optional_skills || []).slice(0, 2).map(s => ({ skill: s, priority: 'High' }))
+            ...missingCore.slice(0, 3).map(s => ({ skill: s, priority: 'Critical' })),
+            ...missingOpt.slice(0, 2).map(s => ({ skill: s, priority: 'High' }))
         ] : []
 
         return { SKILL_COVERAGE: coverage, TOP_MISSING: missing }
-    }, [analysis, skills])
+    }, [analysis, skills, missingCore, missingOpt])
 
     const METRICS = useMemo(() => [
         { icon: <Activity size={14} />, label: 'Readiness Score', value: analysis ? `${score}%` : '--', sub: analysis ? (chartHistory.length > 1 ? `+${score - chartHistory[0].value}% overall` : 'First analysis') : 'No analysis yet', pct: score, bg: 'rgba(var(--blue-rgb),0.12)', col: 'var(--blue)', colRgb: 'var(--blue-rgb)' },
@@ -129,6 +144,11 @@ export default function Dashboard() {
                                 <span className={`badge badge--${item.priority.toLowerCase()}`}>{item.priority}</span>
                             </div>
                         ))
+                    ) : analysis ? (
+                        <div className="empty-placeholder" style={{ color: 'var(--green)' }}>
+                            <Trophy size={32} />
+                            <p>All skill gaps resolved! 🎉</p>
+                        </div>
                     ) : (
                         <div className="empty-placeholder">
                             <AlertCircle size={32} />

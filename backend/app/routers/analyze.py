@@ -17,6 +17,9 @@ from app.core.auth import optional_user, AuthUser
 from app.utils.validation import validate_email, validate_resume_text
 from app.core.rate_limiter import upload_limit
 from typing import Optional
+import logging
+
+log = logging.getLogger("analyze")
 
 router = APIRouter()
 
@@ -26,19 +29,23 @@ router = APIRouter()
 async def upload_resume(
     request: Request,
     file: UploadFile = File(...),
-    role: str = Form(...),
+    role: str = Form("auto"),
     privacy_mode: bool = Form(False),
     user_email: str = Form(None),
     auth_user: Optional[AuthUser] = Depends(optional_user),
 ):
     """
-    Upload a PDF or DOCX resume with a target role and receive a full
-    readiness analysis. Result is persisted to Supabase automatically.
+    Upload a PDF or DOCX resume and receive a full readiness analysis.
+    If role='auto' (default), the system auto-detects the best-fit role by
+    scoring against all roles and choosing the highest match.
+    Result is persisted to Supabase automatically.
     """
     if not file.filename.lower().endswith((".pdf", ".docx")):
         raise HTTPException(status_code=400, detail="Only PDF and DOCX files are supported.")
 
-    if role not in VALID_ROLES:
+    auto_detect = (role == "auto")
+
+    if not auto_detect and role not in VALID_ROLES:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid role '{role}'. Choose from: {VALID_ROLES}",
@@ -64,12 +71,43 @@ async def upload_resume(
             raise HTTPException(status_code=400, detail=text_msg)
 
         skills  = extract_skills(parsed["raw_text"])
-        result  = calculate_role_readiness(
-            resume_skills     = skills,
-            sections_detected = parsed["sections_detected"],
-            raw_text          = parsed["raw_text"],
-            role_name         = role,
-        )
+
+        # ── Auto-detect best role (or use specified role) ────────────────────
+        if auto_detect:
+            all_results = {}
+            for r in VALID_ROLES:
+                all_results[r] = calculate_role_readiness(
+                    resume_skills=skills,
+                    sections_detected=parsed["sections_detected"],
+                    raw_text=parsed["raw_text"],
+                    role_name=r,
+                )
+            # Rank by final_score descending
+            ranked = sorted(all_results.items(), key=lambda x: x[1].get("final_score", 0), reverse=True)
+            best_role = ranked[0][0]
+            result = all_results[best_role]
+
+            # Build role_matches list for the frontend
+            role_matches = []
+            for r, res in ranked:
+                role_matches.append({
+                    "role": r,
+                    "score": res.get("final_score", 0),
+                    "core_coverage": res.get("core_coverage_percent", 0),
+                    "matched_core": len(res.get("missing_core_skills", [])),
+                    "total_core": res.get("core_coverage_percent", 0),
+                })
+            result["role_matches"] = role_matches
+            result["auto_detected"] = True
+            log.info("Auto-detected role: %s (score=%s) for %s", best_role, result["final_score"], file.filename)
+        else:
+            result = calculate_role_readiness(
+                resume_skills=skills,
+                sections_detected=parsed["sections_detected"],
+                raw_text=parsed["raw_text"],
+                role_name=role,
+            )
+            result["auto_detected"] = False
 
         result["filename"]          = file.filename
         result["detected_skills"]   = skills
@@ -88,7 +126,7 @@ async def upload_resume(
             try:
                 sb = get_supabase()
 
-                # Upsert resume (single query instead of select+insert/update)
+                # ── Save / update resume row ────────────────────────────────
                 resume_data = {
                     "filename":          file.filename,
                     "raw_text":          encrypt_text(parsed["raw_text"]),
@@ -99,14 +137,23 @@ async def upload_resume(
                     "user_email":        effective_email,
                 }
 
-                resume_resp = (
+                # Check if this resume already exists for this user
+                existing = (
                     sb.table("resumes")
-                    .upsert(resume_data, on_conflict="filename,user_email")
+                    .select("id")
+                    .eq("filename", file.filename)
+                    .eq("user_email", effective_email)
+                    .limit(1)
                     .execute()
                 )
-                resume_id = resume_resp.data[0]["id"]
+                if existing.data:
+                    resume_id = existing.data[0]["id"]
+                    sb.table("resumes").update(resume_data).eq("id", resume_id).execute()
+                else:
+                    resp = sb.table("resumes").insert(resume_data).execute()
+                    resume_id = resp.data[0]["id"]
 
-                # Upsert analysis (single query instead of select+insert/update)
+                # ── Save / update analysis row ──────────────────────────────
                 analysis_data = {
                     "resume_id":                 resume_id,
                     "role":                      result["role"],
@@ -122,12 +169,19 @@ async def upload_resume(
                     "recommendations":           result["recommendations"],
                 }
 
-                analysis_resp = (
+                existing_a = (
                     sb.table("role_analyses")
-                    .upsert(analysis_data, on_conflict="resume_id")
+                    .select("id")
+                    .eq("resume_id", resume_id)
+                    .limit(1)
                     .execute()
                 )
-                analysis_id = analysis_resp.data[0]["id"]
+                if existing_a.data:
+                    analysis_id = existing_a.data[0]["id"]
+                    sb.table("role_analyses").update(analysis_data).eq("id", analysis_id).execute()
+                else:
+                    resp_a = sb.table("role_analyses").insert(analysis_data).execute()
+                    analysis_id = resp_a.data[0]["id"]
 
             except EnvironmentError as e:
                 db_warning = f"Supabase not configured — result not saved. {e}"

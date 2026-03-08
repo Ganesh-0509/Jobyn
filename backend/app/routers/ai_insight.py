@@ -190,10 +190,19 @@ async def get_forecast(request: Request, req: ForecastRequest):
 
 @router.get("/study/notes")
 async def get_study_notes(skill: str, existing_skills: Optional[str] = None):
-    """Generates study notes for a specific skill."""
+    """Generates study notes for a specific skill (intro + first section)."""
     if not skill:
         raise HTTPException(status_code=400, detail="Skill name is required.")
     return await ai_service.get_study_materials(skill, existing_skills or "")
+
+@router.get("/study/section")
+async def get_study_section(skill: str, section_idx: int, existing_skills: Optional[str] = None):
+    """Generates a single study section on-demand for progressive loading."""
+    if not skill:
+        raise HTTPException(status_code=400, detail="Skill name is required.")
+    if section_idx < 0 or section_idx > 4:
+        raise HTTPException(status_code=400, detail="section_idx must be 0-4.")
+    return await ai_service.get_study_section(skill, section_idx, existing_skills or "")
 
 @router.get("/study/quiz")
 async def get_study_quiz(skill: str):

@@ -34,6 +34,10 @@ CREATE TABLE IF NOT EXISTS role_analyses (
     created_at                TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Unique constraints required for upsert ON CONFLICT
+ALTER TABLE resumes       ADD CONSTRAINT uq_resumes_filename_email UNIQUE (filename, user_email);
+ALTER TABLE role_analyses  ADD CONSTRAINT uq_role_analyses_resume  UNIQUE (resume_id);
+
 -- Indexes for common queries
 CREATE INDEX IF NOT EXISTS idx_role_analyses_resume_id  ON role_analyses(resume_id);
 CREATE INDEX IF NOT EXISTS idx_role_analyses_role       ON role_analyses(role);

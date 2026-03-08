@@ -11,7 +11,7 @@ from typing import Optional, Dict, Any
 log = logging.getLogger("knowledge_service")
 
 # Bump this when prompts change significantly to auto-invalidate stale cache
-CACHE_VERSION = 2
+CACHE_VERSION = 4
 
 
 def _sb():
