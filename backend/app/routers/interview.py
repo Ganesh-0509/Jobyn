@@ -88,7 +88,17 @@ def evaluate(body: EvaluateRequest):
     Output: score, grade, detected/missing concepts, feedback.
     """
     if not body.answer or len(body.answer.strip()) < 5:
-        raise HTTPException(400, "Answer is too short to evaluate.")
+        return {
+            "score": 0,
+            "grade": "Needs Practice",
+            "detected_concepts": [],
+            "missing_concepts": [],
+            "total_concepts": 0,
+            "feedback": "Your answer is too short to evaluate properly. Please explain in more detail.",
+            "tip": "Aim for at least one full sentence covering the core mechanism.",
+            "diagnostic_flag": True,
+            "learning_path": []
+        }
 
     result = evaluate_answer(body.role, body.question_id, body.answer)
 

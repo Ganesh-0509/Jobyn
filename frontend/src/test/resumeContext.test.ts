@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import {
     getReadinessClass,
     getIndustryAlignment,
-    getImprovementPlan,
 } from '../context/ResumeContext'
 
 describe('ResumeContext helpers', () => {
@@ -40,20 +39,4 @@ describe('ResumeContext helpers', () => {
         })
     })
 
-    describe('getImprovementPlan', () => {
-        it('returns 4-day plan', () => {
-            const plan = getImprovementPlan(
-                ['docker', 'aws'],
-                ['terraform'],
-                [{ skill: 'docker', priority: 'HIGH' }, { skill: 'terraform', priority: 'MEDIUM' }]
-            )
-            expect(plan).toHaveLength(4)
-            expect(plan[0].days).toBe('Day 1–2')
-            expect(plan[3].title).toContain('Mini Project')
-        })
-        it('uses defaults when missing skills are empty', () => {
-            const plan = getImprovementPlan([], [], [])
-            expect(plan).toHaveLength(4)
-        })
-    })
 })

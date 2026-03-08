@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useResume } from '../context/ResumeContext'
 import { BarChart2 } from 'lucide-react'
 import SkillGraphViz from '../components/SkillGraphViz'
+import ProjectGeneratorModal from '../components/ProjectGeneratorModal'
 import { ErrorState } from '../components/StateDisplay'
 import { BASE } from '../api/client'
 
@@ -12,12 +13,17 @@ export default function SkillGap() {
     const [deps, setDeps] = useState<Record<string, string[]>>({})
     const [depsError, setDepsError] = useState(false)
     const [showGraph, setShowGraph] = useState(true)
+    const [activeProject, setActiveProject] = useState<{ role: string, skills: string[] } | null>(null)
 
     useEffect(() => {
-        fetch(`${BASE}/interview/dependencies`)
+        const controller = new AbortController()
+        fetch(`${BASE}/interview/dependencies`, { signal: controller.signal })
             .then(r => r.json())
             .then(d => setDeps(d))
-            .catch(() => setDepsError(true))
+            .catch((err) => {
+                if (err.name !== 'AbortError') setDepsError(true)
+            })
+        return () => controller.abort()
     }, [])
 
     const coreMissing = (analysis?.missing_core_skills ?? []).filter((s: string) => !masteredSkills.includes(s))
@@ -49,7 +55,22 @@ export default function SkillGap() {
         navigate('/improvement-plan', { state: { highlightSkill: skill } })
     }
 
-    const role = analysis?.role ?? 'Software Developer'
+    const role = analysis?.role ?? ''
+
+    if (!analysis) {
+        return (
+            <div className="page-content">
+                <div style={{ maxWidth: 800, margin: '60px auto', textAlign: 'center' }}>
+                    <div style={{ fontSize: 60, marginBottom: 20 }}>🧠</div>
+                    <h1 className="page-title">Skill Gap Analysis Locked</h1>
+                    <p className="page-subtitle">Upload your resume first to identify skill gaps.</p>
+                    <button className="btn btn--primary" onClick={() => navigate('/resume-analyzer')} style={{ marginTop: 24 }}>
+                        Analyze Your Resume Now
+                    </button>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="page-content">
@@ -60,6 +81,13 @@ export default function SkillGap() {
                     Prioritizing <span style={{ color: 'var(--red)', fontWeight: 700 }}>Critical</span> gaps for your {role} career path
                 </div>
             </div>
+
+            {/* ── Dependencies Error ── */}
+            {depsError && (
+                <div style={{ marginBottom: 16, padding: '10px 16px', background: 'rgba(var(--red-rgb),0.08)', border: '1px solid rgba(var(--red-rgb),0.2)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--red)' }}>
+                    ⚠️ Failed to load skill dependencies. Prerequisite data may be unavailable.
+                </div>
+            )}
 
             {/* ── Skill Dependency Graph ── */}
             <div className="card mb-16">
@@ -81,6 +109,7 @@ export default function SkillGap() {
                         missingCore={coreGaps}
                         missingOptional={optGaps}
                         dependencies={deps}
+                        onNodeClick={(skill) => setActiveProject({ role, skills: [skill] })}
                     />
                 )}
             </div>
@@ -113,7 +142,7 @@ export default function SkillGap() {
                                         {prereqs.map(p => (
                                             <span key={p} style={{
                                                 fontSize: 10, padding: '1px 6px', borderRadius: 4,
-                                                background: 'rgba(255, 255, 255, 0.05)',
+                                                background: 'var(--bg-glass)',
                                                 border: '1px solid var(--border)',
                                                 color: 'var(--text-secondary)'
                                             }}>{p}</span>
@@ -138,6 +167,15 @@ export default function SkillGap() {
                         ))}
                     </div>
                 </div>
+            )}
+
+            {/* Capstone Project Modal */}
+            {activeProject && (
+                <ProjectGeneratorModal
+                    role={activeProject.role}
+                    skills={activeProject.skills}
+                    onClose={() => setActiveProject(null)}
+                />
             )}
         </div>
     )

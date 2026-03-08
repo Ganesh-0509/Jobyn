@@ -62,6 +62,7 @@ interface SkillGraphVizProps {
     missingCore: string[]
     missingOptional: string[]
     dependencies: Record<string, string[]>
+    onNodeClick?: (skill: string) => void
 }
 
 export default function SkillGraphViz({
@@ -69,6 +70,7 @@ export default function SkillGraphViz({
     missingCore,
     missingOptional,
     dependencies,
+    onNodeClick,
 }: SkillGraphVizProps) {
     const W = 640, H = 430
     const cx = W / 2, cy = H / 2
@@ -263,6 +265,7 @@ export default function SkillGraphViz({
                                     setTooltip({ x: n.x, y: n.y, label: n.label, type: n.type })
                                 }}
                                 onMouseLeave={() => setTooltip(null)}
+                                onClick={() => n.type !== 'center' && onNodeClick?.(n.id)}
                             >
                                 {isYou && <circle cx={n.x} cy={n.y} r={pulseR} fill="none" stroke={`${col}40`} strokeWidth="2" style={{ transition: 'r 1.6s ease' }} />}
                                 <circle cx={n.x} cy={n.y} r={n.r + 5} fill={`${col}18`} filter={`url(#glow-${n.type})`} />

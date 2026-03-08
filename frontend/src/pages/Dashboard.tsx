@@ -52,10 +52,10 @@ export default function Dashboard() {
     }, [analysis, skills])
 
     const METRICS = useMemo(() => [
-        { icon: <Activity size={14} />, label: 'Readiness Score', value: analysis ? `${score}%` : '--', sub: analysis ? (chartHistory.length > 1 ? `+${score - chartHistory[0].value}% overall` : 'First analysis') : 'No analysis yet', pct: score, bg: 'rgba(59,130,246,0.12)', col: '#3b82f6' },
-        { icon: <Lightbulb size={14} />, label: 'Core Skill Coverage', value: analysis ? `${corePct}%` : '--', sub: analysis ? `${skills.length} skills detected` : 'Upload resume', pct: corePct, bg: 'rgba(34,211,238,0.12)', col: '#22d3ee' },
-        { icon: <AlertCircle size={14} />, label: 'Missing Critical Skills', value: analysis ? String(missingCount) : '--', sub: analysis ? `${Math.min(missingCount, 3)} high priority` : 'Pending analysis', pct: analysis ? Math.min(100, (missingCount / 10) * 100) : 0, bg: 'rgba(245,158,11,0.12)', col: '#f59e0b' },
-        { icon: <Activity size={14} />, label: 'Interview Readiness', value: analysis ? readiness : '--', sub: analysis ? (analytics?.total_analyses ? `${analytics.total_analyses} total analyses` : 'Level 2 of 4') : 'Ready to start', pct: analysis ? score * 0.8 : 0, bg: 'rgba(167,139,250,0.12)', col: '#a78bfa' },
+        { icon: <Activity size={14} />, label: 'Readiness Score', value: analysis ? `${score}%` : '--', sub: analysis ? (chartHistory.length > 1 ? `+${score - chartHistory[0].value}% overall` : 'First analysis') : 'No analysis yet', pct: score, bg: 'rgba(var(--blue-rgb),0.12)', col: 'var(--blue)', colRgb: 'var(--blue-rgb)' },
+        { icon: <Lightbulb size={14} />, label: 'Core Skill Coverage', value: analysis ? `${corePct}%` : '--', sub: analysis ? `${skills.length} skills detected` : 'Upload resume', pct: corePct, bg: 'rgba(var(--cyan-rgb),0.12)', col: 'var(--cyan)', colRgb: 'var(--cyan-rgb)' },
+        { icon: <AlertCircle size={14} />, label: 'Missing Critical Skills', value: analysis ? String(missingCount) : '--', sub: analysis ? `${Math.min(missingCount, 3)} high priority` : 'Pending analysis', pct: analysis ? Math.min(100, (missingCount / 10) * 100) : 0, bg: 'rgba(var(--orange-rgb),0.12)', col: 'var(--orange)', colRgb: 'var(--orange-rgb)' },
+        { icon: <Activity size={14} />, label: 'Interview Readiness', value: analysis ? readiness : '--', sub: analysis ? (analytics?.total_analyses ? `${analytics.total_analyses} total analyses` : 'First analysis') : 'Ready to start', pct: analysis ? score * 0.8 : 0, bg: 'rgba(var(--purple-rgb),0.12)', col: 'var(--purple)', colRgb: 'var(--purple-rgb)' },
     ], [analysis, score, corePct, missingCount, readiness, skills, chartHistory, analytics])
 
 
@@ -73,11 +73,19 @@ export default function Dashboard() {
                 </button>
             </div>
 
+            {/* Analytics Error */}
+            {analyticsError && (
+                <div style={{ marginBottom: 16, padding: '10px 16px', background: 'rgba(var(--red-rgb),0.08)', border: '1px solid rgba(var(--red-rgb),0.2)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--red)' }}>
+                    <AlertCircle size={14} />
+                    {analyticsError}
+                </div>
+            )}
+
             {/* Metric Cards */}
             <div className="metrics-grid mb-32">
                 {METRICS.map((m, i) => (
                     <div key={i} className="metric-card" style={{ background: m.bg }}>
-                        <div className="metric-card__icon" style={{ background: `${m.col}22`, color: m.col }}>{m.icon}</div>
+                        <div className="metric-card__icon" style={{ background: `rgba(${m.colRgb},0.13)`, color: m.col }}>{m.icon}</div>
                         <div className="metric-card__value">{m.value}</div>
                         <div className="metric-card__label">{m.label}</div>
                         <div className="metric-card__bar">

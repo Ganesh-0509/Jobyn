@@ -62,8 +62,8 @@ function useWebSpeech() {
 export default function InterviewReadiness() {
     const navigate = useNavigate()
     const { analysis, prediction } = useResume()
-    const role = analysis?.role ?? prediction?.predicted_role ?? 'Software Developer'
-    const readiness = analysis?.final_score ?? 55
+    const role = analysis?.role ?? prediction?.predicted_role ?? ''
+    const readiness = analysis?.final_score ?? 0
 
     const [question, setQuestion] = useState<Question | null>(null)
     const [result, setResult] = useState<EvalResult | null>(null)
@@ -109,8 +109,8 @@ export default function InterviewReadiness() {
     const reset = () => { setQuestion(null); setResult(null); setTranscript(''); setPhase('idle') }
 
     const overallLabel = readiness >= 80 ? 'Interview Ready' : readiness >= 60 ? 'Placement Ready' : readiness >= 40 ? 'Developing' : 'Beginner'
-    const STRENGTHS = analysis?.detected_skills?.slice(0, 4).map(s => s.charAt(0).toUpperCase() + s.slice(1)) ?? ['Data Structures', 'Python Programming', 'REST APIs', 'SQL Databases']
-    const IMPROVEMENTS = prediction?.weak_areas?.length ? prediction.weak_areas : ['System Design', 'Behavioral Questions', 'Time Management']
+    const STRENGTHS = analysis?.detected_skills?.slice(0, 4).map(s => s.charAt(0).toUpperCase() + s.slice(1)) ?? []
+    const IMPROVEMENTS = prediction?.weak_areas?.length ? prediction.weak_areas : (analysis?.missing_core_skills?.slice(0, 3) ?? [])
 
     if (!analysis) {
         return (
@@ -188,7 +188,7 @@ export default function InterviewReadiness() {
                             {loading ? '⏳ Loading...' : <><ChevronRight size={14} /> Start Interview Question</>}
                         </button>
                         {fetchError && (
-                            <div style={{ marginTop: 16, padding: '12px 16px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 13, color: 'var(--red)' }}>
+                            <div style={{ marginTop: 16, padding: '12px 16px', background: 'rgba(var(--red-rgb),0.1)', border: '1px solid rgba(var(--red-rgb),0.2)', borderRadius: 8, fontSize: 13, color: 'var(--red)' }}>
                                 {fetchError}
                             </div>
                         )}
@@ -199,7 +199,7 @@ export default function InterviewReadiness() {
                 {phase === 'questioning' && question && (
                     <>
                         <div style={{
-                            background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.2)',
+                            background: 'rgba(var(--blue-rgb),0.06)', border: '1px solid rgba(var(--blue-rgb),0.2)',
                             borderRadius: 10, padding: '16px 18px', marginBottom: 16,
                         }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -261,8 +261,8 @@ export default function InterviewReadiness() {
                             <div style={{
                                 display: 'inline-flex', flexDirection: 'column', alignItems: 'center',
                                 padding: '20px 40px',
-                                background: result.score >= 70 ? 'rgba(34,197,94,0.08)' : result.score >= 40 ? 'rgba(245,158,11,0.08)' : 'rgba(239,68,68,0.08)',
-                                border: `1px solid ${result.score >= 70 ? 'rgba(34,197,94,0.3)' : result.score >= 40 ? 'rgba(245,158,11,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                                background: result.score >= 70 ? 'rgba(var(--green-rgb),0.08)' : result.score >= 40 ? 'rgba(var(--orange-rgb),0.08)' : 'rgba(var(--red-rgb),0.08)',
+                                border: `1px solid ${result.score >= 70 ? 'rgba(var(--green-rgb),0.3)' : result.score >= 40 ? 'rgba(var(--orange-rgb),0.3)' : 'rgba(var(--red-rgb),0.3)'}`,
                                 borderRadius: 14,
                             }}>
                                 <div style={{ fontSize: 52, fontWeight: 900, color: result.score >= 70 ? 'var(--green)' : result.score >= 40 ? 'var(--orange)' : 'var(--red)', letterSpacing: -2 }}>
@@ -290,7 +290,7 @@ export default function InterviewReadiness() {
                                 <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--red)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>✗ Missing</div>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                                     {result.missing_concepts.length
-                                        ? result.missing_concepts.map(c => <span key={c} style={{ padding: '3px 10px', borderRadius: 6, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', fontSize: 11, color: 'var(--red)' }}>{c}</span>)
+                                        ? result.missing_concepts.map(c => <span key={c} style={{ padding: '3px 10px', borderRadius: 6, background: 'rgba(var(--red-rgb),0.1)', border: '1px solid rgba(var(--red-rgb),0.25)', fontSize: 11, color: 'var(--red)' }}>{c}</span>)
                                         : <span className="text-muted">Nothing critical missing!</span>
                                     }
                                 </div>
@@ -298,13 +298,13 @@ export default function InterviewReadiness() {
                         </div>
 
                         {/* Feedback */}
-                        <div style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 10, padding: 14, marginBottom: 12 }}>
+                        <div style={{ background: 'rgba(var(--blue-rgb),0.06)', border: '1px solid rgba(var(--blue-rgb),0.15)', borderRadius: 10, padding: 14, marginBottom: 12 }}>
                             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--blue)', marginBottom: 6 }}>💬 AI FEEDBACK</div>
                             <div style={{ fontSize: 13, lineHeight: 1.7 }}>{result.feedback}</div>
                         </div>
 
                         {result.tip && (
-                            <div style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 10, padding: 14 }}>
+                            <div style={{ background: 'rgba(var(--orange-rgb),0.06)', border: '1px solid rgba(var(--orange-rgb),0.15)', borderRadius: 10, padding: 14 }}>
                                 <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--orange)', marginBottom: 6 }}>💡 TIP</div>
                                 <div style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--text-secondary)' }}>{result.tip}</div>
                             </div>

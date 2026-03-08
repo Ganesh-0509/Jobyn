@@ -136,3 +136,32 @@ CREATE TABLE IF NOT EXISTS prediction_feedback (
 CREATE INDEX IF NOT EXISTS idx_feedback_user    ON prediction_feedback(user_email);
 CREATE INDEX IF NOT EXISTS idx_feedback_created ON prediction_feedback(created_at);
 ALTER TABLE prediction_feedback DISABLE ROW LEVEL SECURITY;
+
+-- 7. Knowledge cache (replaces local SQLite knowledge_cache)
+CREATE TABLE IF NOT EXISTS knowledge_cache (
+    id              BIGSERIAL    PRIMARY KEY,
+    topic           TEXT         NOT NULL,
+    type            TEXT         NOT NULL,
+    content         JSONB        NOT NULL DEFAULT '{}',
+    created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    UNIQUE(topic, type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_knowledge_topic ON knowledge_cache(topic);
+CREATE INDEX IF NOT EXISTS idx_knowledge_type  ON knowledge_cache(type);
+ALTER TABLE knowledge_cache DISABLE ROW LEVEL SECURITY;
+
+-- 8. Community contributions (replaces local SQLite contributions)
+CREATE TABLE IF NOT EXISTS contributions (
+    id              BIGSERIAL    PRIMARY KEY,
+    topic           TEXT         NOT NULL,
+    submitted_by    TEXT,
+    content         JSONB        NOT NULL DEFAULT '{}',
+    status          TEXT         DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+    created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_contributions_status ON contributions(status);
+CREATE INDEX IF NOT EXISTS idx_contributions_topic  ON contributions(topic);
+ALTER TABLE contributions DISABLE ROW LEVEL SECURITY;

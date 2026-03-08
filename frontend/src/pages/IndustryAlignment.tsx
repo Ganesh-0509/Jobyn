@@ -66,6 +66,21 @@ export default function IndustryAlignment() {
         },
     ]
 
+    if (score === null) {
+        return (
+            <div className="page-content">
+                <div style={{ maxWidth: 800, margin: '60px auto', textAlign: 'center' }}>
+                    <div style={{ fontSize: 60, marginBottom: 20 }}>🏢</div>
+                    <h1 className="page-title">Industry Alignment Locked</h1>
+                    <p className="page-subtitle">Upload your resume to see personalized industry alignment scores.</p>
+                    <button className="btn btn--primary" onClick={() => navigate('/resume-analyzer')} style={{ marginTop: 24 }}>
+                        Analyze Your Resume Now
+                    </button>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="page-content">
             <div className="page-header" style={{ marginBottom: 40 }}>
@@ -78,24 +93,6 @@ export default function IndustryAlignment() {
                         <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)', boxShadow: '0 0 10px var(--green)' }} /> Live Market Benchmarks
                     </div>
                 </div>
-
-                {score === null && (
-                    <div className="card" style={{ marginTop: 24, padding: '16px 24px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid var(--blue)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>!</div>
-                            <div>
-                                <div style={{ fontSize: 13, fontWeight: 700 }}>No Resume Data Found</div>
-                                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Upload your resume to see personalized industry alignment scores. Showing general benchmarks until then.</div>
-                            </div>
-                        </div>
-                        <button
-                            onClick={() => navigate('/resume-analyzer')}
-                            style={{ padding: '8px 16px', background: 'var(--blue)', border: 'none', borderRadius: 6, color: 'white', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-                        >
-                            Upload Now
-                        </button>
-                    </div>
-                )}
             </div>
 
             <div style={{ display: 'grid', gap: 32 }}>
@@ -134,7 +131,7 @@ export default function IndustryAlignment() {
                                     <p style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.6, marginBottom: 12 }}>
                                         {details.summary}
                                     </p>
-                                    <div style={{ padding: '12px 16px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', borderLeft: `3px solid var(--${row.cls})`, fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500 }}>
+                                    <div style={{ padding: '12px 16px', borderRadius: 8, background: 'var(--bg-glass)', borderLeft: `3px solid var(--${row.cls})`, fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500 }}>
                                         {details.benchmark}
                                     </div>
                                 </div>
@@ -155,7 +152,7 @@ export default function IndustryAlignment() {
                                                     flexDirection: 'column',
                                                     gap: 4,
                                                     padding: '12px 16px',
-                                                    background: 'rgba(255,255,255,0.03)',
+                                                    background: 'var(--bg-glass)',
                                                     borderRadius: 10,
                                                     border: '1px solid var(--border)',
                                                     textDecoration: 'none',
@@ -164,8 +161,8 @@ export default function IndustryAlignment() {
                                                 className="resource-card-link"
                                             >
                                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                    <span style={{ fontSize: 13, fontWeight: 700, color: 'white' }}>{res.name}</span>
-                                                    <ExternalLink size={14} style={{ opacity: 0.5, color: 'white' }} />
+                                                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{res.name}</span>
+                                                    <ExternalLink size={14} style={{ opacity: 0.5, color: 'var(--text-secondary)' }} />
                                                 </div>
                                                 <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>via {res.platform}</span>
                                             </a>

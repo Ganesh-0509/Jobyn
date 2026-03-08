@@ -34,12 +34,7 @@ export function loadHistory(userEmail?: string): HistoryEntry[] {
     catch { return [] }
 }
 
-/** Returns data seeded with demo entries if user has never uploaded */
+/** Returns real history only — no synthetic demo data */
 export function getHistoryOrDemo(real: HistoryEntry[]): HistoryEntry[] {
-    if (real.length >= 2) return real
-    return [
-        { label: 'Jan', value: 35 }, { label: 'Feb', value: 43 },
-        { label: 'Mar', value: 50 }, { label: 'Apr', value: 58 },
-        { label: 'May', value: 65 }, { label: 'Jun', value: 74 },
-    ] as HistoryEntry[]
+    return real
 }

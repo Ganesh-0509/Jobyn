@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useResume, getReadinessClass } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
+import { EmptyState } from '../components/StateDisplay'
 import { uploadResume, predictResume } from '../api/client'
 import CircularProgress from '../components/CircularProgress'
 import { Cpu, Cloud, Zap, ArrowRight, TrendingUp, AlertCircle, Shield } from 'lucide-react'
@@ -18,8 +20,22 @@ export default function ReadinessScore() {
     const { analysis, prediction, bestFit, setAnalysis, setPrediction, currentFile } = useResume()
     const { privacy } = usePrivacy()
     const { user } = useAuth()
+    const navigate = useNavigate()
     const [switching, setSwitching] = useState(false)
     const [switchError, setSwitchError] = useState<string | null>(null)
+
+    if (!analysis) {
+        return (
+            <div className="page-content">
+                <EmptyState
+                    icon="📊"
+                    title="No Analysis Available"
+                    subtitle="Upload and analyze your resume to see your readiness score breakdown."
+                    action={{ label: 'Upload Resume', onClick: () => navigate('/resume-analyzer') }}
+                />
+            </div>
+        )
+    }
 
     const score = analysis?.final_score ?? 0
     const current = getReadinessClass(score)
@@ -48,7 +64,7 @@ export default function ReadinessScore() {
 
             <div className="grid-2 mb-16">
                 <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 220, gap: 16 }}>
-                    <CircularProgress pct={score} size={160} stroke={14} color="#3b82f6" label="Overall" />
+                    <CircularProgress pct={score} size={160} stroke={14} color="var(--blue)" label="Overall" />
                     <div style={{ textAlign: 'center' }}>
                         <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{current}</div>
                         {analysis?.role && <div className="text-muted">for {analysis.role}</div>}
@@ -59,8 +75,8 @@ export default function ReadinessScore() {
                             <div style={{
                                 marginTop: 4, display: 'flex', alignItems: 'center', gap: 6,
                                 padding: '4px 10px', borderRadius: 20,
-                                background: prediction.model_version.includes('onnx') ? 'rgba(34,197,94,0.1)' : 'rgba(59,130,246,0.1)',
-                                border: `1px solid ${prediction.model_version.includes('onnx') ? 'rgba(34,197,94,0.2)' : 'rgba(59,130,246,0.2)'}`,
+                                background: prediction.model_version.includes('onnx') ? 'rgba(var(--green-rgb),0.1)' : 'rgba(var(--blue-rgb),0.1)',
+                                border: `1px solid ${prediction.model_version.includes('onnx') ? 'rgba(var(--green-rgb),0.2)' : 'rgba(var(--blue-rgb),0.2)'}`,
                                 fontSize: 11, color: prediction.model_version.includes('onnx') ? 'var(--green)' : 'var(--blue)',
                                 fontWeight: 600
                             }}>
@@ -74,11 +90,11 @@ export default function ReadinessScore() {
                             <div style={{
                                 marginTop: 18, padding: '16px 20px', borderRadius: 12,
                                 background: score < 50
-                                    ? 'linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(239,68,68,0.12) 100%)'
-                                    : 'linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(34,197,94,0.08) 100%)',
+                                    ? 'linear-gradient(135deg, rgba(var(--orange-rgb),0.12) 0%, rgba(var(--red-rgb),0.12) 100%)'
+                                    : 'linear-gradient(135deg, rgba(var(--blue-rgb),0.08) 0%, rgba(var(--green-rgb),0.08) 100%)',
                                 border: score < 50
-                                    ? '1px solid rgba(245,158,11,0.3)'
-                                    : '1px solid rgba(59,130,246,0.15)',
+                                    ? '1px solid rgba(var(--orange-rgb),0.3)'
+                                    : '1px solid rgba(var(--blue-rgb),0.15)',
                                 textAlign: 'left',
                             }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -140,7 +156,7 @@ export default function ReadinessScore() {
                                         {switching ? <div className="spinner spinner--sm" /> : <><Zap size={14} /> {score < 50 ? 'Switch to Highest Match Role' : 'Apply Suggested Path'}</>}
                                     </button>
                                     {switchError && (
-                                        <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 12, color: 'var(--red)' }}>
+                                        <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(var(--red-rgb),0.1)', border: '1px solid rgba(var(--red-rgb),0.2)', borderRadius: 8, fontSize: 12, color: 'var(--red)' }}>
                                             {switchError}
                                         </div>
                                     )}

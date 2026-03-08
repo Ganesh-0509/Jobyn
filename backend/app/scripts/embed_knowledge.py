@@ -41,16 +41,15 @@ def chunk_text(text: str, chunk_size: int = 700, overlap: int = 100) -> list[str
 # ── Embedding ─────────────────────────────────────────────────────────────────
 def embed_text(text: str) -> list[float] | None:
     try:
-        import google.generativeai as genai
-        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+        from google import genai
+        from app.core.settings import settings
+        client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
         
-        # models/gemini-embedding-001 uses 3072 dimensions
-        embed_res = genai.embed_content(
-            model="models/gemini-embedding-001",
-            content=text,
-            task_type="retrieval_document"
+        embed_res = client.models.embed_content(
+            model=settings.GEMINI_EMBEDDING_MODEL,
+            contents=text,
         )
-        return embed_res['embedding']
+        return embed_res.embeddings[0].values
     except Exception as e:
         log.error("Gemini embedding failed: %s", e)
         return None

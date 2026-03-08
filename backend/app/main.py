@@ -33,6 +33,7 @@ from app.routers import inference as inference_router
 from app.routers import interview as interview_router
 from app.core.rate_limiter import limiter, rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from app.core.settings import settings
 
 logging.basicConfig(
     level   = logging.INFO,
@@ -89,7 +90,7 @@ app = FastAPI(
         "Start with `POST /upload` to analyse a resume, "
         "then use `POST /predict` for ML-powered role prediction."
     ),
-    version     = "4.1.0",
+    version     = settings.APP_VERSION,
     lifespan    = lifespan,
     docs_url    = "/docs",
     redoc_url   = "/redoc",
@@ -100,15 +101,9 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
 # ── CORS ───────────────────────────────────────────────────────────────────────
-# In production, replace "*" with your actual frontend origin(s).
-_ALLOWED_ORIGINS = [
-    "http://localhost:5173",   # Vite dev server
-    "http://127.0.0.1:5173",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins     = _ALLOWED_ORIGINS,
+    allow_origins     = settings.CORS_ORIGINS,
     allow_credentials = True,
     allow_methods     = ["*"],
     allow_headers     = ["*"],
@@ -116,6 +111,7 @@ app.add_middleware(
 
 from app.routers import ai_insight
 from app.routers import feedback as feedback_router
+from app.routers import project_generator
 
 # ── App factory ────────────────────────────────────────────────────────────────
 # ... (rest of App factory)
@@ -126,6 +122,7 @@ app.include_router(inference_router.router)
 app.include_router(interview_router.router)
 app.include_router(ai_insight.router)
 app.include_router(feedback_router.router)
+app.include_router(project_generator.router)
 
 
 # ── Root ────────────────────────────────────────────────────────────────────────
@@ -138,7 +135,7 @@ def root():
     meta = get_metadata() if is_loaded() else {}
     return {
         "status":        "Resume Intelligence API Running",
-        "version":       "4.2.0",
+        "version":       settings.APP_VERSION,
         "model_version": meta.get("version", "not_loaded"),
         "model_accuracy": f"{meta.get('accuracy', 0)*100:.1f}%" if meta else "N/A",
         "database":      db["supabase"],

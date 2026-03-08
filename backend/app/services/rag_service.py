@@ -20,6 +20,7 @@ import hashlib
 from typing import List, Dict, Any, Optional
 
 from app.utils.llm_utils import extract_content, parse_json_from_llm
+from app.core.settings import settings
 
 log = logging.getLogger("rag_service")
 
@@ -49,15 +50,14 @@ def embed_text(text: str) -> Optional[List[float]]:
         log.warning("GEMINI_API_KEY not set — embedding unavailable.")
         return None
     try:
-        import google.generativeai as genai
-        genai.configure(api_key=api_key)
+        from google import genai
+        client = genai.Client(api_key=api_key)
         
-        embed_res = genai.embed_content(
-            model="models/gemini-embedding-001",
-            content=text,
-            task_type="retrieval_query"
+        embed_res = client.models.embed_content(
+            model=settings.GEMINI_EMBEDDING_MODEL,
+            contents=text,
         )
-        return embed_res['embedding']
+        return embed_res.embeddings[0].values
     except Exception as e:
         log.error("Gemini embedding failed: %s", e)
         return None
@@ -103,7 +103,7 @@ def _cache_get(key: str) -> Optional[Dict]:
         return None
 
 
-def _cache_set(key: str, value: Dict, ttl_seconds: int = 86400):
+def _cache_set(key: str, value: Dict, ttl_seconds: int = settings.RAG_CACHE_TTL):
     if _redis is None:
         return
     try:
@@ -175,8 +175,22 @@ async def generate_rag_tutorial(skill: str, existing_skills: str = "", model=Non
     ]
     retrieved_text = "\n\n---\n\n".join([c.get("content", "") for c in chunks]) if chunks else ""
 
-    # Build prompt
-    reference_block = f"Use ONLY this verified reference material:\n\n{retrieved_text}\n\nDo NOT hallucinate beyond reference." if retrieved_text else f"Skill: {skill}. Student knows: [{existing_skills}]."
+    # Build prompt — two modes:
+    #   A) Reference-grounded when we have PGVector chunks
+    #   B) Expert-generation when no chunks (works for ANY skill)
+    if retrieved_text:
+        reference_block = (
+            f"Use the following verified reference material as your primary source:\n\n"
+            f"{retrieved_text}\n\n"
+            f"You may supplement with your own expert knowledge but stay consistent with the references."
+        )
+    else:
+        reference_block = (
+            f"No curated reference material is available for this topic.\n"
+            f"Use your expert knowledge as a senior software engineer and educator to generate "
+            f"comprehensive, accurate, and interview-ready content for: {skill}.\n"
+            f"Include real-world examples, common interview patterns, and industry best practices."
+        )
 
     prompt = f"""
 You are a senior interview curriculum architect.
@@ -189,30 +203,35 @@ Student already knows: [{existing_skills}]
 Return this exact JSON format:
 {{
   "skill": "{skill}",
-  "quick_summary": "...",
-  "estimated_study_time": "...",
+  "quick_summary": "2-3 sentence overview",
+  "estimated_study_time": "45 minutes",
   "sub_roadmap": [{{"title": "Topic", "duration": "Time"}}],
   "detailed_content": [
     {{
-      "subheading": "1. Concept Foundation",
-      "explanation": "Detailed explanation...",
-      "algorithm": "Step 1: ...\\nStep 2: ...",
-      "example": "code or analogy...",
-      "complexity": "Time: O(n), Space: O(1)"
+      "subheading": "Section Title",
+      "explanation": "Clear explanation with real-world analogy (2-3 paragraphs)",
+      "algorithm": "Step 1: ...\nStep 2: ... (if applicable, else omit)",
+      "example": "```python\n# Actual runnable code here\nresult = do_something()\nprint(result)\n```",
+      "key_takeaway": "One-sentence key insight to remember",
+      "try_it": "Mini challenge: Modify the above code to do X instead of Y",
+      "complexity": "Time: O(n), Space: O(1) (if applicable, else omit)"
     }}
   ],
   "pro_tip": "industry tip...",
   "sources": []
 }}
 
-Produce at least 5-7 detailed_content sections covering:
-1. Concept Foundation
-2. Core Theory
-3. Internal Working
-4. Implementation
-5. Interview Focus
-6. Advanced Insight
-7. Practice Problems
+RULES:
+- Every section MUST have a real, runnable code example in the 'example' field wrapped in markdown code fences (```python or ```javascript).
+- Every section MUST have a 'key_takeaway' — a memorable one-liner.
+- Every section MUST have a 'try_it' — a small hands-on challenge for the student.
+- Keep each explanation under 200 words.
+- Produce exactly 5 detailed_content sections:
+  1. Concept Foundation (what it is + real-world analogy)
+  2. Core Theory & How It Works (internals, diagrams described)
+  3. Implementation with Code (full working example)
+  4. Interview Patterns & Common Questions
+  5. Practice Problems (2-3 problems with hints)
 """
 
     # Step 3 — LLM generation (with model fallback)
@@ -248,7 +267,7 @@ Produce at least 5-7 detailed_content sections covering:
 
     # Step 5 — Attach citations
     result["sources"] = sources if sources else [
-        {"title": skill, "source_type": "AI Generated", "version": "gemini-2.5-flash-lite"}
+        {"title": skill, "source_type": "AI Generated", "version": settings.BYTEZ_MODEL}
     ]
 
     # Step 6 — Cache in Redis

@@ -5,12 +5,14 @@ import { useAuth } from '../context/AuthContext'
 import { uploadResume, predictResume, getRoles } from '../api/client'
 import { Upload, FileText, CheckCircle, Cpu, Shield } from 'lucide-react'
 import { usePrivacy } from '../context/PrivacyContext'
+import { useToast } from '../context/ToastContext'
 import { predictOnDevice, isOnDeviceReady } from '../utils/onDevicePredictor'
 
 export default function ResumeAnalyzer() {
     const { setAnalysis, setPrediction, analysis, setCurrentFile } = useResume()
     const { privacy } = usePrivacy()
     const { user } = useAuth()
+    const { toast } = useToast()
     const navigate = useNavigate()
 
     const [roles, setRoles] = useState<string[]>([])
@@ -26,8 +28,10 @@ export default function ResumeAnalyzer() {
     }, [])
 
     const handleFile = (f: File) => {
+        const MAX_SIZE = 5 * 1024 * 1024 // 5 MB
+        if (f.size > MAX_SIZE) { setError('File must be under 5 MB.'); toast('File must be under 5 MB.', 'warning'); return }
         const ok = f.name.endsWith('.pdf') || f.name.endsWith('.docx')
-        if (!ok) { setError('Only PDF and DOCX files are supported.'); return }
+        if (!ok) { setError('Only PDF and DOCX files are supported.'); toast('Only PDF and DOCX files are supported.', 'warning'); return }
         setFile(f); setCurrentFile(f); setError('')
     }
 
@@ -83,14 +87,17 @@ export default function ResumeAnalyzer() {
                     inference_time_ms: 0
                 })
             }
+            toast('Resume analyzed successfully!', 'success')
             navigate('/readiness-score')
         } catch (e: unknown) {
-            setError(e instanceof Error ? e.message : 'Upload failed. Make sure the backend is running on :8000')
+            const msg = e instanceof Error ? e.message : 'Upload failed. Make sure the backend is running on :8000'
+            setError(msg)
+            toast(msg, 'error')
         } finally { setLoading(false) }
     }
 
-    const skills = analysis?.detected_skills ?? ['Python', 'React', 'Node.js', 'SQL', 'Git', 'MongoDB']
-    const atsGood = (analysis?.ats_score_percent ?? 82) >= 70
+    const skills = analysis?.detected_skills ?? []
+    const atsGood = (analysis?.ats_score_percent ?? 0) >= 70
 
     return (
         <div className="page-content">
@@ -123,7 +130,7 @@ export default function ResumeAnalyzer() {
             </div>
 
             {error && (
-                <div style={{ color: 'var(--red)', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13 }}>
+                <div style={{ color: 'var(--red)', background: 'rgba(var(--red-rgb),0.08)', border: '1px solid rgba(var(--red-rgb),0.2)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13 }}>
                     {error}
                 </div>
             )}
@@ -162,7 +169,7 @@ export default function ResumeAnalyzer() {
                         {[
                             { label: 'Filename', value: analysis.filename },
                             { label: 'Role', value: analysis.role },
-                            { label: 'Sections', value: analysis.sections_detected?.join(', ') || 'Skills, Education, Projects' },
+                            { label: 'Sections', value: analysis.sections_detected?.join(', ') || 'Not detected' },
                             { label: 'Links', value: `${analysis.links?.length ?? 0} detected` },
                         ].map(({ label, value }) => (
                             <div key={label} style={{ marginBottom: 14, padding: '10px 12px', background: 'var(--bg-input)', borderRadius: 8 }}>

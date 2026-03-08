@@ -50,9 +50,10 @@ async def upload_resume(
     try:
         file_bytes = await file.read()
 
-        # Guard against oversized uploads (max 5MB)
-        if len(file_bytes) > 5_000_000:
-            raise HTTPException(status_code=413, detail="File too large. Maximum size is 5MB.")
+        # Guard against oversized uploads
+        from app.core.settings import settings as _settings
+        if len(file_bytes) > _settings.MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail=f"File too large. Maximum size is {_settings.MAX_UPLOAD_BYTES // 1_000_000}MB.")
 
         # ── Core deterministic pipeline ──────────────────────────────────────
         parsed  = parse_resume(file_bytes, file.filename)

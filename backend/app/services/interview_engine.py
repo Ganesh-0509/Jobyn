@@ -326,7 +326,7 @@ def evaluate_answer(role: str, question_id: str, answer_text: str) -> dict:
 
     Returns:
         score (0–100), detected_concepts, missing_concepts,
-        feedback (str), grade (str)
+        feedback (str), grade (str), learning_path (list)
     """
     question = get_question_by_id(role, question_id)
     if not question:
@@ -371,6 +371,21 @@ def evaluate_answer(role: str, question_id: str, answer_text: str) -> dict:
     # Feedback
     feedback = _generate_feedback(score, detected, missing, question)
 
+    # Diagnostic Learning Path Generation
+    learning_path = []
+    if score < 70 and missing: # Flag as genuine knowledge gap
+        for concept in missing[:2]:
+            learning_path.append({
+                "concept": concept,
+                "resource": f"https://www.youtube.com/results?search_query={concept.replace(' ', '+')}+tutorial",
+                "type": "video"
+            })
+            learning_path.append({
+                "concept": concept,
+                "resource": f"https://www.google.com/search?q={concept.replace(' ', '+')}+best+practices+documentation",
+                "type": "docs"
+            })
+
     return {
         "score":             score,
         "grade":             grade,
@@ -381,6 +396,8 @@ def evaluate_answer(role: str, question_id: str, answer_text: str) -> dict:
         "tip":               question.get("tip", ""),
         "question":          question["question"],
         "difficulty":        question.get("difficulty", "Intermediate"),
+        "diagnostic_flag":   score < 70, # Flag it if they fail
+        "learning_path":     learning_path
     }
 
 

@@ -229,7 +229,7 @@ function AnimatedCharacter({ state }: { state: CharState }) {
    Character is directly above the form (same card, connected)
 ────────────────────────────────────────────────────────────── */
 export default function Login() {
-    const { login } = useAuth()
+    const { login, loginWithGoogle } = useAuth()
     const navigate = useNavigate()
 
     const [email, setEmail] = useState('')
@@ -264,7 +264,7 @@ export default function Login() {
             await login(email.trim(), password)
             setChar('happy')
             // Wait for the sparkles and big smile before moving on!
-            setTimeout(() => navigate('/dashboard'), 2200)
+            setTimeout(() => navigate('/dashboard'), 800)
         } catch (err: unknown) {
             setChar('error')
             setError(err instanceof Error ? err.message : 'Invalid credentials. Please try again.')
@@ -274,102 +274,46 @@ export default function Login() {
     }
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'var(--bg-app)',
-            padding: '24px 16px',
-            fontFamily: 'var(--font)',
-        }}>
-            <div style={{
-                width: '100%',
-                maxWidth: 440,
-                borderRadius: 24,
-                overflow: 'hidden',
-                boxShadow: '0 32px 96px rgba(0,0,0,0.5)',
-                border: '1px solid var(--border)',
-            }}>
+        <div className="auth-v2">
+            {/* Animated background */}
+            <div className="gradient-mesh" aria-hidden="true">
+                <div className="gradient-mesh__orb gradient-mesh__orb--1" />
+                <div className="gradient-mesh__orb gradient-mesh__orb--2" />
+                <div className="gradient-mesh__orb gradient-mesh__orb--3" />
+            </div>
 
-                {/* ── TOP: Character section ─────────────────────────────── */}
-                <div style={{
-                    background: 'linear-gradient(160deg, #060d18 0%, #0a1628 50%, #0d2040 100%)',
-                    padding: '28px 40px 20px',
-                    textAlign: 'center',
-                    position: 'relative',
-                    overflow: 'hidden',
-                }}>
-                    {/* Glow orbs */}
-                    <div style={{ position: 'absolute', top: -40, left: '15%', width: 200, height: 200, background: 'radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
-                    <div style={{ position: 'absolute', top: -20, right: '10%', width: 150, height: 150, background: 'radial-gradient(circle, rgba(34,211,238,0.10) 0%, transparent 70%)', pointerEvents: 'none' }} />
-
-                    {/* Logo */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16, position: 'relative', zIndex: 2 }}>
-                        <div style={{ width: 30, height: 30, background: 'linear-gradient(135deg,#3b82f6,#22d3ee)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>⚡</div>
-                        <div>
-                            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>CampusSync</span>
-                            <span style={{ fontSize: 9, color: 'var(--blue)', display: 'block', textTransform: 'uppercase', letterSpacing: 1, lineHeight: 1 }}>Edge AI</span>
+            <div className="auth-v2__card">
+                {/* ── TOP: Character section ── */}
+                <div className="auth-v2__header">
+                    <div className="auth-v2__logo">
+                        <div className="auth-v2__logo-icon">⚡</div>
+                        <div className="auth-v2__logo-text">
+                            <div className="auth-v2__logo-name">CampusSync</div>
+                            <div className="auth-v2__logo-tag">Edge AI</div>
                         </div>
                     </div>
 
-                    {/* Character */}
-                    <div style={{ position: 'relative', zIndex: 2, marginBottom: -25 }}>
+                    <div className="auth-v2__character">
                         <AnimatedCharacter state={charState} />
                     </div>
 
-                    {/* Speech bubble — moved down slightly to overlap less */}
-                    <div style={{
-                        position: 'relative',
-                        zIndex: 3,
-                        background: 'rgba(255,255,255,0.08)',
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        borderRadius: 14,
-                        padding: '10px 18px',
-                        marginTop: 15,
-                        backdropFilter: 'blur(12px)',
-                        transition: 'all 0.35s ease',
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-                    }}>
-                        {/* Tail pointing up */}
-                        <div style={{
-                            position: 'absolute', top: -9, left: '50%', marginLeft: -9,
-                            width: 0, height: 0,
-                            borderLeft: '9px solid transparent',
-                            borderRight: '9px solid transparent',
-                            borderBottom: '9px solid rgba(255,255,255,0.07)',
-                        }} />
-                        <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, minHeight: 20, transition: 'all 0.3s' }}>
-                            {TIPS[charState]}
-                        </p>
+                    <div className="auth-v2__bubble">
+                        <p>{TIPS[charState]}</p>
                     </div>
                 </div>
 
-                {/* ── BOTTOM: Form section ───────────────────────────────── */}
-                <div style={{
-                    background: 'var(--bg-card)',
-                    padding: '28px 36px 32px',
-                }}>
-                    <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: -0.5, marginBottom: 4 }}>
-                        Welcome back 👋
-                    </h1>
-                    <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 22 }}>
-                        Sign in to your Career Intelligence dashboard
-                    </p>
+                {/* ── BOTTOM: Form section ── */}
+                <div className="auth-v2__form">
+                    <h1 className="auth-v2__title">Welcome back 👋</h1>
+                    <p className="auth-v2__sub">Sign in to your Career Intelligence dashboard</p>
 
-                    {error && (
-                        <div style={{
-                            background: 'rgba(239,68,68,0.08)',
-                            border: '1px solid rgba(239,68,68,0.25)',
-                            borderRadius: 8, padding: '10px 12px',
-                            fontSize: 12, color: 'var(--red)', marginBottom: 14,
-                        }}>{error}</div>
-                    )}
+                    {error && <div className="auth-v2__error">{error}</div>}
 
                     <form onSubmit={handleSubmit}>
                         <div className="auth-field">
-                            <label>Email address</label>
+                            <label htmlFor="login-email">Email address</label>
                             <input
+                                id="login-email"
                                 type="email"
                                 placeholder="you@college.edu"
                                 value={email}
@@ -380,8 +324,9 @@ export default function Login() {
                             />
                         </div>
                         <div className="auth-field">
-                            <label>Password</label>
+                            <label htmlFor="login-password">Password</label>
                             <input
+                                id="login-password"
                                 type="password"
                                 placeholder="••••••••"
                                 value={password}
@@ -391,12 +336,7 @@ export default function Login() {
                                 autoComplete="current-password"
                             />
                         </div>
-                        <button
-                            type="submit"
-                            className="auth-btn"
-                            disabled={loading}
-                            style={{ marginTop: 6 }}
-                        >
+                        <button type="submit" className="auth-btn" disabled={loading} style={{ marginTop: 6 }}>
                             {loading ? '⏳ Signing in...' : '→ Sign In'}
                         </button>
                     </form>
@@ -406,9 +346,12 @@ export default function Login() {
                     <button
                         className="google-btn"
                         onClick={async () => {
-                            setChar('happy')
-                            await login('demo@campussync.ai', 'demo')
-                            setTimeout(() => navigate('/dashboard'), 1000)
+                            try {
+                                await loginWithGoogle()
+                            } catch (err) {
+                                setChar('error')
+                                setError(err instanceof Error ? err.message : 'Google sign-in failed.')
+                            }
                         }}
                     >
                         <svg width="16" height="16" viewBox="0 0 48 48">
@@ -417,15 +360,13 @@ export default function Login() {
                             <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
                             <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
                         </svg>
-                        Continue with Google (Demo)
+                        Continue with Google
                     </button>
 
-                    <div style={{ marginTop: 18, textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)' }}>
-                        Don't have an account? <Link to="/signup" style={{ color: 'var(--blue)', fontWeight: 600 }}>Sign up free</Link>
+                    <div className="auth-v2__footer">
+                        Don't have an account? <Link to="/signup">Sign up free</Link>
                     </div>
-                    <div style={{ marginTop: 10, textAlign: 'center' }}>
-                        <Link to="/" style={{ fontSize: 12, color: 'var(--text-muted)' }}>← Back to homepage</Link>
-                    </div>
+                    <Link to="/" className="auth-v2__back">← Back to homepage</Link>
                 </div>
             </div>
         </div>

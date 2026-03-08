@@ -129,11 +129,15 @@ def get_curriculum_overview() -> Dict[str, Any]:
     }
 
 
-def can_unlock(skill: str, mastered: List[str], quiz_score: float = 0.0, min_quiz_score: float = 70.0) -> Dict[str, Any]:
+def can_unlock(skill: str, mastered: List[str], quiz_score: float = 0.0, min_quiz_score: float | None = None) -> Dict[str, Any]:
     """
     Check if a student can unlock the next skill.
-    A skill unlocks when: all prerequisites mastered AND quiz score >= 70%.
+    A skill unlocks when: all prerequisites mastered AND quiz score >= threshold.
     """
+    if min_quiz_score is None:
+        from app.core.settings import settings
+        min_quiz_score = settings.MIN_QUIZ_UNLOCK_SCORE
+
     prereqs = get_prerequisites(skill)
     mastered_set = {s.lower().strip() for s in mastered}
     missing_prereqs = [p for p in prereqs if p not in mastered_set]

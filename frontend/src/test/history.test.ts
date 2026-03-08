@@ -18,10 +18,9 @@ describe('history utility', () => {
         localStorage.removeItem(`${testEmail}_cse_score_history`)
     })
 
-    it('getHistoryOrDemo returns demo data for empty history', () => {
+    it('getHistoryOrDemo returns empty array for empty history', () => {
         const result = getHistoryOrDemo([])
-        expect(result.length).toBeGreaterThan(2)
-        expect(result[0].label).toBe('Jan')
+        expect(result).toEqual([])
     })
 
     it('getHistoryOrDemo returns real data when >= 2 entries', () => {

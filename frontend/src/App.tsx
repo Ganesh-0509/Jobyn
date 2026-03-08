@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ResumeProvider, useResume } from './context/ResumeContext'
+import { ToastProvider } from './context/ToastContext'
 import Layout from './components/Layout'
 import ErrorBoundary from './components/ErrorBoundary'
 import React, { Suspense, lazy } from 'react'
@@ -18,8 +19,10 @@ const InterviewReadiness = lazy(() => import('./pages/InterviewReadiness'))
 const ProgressTracking = lazy(() => import('./pages/ProgressTracking'))
 const ResumeComparison = lazy(() => import('./pages/ResumeComparison'))
 const IndustryAlignment = lazy(() => import('./pages/IndustryAlignment'))
+const MyProjects = lazy(() => import('./pages/MyProjects'))
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
 const Settings = lazy(() => import('./pages/Settings'))
+const NotFound = lazy(() => import('./pages/NotFound'))
 
 /** Global page loading spinner for lazy chunks */
 function PageLoader() {
@@ -34,6 +37,14 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth()
     if (loading) return <div className="page-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}><div className="spinner" /></div>
     return user ? <>{children}</> : <Navigate to="/login" replace />
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+    const { user, loading } = useAuth()
+    if (loading) return <PageLoader />
+    if (!user) return <Navigate to="/login" replace />
+    if (!user.isAdmin) return <Navigate to="/dashboard" replace />
+    return <>{children}</>
 }
 
 function DashboardRedirect() {
@@ -81,11 +92,12 @@ function AppRoutes() {
                 <Route path="progress-tracking" element={<Safe><ProgressTracking /></Safe>} />
                 <Route path="resume-comparison" element={<Safe><ResumeComparison /></Safe>} />
                 <Route path="industry-alignment" element={<Safe><IndustryAlignment /></Safe>} />
-                <Route path="admin" element={<Safe><AdminDashboard /></Safe>} />
+                <Route path="my-projects" element={<Safe><MyProjects /></Safe>} />
+                <Route path="admin" element={<Safe><AdminRoute><AdminDashboard /></AdminRoute></Safe>} />
                 <Route path="settings" element={<Safe><Settings /></Safe>} />
             </Route>
 
-            <Route path="*" element={<Navigate to={user ? '/dashboard' : '/'} replace />} />
+            <Route path="*" element={<NotFound />} />
         </Routes>
         </Suspense>
     )
@@ -96,9 +108,11 @@ export default function App() {
         <ErrorBoundary>
             <AuthProvider>
                 <ResumeProvider>
-                    <BrowserRouter>
-                        <AppRoutes />
-                    </BrowserRouter>
+                    <ToastProvider>
+                        <BrowserRouter>
+                            <AppRoutes />
+                        </BrowserRouter>
+                    </ToastProvider>
                 </ResumeProvider>
             </AuthProvider>
         </ErrorBoundary>

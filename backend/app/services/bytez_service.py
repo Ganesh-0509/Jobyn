@@ -3,6 +3,8 @@ import logging
 from typing import Dict, Any, List
 import json
 
+from app.utils.llm_utils import extract_content, parse_json_from_llm
+
 log = logging.getLogger("ai_service")
 
 class BytezService:
@@ -14,7 +16,8 @@ class BytezService:
                 # Based on the user's snippet
                 import bytez
                 self.sdk = bytez.Bytez(api_key)
-                self.model = self.sdk.model(os.getenv("BYTEZ_MODEL", "google/gemini-2.5-flash-lite"))
+                from app.core.settings import settings as _settings
+                self.model = self.sdk.model(_settings.BYTEZ_MODEL)
             except Exception as e:
                 log.error(f"Failed to initialize Bytez SDK: {e}")
 
@@ -54,55 +57,47 @@ class BytezService:
         context_prompt = f"\n\nBase your educational material strictly on this trusted external data to avoid hallucinations:\n{scraped_data}\n" if scraped_data else ""
 
         prompt = f"""
-        Expert Tutor Role.
-        Create a comprehensive AI study guide and mini-course for: {skill}.
-        Student already knows: [{existing_skills}].
-        
-        You must generate a detailed reading material that explains the topic with subheadings, detailed notes, step-by-step algorithms, and code examples for each subheading until the topic is well explained. Mimic the detailed structure of advanced coding tutorial platforms (e.g. GeeksForGeeks).
-        
-        Return JSON format:
-        {{
-          "skill": "{skill}",
-          "quick_summary": "High-level overview...",
-          "estimated_study_time": "Time...",
-          "sub_roadmap": [
-            {{"title": "Topic X", "duration": "Time"}}
-          ],
-          "detailed_content": [
-            {{
-                "subheading": "Introduction to Topic",
-                "explanation": "Detailed, multi-paragraph explanation...",
-                "algorithm": "Step 1: ...\\nStep 2: ... (Optional, omit if not applicable)",
-                "example": "Extensive code snippet or real-world analogy here...",
-                "complexity": "Time: O(N), Space: O(1) (Optional, omit if not applicable)"
-            }}
-          ],
-          "pro_tip": "Industry Hack..."
-        }}
-        Ensure detailed_content has at least 3-5 sections diving deep into {skill}.{context_prompt}
+You are a senior software engineer and coding tutor.
+Create a comprehensive study guide for: {skill}.
+Student already knows: [{existing_skills}].
+
+Return JSON format:
+{{
+  "skill": "{skill}",
+  "quick_summary": "High-level overview...",
+  "estimated_study_time": "45 minutes",
+  "sub_roadmap": [
+    {{"title": "Topic X", "duration": "Time"}}
+  ],
+  "detailed_content": [
+    {{
+      "subheading": "Section Title",
+      "explanation": "Clear explanation with a real-world analogy (2-3 paragraphs)",
+      "algorithm": "Step 1: ...\\nStep 2: ... (if applicable, else omit)",
+      "example": "```python\\n# Actual runnable code\\nresult = compute()\\nprint(result)\\n```",
+      "key_takeaway": "One memorable sentence summarizing this section",
+      "try_it": "Mini challenge: modify the code above to handle edge case X",
+      "complexity": "Time: O(n), Space: O(1) (if applicable, else omit)"
+    }}
+  ],
+  "pro_tip": "Industry Hack..."
+}}
+
+RULES:
+- Every section MUST have a runnable code example wrapped in markdown code fences (```python or ```javascript).
+- Every section MUST have a 'key_takeaway' one-liner and a 'try_it' mini-challenge.
+- Keep explanations under 200 words per section.
+- Produce exactly 5 detailed_content sections.
+{context_prompt}
         """
         try:
-            # model.run in Bytez is typically synchronous in the JS snippet provided 
-            # but usually SDKs provide async or it's wrapped.
-            # Using the direct model run from the snippet.
             res = self.model.run([{"role": "user", "content": prompt}])
-            
-            # Extract content from Bytez output structure
-            content = ""
-            if isinstance(res, dict):
-                content = res.get("output", {}).get("content", "") if isinstance(res.get("output"), dict) else str(res.get("output", ""))
-            elif hasattr(res, 'output'):
-                content = res.output.get("content", "") if isinstance(res.output, dict) else str(res.output)
-            else:
-                content = str(res)
-
-            # JSON cleanup (models sometimes put backticks)
-            if "```json" in content:
-                content = content.split("```json")[1].split("```")[0].strip()
-            elif "```" in content:
-                content = content.split("```")[1].split("```")[0].strip()
-            
-            return json.loads(content)
+            content = extract_content(res)
+            data = parse_json_from_llm(content)
+            if data:
+                return data
+            log.warning("Bytez study guide: JSON parse returned None")
+            return {"skill": skill, "is_fallback": True}
         except Exception as e:
             log.error(f"Bytez Study Guide failed: {e}")
             return {"skill": skill, "is_fallback": True}
@@ -111,24 +106,36 @@ class BytezService:
         """Generates 3 verification questions for a skill."""
         if not self.model: return {"is_fallback": True}
         
-        prompt = f"Generate 3 multiple choice questions for {skill} as JSON: {{'questions': [{{'id':1, 'question':'', 'options':[], 'correct_index':0, 'explanation':''}}]}}"
+        prompt = f"""Generate 5 challenging multiple-choice questions to test mastery of {skill}.
+
+RULES:
+- Questions should be scenario-based, not trivial definitions.
+- Include code snippets in questions where applicable.
+- Each option should be plausible (no obvious wrong answers).
+- Provide a clear, educational explanation for the correct answer.
+- Mix difficulty: 2 medium, 2 hard, 1 expert.
+
+Return valid JSON:
+{{
+  "skill": "{skill}",
+  "questions": [
+    {{
+      "id": 1,
+      "question": "Scenario-based question text...",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct_index": 0,
+      "explanation": "Detailed explanation of why this answer is correct and why others are wrong.",
+      "difficulty": "medium"
+    }}
+  ]
+}}"""
         try:
             res = self.model.run([{"role": "user", "content": prompt}])
-            
-            content = ""
-            if isinstance(res, dict):
-                content = res.get("output", {}).get("content", "") if isinstance(res.get("output"), dict) else str(res.get("output", ""))
-            elif hasattr(res, 'output'):
-                content = res.output.get("content", "") if isinstance(res.output, dict) else str(res.output)
-            else:
-                content = str(res)
-            
-            if "```json" in content:
-                content = content.split("```json")[1].split("```")[0].strip()
-            elif "```" in content:
-                content = content.split("```")[1].split("```")[0].strip()
-            
-            return json.loads(content)
+            content = extract_content(res)
+            data = parse_json_from_llm(content)
+            if data:
+                return data
+            return {"is_fallback": True}
         except Exception as e:
             log.error(f"Generate quiz failed: {e}")
             return {"is_fallback": True}
@@ -136,24 +143,35 @@ class BytezService:
     async def get_market_forecast(self, role: str, missing: List[str]) -> Dict[str, Any]:
         """Generates market snapshot."""
         if not self.model: return {"is_fallback": True}
-        prompt = f"Forecast for {role}. Skills: {missing}. JSON: {{'trend_title':'', 'growth_pct':0, 'summary':'', 'sources':[]}}"
+        skills_str = ', '.join(missing[:5])
+        prompt = f"""You are a tech recruitment analyst. Generate a 2026 career market forecast.
+
+Role: {role}
+Key skills to analyze: {skills_str}
+
+Return valid JSON:
+{{
+  "trend_title": "Market Insight for {role} — 2026",
+  "growth_pct": 15,
+  "summary": "2-3 sentence analysis of demand trends for this role and these skills.",
+  "sources": [
+    {{"name": "Industry Report or Platform Name", "url": "", "insight": "1-sentence key finding from this source"}},
+    {{"name": "Another Source", "url": "", "insight": "1-sentence key finding"}}
+  ]
+}}
+
+RULES:
+- growth_pct should be a realistic number (5-30).
+- Provide 2-4 sources with real platform/report names (e.g. Stack Overflow Survey, LinkedIn Jobs Report, Gartner, etc.).
+- Each source must have a meaningful 'insight' string.
+- Keep summary under 50 words."""
         try:
             res = self.model.run([{"role": "user", "content": prompt}])
-            
-            content = ""
-            if isinstance(res, dict):
-                content = res.get("output", {}).get("content", "") if isinstance(res.get("output"), dict) else str(res.get("output", ""))
-            elif hasattr(res, 'output'):
-                content = res.output.get("content", "") if isinstance(res.output, dict) else str(res.output)
-            else:
-                content = str(res)
-                
-            if "```json" in content:
-                content = content.split("```json")[1].split("```")[0].strip()
-            elif "```" in content:
-                content = content.split("```")[1].split("```")[0].strip()
-                
-            return json.loads(content)
+            content = extract_content(res)
+            data = parse_json_from_llm(content)
+            if data:
+                return data
+            return {"is_fallback": True}
         except Exception as e:
             log.error(f"Generate forecast failed: {e}")
             return {"is_fallback": True}

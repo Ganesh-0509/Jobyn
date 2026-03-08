@@ -1,12 +1,15 @@
+from datetime import date
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from app.services.ai_service import ai_service
+from app.services.interview_service import interview_service
 from app.services.curriculum_graph import (
     get_prerequisites, get_unlocked_skills, get_learning_path,
-    get_curriculum_overview, can_unlock
+    get_curriculum_overview, can_unlock, CURRICULUM_GRAPH,
 )
 from app.core.rate_limiter import ai_limit
+from app.services.knowledge_service import knowledge_service
 
 router = APIRouter(prefix="/ai", tags=["AI Insights"])
 
@@ -24,6 +27,158 @@ class ContributionRequest(BaseModel):
     skill: str
     submitted_by: str
     notes_content: Dict[str, Any]
+
+class SmartPlanRequest(BaseModel):
+    """Build a dependency-aware learning plan."""
+    missing_core_skills: List[str]
+    missing_optional_skills: List[str] = []
+    mastered_skills: List[str] = []
+    daily_hours: float = 2.0
+    deadline: Optional[str] = None  # ISO date string e.g. "2026-03-22"
+
+
+# ── Smart Plan Endpoint ──────────────────────────────────────────────────────
+
+
+def _resolve_full_path(
+    missing_skills: List[str],
+    mastered: List[str],
+) -> List[Dict[str, Any]]:
+    """
+    Build a topologically-sorted learning path that respects the
+    curriculum dependency graph.  Each skill in the final list includes
+    its prerequisites and what it unlocks.
+    """
+    mastered_set = {s.lower().strip() for s in mastered}
+    seen: set = set()
+    ordered: List[str] = []
+
+    def dfs(skill: str):
+        norm = skill.lower().strip()
+        if norm in seen or norm in mastered_set:
+            return
+        seen.add(norm)
+        for prereq in CURRICULUM_GRAPH.get(norm, []):
+            dfs(prereq)
+        ordered.append(norm)
+
+    for skill in missing_skills:
+        dfs(skill)
+
+    # Build rich items with metadata
+    items: List[Dict[str, Any]] = []
+    # Reverse map: what does each skill unlock?
+    unlocks_map: Dict[str, List[str]] = {}
+    for s, prereqs in CURRICULUM_GRAPH.items():
+        for p in prereqs:
+            unlocks_map.setdefault(p, []).append(s)
+
+    for idx, skill in enumerate(ordered):
+        prereqs = [p for p in CURRICULUM_GRAPH.get(skill, []) if p not in mastered_set]
+        unlocks = [u for u in unlocks_map.get(skill, []) if u in seen]
+        is_target = skill in {s.lower().strip() for s in missing_skills}
+
+        # Estimate study time based on prerequisite depth
+        depth = len(CURRICULUM_GRAPH.get(skill, []))
+        if depth >= 3:
+            minutes = 150
+            difficulty = "Advanced"
+        elif depth >= 1:
+            minutes = 90
+            difficulty = "Intermediate"
+        else:
+            minutes = 60
+            difficulty = "Foundational"
+
+        items.append({
+            "id": f"sp-{idx}",
+            "skill": skill,
+            "title": f"{'Master' if is_target else 'Learn'} {skill.title()}",
+            "prerequisites": prereqs,
+            "unlocks": unlocks,
+            "is_target_skill": is_target,
+            "is_prerequisite": not is_target,
+            "difficulty": difficulty,
+            "duration_minutes": minutes,
+            "order": idx,
+        })
+
+    return items
+
+
+@router.post("/smart-plan")
+async def build_smart_plan(req: SmartPlanRequest):
+    """
+    Build a dependency-aware learning plan.  Returns an ordered list of
+    skills with prerequisites, unlock chains, and day-by-day scheduling.
+    Supports optional deadline mode.
+    """
+    all_missing = req.missing_core_skills + req.missing_optional_skills
+    if not all_missing:
+        raise HTTPException(status_code=400, detail="No missing skills provided.")
+
+    items = _resolve_full_path(all_missing, req.mastered_skills)
+
+    # ── Day-by-day scheduling ───────────────────────────────────────
+    daily_minutes = req.daily_hours * 60
+
+    # If deadline is set, calculate required daily hours
+    recommended_daily = req.daily_hours
+    days_available = None
+    if req.deadline:
+        try:
+            deadline_date = date.fromisoformat(req.deadline)
+            today = date.today()
+            delta = (deadline_date - today).days
+            if delta > 0:
+                days_available = delta
+                total_minutes = sum(i["duration_minutes"] for i in items)
+                needed_daily = total_minutes / delta
+                recommended_daily = round(max(needed_daily / 60, 0.5), 1)
+                # Use the recommended daily if it's higher than what user set
+                if needed_daily > daily_minutes:
+                    daily_minutes = needed_daily
+        except ValueError:
+            pass
+
+    schedule: List[Dict[str, Any]] = []
+    current_day = 1
+    day_minutes = 0
+
+    for item in items:
+        if day_minutes + item["duration_minutes"] > daily_minutes and schedule:
+            last_day = schedule[-1]["day"]
+            if last_day == current_day:
+                current_day += 1
+                day_minutes = 0
+
+        item["scheduled_day"] = current_day
+        schedule.append({"day": current_day, **item})
+        day_minutes += item["duration_minutes"]
+
+        if day_minutes >= daily_minutes:
+            current_day += 1
+            day_minutes = 0
+
+    total_days = current_day if day_minutes > 0 else current_day - 1
+    total_days = max(total_days, 1)
+    total_minutes = sum(i["duration_minutes"] for i in items)
+    target_count = sum(1 for i in items if i["is_target_skill"])
+    prereq_count = sum(1 for i in items if i["is_prerequisite"])
+
+    return {
+        "schedule": schedule,
+        "total_skills": len(items),
+        "target_skills": target_count,
+        "prerequisite_skills": prereq_count,
+        "total_days": total_days,
+        "total_hours": round(total_minutes / 60, 1),
+        "daily_hours": req.daily_hours,
+        "recommended_daily_hours": recommended_daily,
+        "days_available": days_available,
+        "deadline": req.deadline,
+    }
+
 
 @router.post("/market-forecast")
 @ai_limit
@@ -57,61 +212,158 @@ async def study_chat(req: ChatRequest):
     content = await ai_service.get_chat_response(req.skill, req.query, req.history, context)
     return {"response": content}
 
+
+# ── AI Interview Simulator ────────────────────────────────────────────────────
+
+class InterviewStartRequest(BaseModel):
+    skill: str
+    difficulty: str = "medium"  # easy | medium | hard
+    role: Optional[str] = ""
+
+class InterviewAnswerRequest(BaseModel):
+    skill: str
+    question: str
+    answer: str
+    question_number: int = 1
+    difficulty: str = "medium"
+    history: Optional[List[Dict[str, Any]]] = []
+
+class InterviewEndRequest(BaseModel):
+    skill: str
+    difficulty: str = "medium"
+    history: List[Dict[str, Any]]
+
+
+@router.post("/interview/start")
+async def start_interview(req: InterviewStartRequest):
+    """Start a mock interview session — returns the first question."""
+    if not req.skill:
+        raise HTTPException(status_code=400, detail="Skill is required.")
+    return await interview_service.start_interview(req.skill, req.difficulty, req.role)
+
+
+@router.post("/interview/answer")
+async def evaluate_interview_answer(req: InterviewAnswerRequest):
+    """Evaluate the candidate's answer and return a follow-up question."""
+    if not req.skill or not req.answer:
+        raise HTTPException(status_code=400, detail="Skill and answer are required.")
+    return await interview_service.evaluate_answer(
+        skill=req.skill,
+        question=req.question,
+        answer=req.answer,
+        question_number=req.question_number,
+        difficulty=req.difficulty,
+        history=req.history or [],
+    )
+
+
+@router.post("/interview/end")
+async def end_interview(req: InterviewEndRequest):
+    """End the interview and return a comprehensive scorecard."""
+    if not req.history:
+        raise HTTPException(status_code=400, detail="Interview history is required.")
+    return await interview_service.end_interview(req.skill, req.difficulty, req.history)
+
+
 # ── Community & Admin Routes ──
-from app.db.local_db import local_db
+def _sb():
+    from app.core.supabase_client import get_supabase
+    return get_supabase()
 
 @router.post("/study/contribute")
 async def submit_contribution(req: ContributionRequest):
-    local_db.add_contribution(req.skill, req.submitted_by, req.notes_content)
-    return {"status": "success", "message": "Contribution submitted for review."}
+    try:
+        sb = _sb()
+        sb.table("contributions").insert({
+            "topic": req.skill.lower(),
+            "submitted_by": req.submitted_by,
+            "content": req.notes_content,
+            "status": "pending",
+        }).execute()
+        return {"status": "success", "message": "Contribution submitted for review."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to submit contribution: {e}")
 
 @router.get("/admin/contributions")
 async def get_pending_contributions():
-    return local_db.get_contributions(status="pending")
+    try:
+        sb = _sb()
+        resp = (
+            sb.table("contributions")
+            .select("*")
+            .eq("status", "pending")
+            .order("created_at", desc=True)
+            .execute()
+        )
+        return resp.data or []
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch contributions: {e}")
 
 @router.post("/admin/contributions/{id}/approve")
 async def approve_contribution(id: int):
-    contrib = local_db.get_contribution_by_id(id)
-    if not contrib:
-        raise HTTPException(status_code=404, detail="Not found")
-    
-    import json
-    content = json.loads(contrib["content"])
-    # Move to knowledge cache
-    local_db.cache_knowledge(contrib["topic"], "study", content)
-    local_db.update_contribution_status(id, "approved")
-    return {"status": "success"}
+    try:
+        sb = _sb()
+        # Fetch the contribution
+        resp = sb.table("contributions").select("*").eq("id", id).limit(1).execute()
+        if not resp.data:
+            raise HTTPException(status_code=404, detail="Not found")
+        contrib = resp.data[0]
+
+        # Move content to knowledge cache
+        knowledge_service.cache_knowledge(contrib["topic"], contrib["content"], "study")
+
+        # Mark as approved
+        sb.table("contributions").update({"status": "approved"}).eq("id", id).execute()
+        return {"status": "success"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Approval failed: {e}")
 
 @router.post("/admin/contributions/{id}/reject")
 async def reject_contribution(id: int):
-    success = local_db.update_contribution_status(id, "rejected")
-    if not success:
-        raise HTTPException(status_code=404, detail="Not found")
-    return {"status": "success"}
+    try:
+        sb = _sb()
+        resp = sb.table("contributions").update({"status": "rejected"}).eq("id", id).execute()
+        if not resp.data:
+            raise HTTPException(status_code=404, detail="Not found")
+        return {"status": "success"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Rejection failed: {e}")
 
 @router.get("/admin/stats")
 async def get_admin_stats():
-    pending = len(local_db.get_contributions(status="pending"))
-    approved = len(local_db.get_contributions(status="approved"))
-    total_skills = local_db.get_all_topics_count()
-    
-    # Dynamic student count from Supabase
-    active_students = 0
     try:
-        from app.core.supabase_client import get_supabase
-        sb = get_supabase()
+        sb = _sb()
+
+        # Contribution counts
+        pending_resp = sb.table("contributions").select("id", count="exact").eq("status", "pending").execute()
+        approved_resp = sb.table("contributions").select("id", count="exact").eq("status", "approved").execute()
+        pending = pending_resp.count if pending_resp.count is not None else len(pending_resp.data or [])
+        approved = approved_resp.count if approved_resp.count is not None else len(approved_resp.data or [])
+
+        # Knowledge cache topic count
+        total_skills = knowledge_service.get_all_topics_count()
+
+        # Active students (unique emails from resumes)
+        active_students = 0
         resp = sb.table("resumes").select("user_email", count="exact").execute()
-        # Count unique emails for true "active students"
         emails = set(r.get("user_email") for r in resp.data if r.get("user_email"))
         active_students = len(emails)
+
     except Exception:
-        active_students = 0  # Fallback
-        
+        pending = 0
+        approved = 0
+        total_skills = 0
+        active_students = 0
+
     return {
         "pending_reviews": pending,
         "approved_contributions": approved,
         "total_courses_cached": total_skills,
-        "active_students": active_students
+        "active_students": active_students,
     }
 
 

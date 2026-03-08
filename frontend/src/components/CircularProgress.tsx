@@ -13,13 +13,21 @@ export default function CircularProgress({ pct, size = 120, stroke = 10, color =
     const offset = c - (pct / 100) * c
 
     return (
-        <div className="circular-progress" style={{ width: size, height: size }}>
+        <div
+            className="circular-progress"
+            style={{ width: size, height: size }}
+            role="progressbar"
+            aria-valuenow={pct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={label ? `${label}: ${pct}%` : `Progress: ${pct}%`}
+        >
             <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
                 {/* Track */}
                 <circle
                     cx={size / 2} cy={size / 2} r={r}
                     fill="none"
-                    stroke="rgba(255,255,255,0.06)"
+                    stroke="var(--track-color)"
                     strokeWidth={stroke}
                 />
                 {/* Fill */}
@@ -39,10 +47,10 @@ export default function CircularProgress({ pct, size = 120, stroke = 10, color =
                 position: 'absolute',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             }}>
-                <span style={{ fontSize: size * 0.22, fontWeight: 800, color: '#f1f5f9', letterSpacing: '-1px' }}>
+                <span style={{ fontSize: size * 0.22, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-1px' }}>
                     {pct}%
                 </span>
-                {label && <span style={{ fontSize: size * 0.09, color: '#8892a4', marginTop: 2 }}>{label}</span>}
+                {label && <span style={{ fontSize: size * 0.09, color: 'var(--text-secondary)', marginTop: 2 }}>{label}</span>}
             </div>
         </div>
     )

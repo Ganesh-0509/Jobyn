@@ -14,6 +14,7 @@
     },
     "dependencies": {
         "@supabase/supabase-js": "^2.98.0",
+        "@xyflow/react": "^12.10.1",
         "dompurify": "^3.3.1",
         "lucide-react": "^0.344.0",
         "onnxruntime-web": "^1.24.2",

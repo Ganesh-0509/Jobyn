@@ -122,6 +122,9 @@ def get_skill_category(skill: str) -> str:
     return "other"
 
 
+# ── Public alias for _SKILL_CATEGORIES (used by jd_matcher) ───────────────────
+SKILL_CATEGORIES = _SKILL_CATEGORIES
+
 # ── Backward-compat alias (used by jd_matcher) ────────────────────────────────
 def extract_skills_from_text(text: str) -> dict:
     skills = extract_skills(text)

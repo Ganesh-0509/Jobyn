@@ -8,6 +8,7 @@ Original load_dataset() is preserved for Phase 4A similarity engine.
 """
 
 from app.core.supabase_client import get_supabase
+from app.core.settings import settings
 import logging
 import time
 
@@ -20,7 +21,6 @@ WEIGHT_SYNTHETIC = 1.0
 # ── TTL cache for dataset (avoids hitting Supabase on every ML endpoint) ──────
 _dataset_cache: list[dict] | None = None
 _dataset_cache_ts: float = 0
-_DATASET_TTL = 300  # 5 minutes
 
 _combined_cache: list[dict] | None = None
 _combined_cache_ts: float = 0
@@ -67,7 +67,7 @@ def load_dataset() -> list[dict]:
     global _dataset_cache, _dataset_cache_ts
 
     now = time.monotonic()
-    if _dataset_cache is not None and (now - _dataset_cache_ts) < _DATASET_TTL:
+    if _dataset_cache is not None and (now - _dataset_cache_ts) < settings.DATASET_CACHE_TTL:
         return _dataset_cache
 
     try:

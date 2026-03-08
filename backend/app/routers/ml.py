@@ -11,6 +11,7 @@ Endpoints:
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from app.core.settings import settings
 from app.ml_pipeline.data_loader     import load_dataset
 from app.ml_pipeline.similarity_engine import predict_role
 from app.ml_pipeline.skill_impact    import compute_skill_impact
@@ -132,7 +133,7 @@ def ml_predict_role(request: RolePredictRequest):
             "confidence": best_score / 100.0,
             "top_matches": all_results[:3],
             "reasoning": reasoning,
-            "model_version": "cross-role-validator-v1"
+            "model_version": f"cross-role-validator-{settings.APP_VERSION}"
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

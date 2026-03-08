@@ -1,6 +1,10 @@
 import { supabase } from '../lib/supabase'
 
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const BASE = import.meta.env.VITE_API_URL
+
+if (!BASE) {
+    console.error('VITE_API_URL is not set. Add it to frontend/.env')
+}
 
 export { BASE }
 
@@ -260,11 +264,60 @@ export async function getMarketForecast(role: string, missingSkills: string[]): 
     })
 }
 
+// ── Smart Plan (dependency-aware) ─────────────────────────────
+export interface SmartPlanItem {
+    id: string
+    skill: string
+    title: string
+    prerequisites: string[]
+    unlocks: string[]
+    is_target_skill: boolean
+    is_prerequisite: boolean
+    difficulty: 'Foundational' | 'Intermediate' | 'Advanced'
+    duration_minutes: number
+    order: number
+    scheduled_day: number
+}
+
+export interface SmartPlanResult {
+    schedule: SmartPlanItem[]
+    total_skills: number
+    target_skills: number
+    prerequisite_skills: number
+    total_days: number
+    total_hours: number
+    daily_hours: number
+    recommended_daily_hours: number
+    days_available: number | null
+    deadline: string | null
+}
+
+export async function getSmartPlan(
+    missingCore: string[],
+    missingOptional: string[],
+    mastered: string[],
+    dailyHours: number,
+    deadline?: string,
+): Promise<SmartPlanResult> {
+    return apiFetch<SmartPlanResult>('/ai/smart-plan', {
+        method: 'POST',
+        body: {
+            missing_core_skills: missingCore,
+            missing_optional_skills: missingOptional,
+            mastered_skills: mastered,
+            daily_hours: dailyHours,
+            deadline: deadline || null,
+        },
+    })
+}
+
 export interface DetailedContent {
     subheading: string
     explanation: string
     algorithm?: string
     example: string
+    key_takeaway?: string
+    try_it?: string
     complexity?: string
 }
 
@@ -289,6 +342,7 @@ export interface QuizQuestion {
     options: string[]
     correct_index: number
     explanation: string
+    difficulty?: string
 }
 
 export interface QuizResult {
@@ -312,6 +366,60 @@ export async function studyChat(skill: string, query: string, history: Array<{ r
         noAuth: true
     })
     return data.response
+}
+
+export interface ProjectResult {
+    role: string;
+    skills: string[];
+    markdown: string;
+    is_fallback: boolean;
+}
+
+export async function generateProject(role: string, skills: string[]): Promise<ProjectResult> {
+    return apiFetch<ProjectResult>('/projects/generate', {
+        method: 'POST',
+        body: { role, skills }
+    })
+}
+
+// ── Project Verification ──────────────────────────────────────
+export interface VerificationCriterion {
+    score: number;
+    detail: string;
+}
+
+export interface VerificationResult {
+    verified: boolean;
+    overall_score: number;
+    verdict: 'VERIFIED' | 'PARTIAL' | 'INSUFFICIENT' | 'SUSPICIOUS';
+    skill_coverage: VerificationCriterion;
+    spec_alignment: VerificationCriterion;
+    code_authenticity: VerificationCriterion;
+    documentation: VerificationCriterion;
+    completeness: VerificationCriterion;
+    strengths: string[];
+    improvements: string[];
+    summary: string;
+    repo: string;
+    repo_name: string;
+    languages: string[];
+    commit_count: number;
+    file_count: number;
+    verified_at: string;
+    is_rule_based?: boolean;
+    error?: string;
+}
+
+export async function verifyProject(
+    github_url: string,
+    project_markdown: string,
+    required_skills: string[],
+    role: string
+): Promise<VerificationResult> {
+    return apiFetch<VerificationResult>('/projects/verify', {
+        method: 'POST',
+        body: { github_url, project_markdown, required_skills, role }
+    })
 }
 
 // ── Admin & Community ─────────────────────────────────────────
@@ -383,4 +491,78 @@ export async function getLatestSession(email: string): Promise<{ analysis: Uploa
     } catch {
         return { analysis: null, prediction: null }
     }
+}
+
+// ── AI Interview Simulator ────────────────────────────────────
+export interface InterviewQuestion {
+    skill: string
+    question_number: number
+    question: string
+    category: string
+    hint: string
+    expected_depth: string
+    time_estimate_seconds: number
+    is_fallback?: boolean
+}
+
+export interface InterviewEvaluation {
+    score: number
+    max_score: number
+    feedback: string
+    key_points_covered: string[]
+    key_points_missed: string[]
+    follow_up_question: InterviewQuestion
+    interviewer_note: string
+    is_fallback?: boolean
+}
+
+export interface InterviewScorecard {
+    skill: string
+    difficulty: string
+    overall_score: number
+    max_score: number
+    percentage: number
+    verdict: string
+    summary: string
+    strengths: string[]
+    weaknesses: string[]
+    recommendations: string[]
+    skill_breakdown: Record<string, number>
+    interview_ready: boolean
+    suggested_next_topics: string[]
+    questions_answered: number
+}
+
+export async function startInterview(skill: string, difficulty: string = 'medium', role: string = ''): Promise<InterviewQuestion> {
+    return apiFetch<InterviewQuestion>('/ai/interview/start', {
+        method: 'POST',
+        body: { skill, difficulty, role },
+        noAuth: true,
+        retries: 1,
+    })
+}
+
+export async function submitInterviewAnswer(
+    skill: string, question: string, answer: string,
+    questionNumber: number, difficulty: string,
+    history: Array<Record<string, unknown>> = []
+): Promise<InterviewEvaluation> {
+    return apiFetch<InterviewEvaluation>('/ai/interview/answer', {
+        method: 'POST',
+        body: { skill, question, answer, question_number: questionNumber, difficulty, history },
+        noAuth: true,
+        retries: 1,
+    })
+}
+
+export async function endInterview(
+    skill: string, difficulty: string,
+    history: Array<Record<string, unknown>>
+): Promise<InterviewScorecard> {
+    return apiFetch<InterviewScorecard>('/ai/interview/end', {
+        method: 'POST',
+        body: { skill, difficulty, history },
+        noAuth: true,
+        retries: 1,
+    })
 }

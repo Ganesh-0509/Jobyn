@@ -2,7 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import {
     LayoutDashboard, FileText, BarChart2, ZapOff,
     CheckSquare, MessageSquare, TrendingUp, GitCompare,
-    Building2, Settings, Sun, Moon, Shield, Cpu, Menu, X as XIcon
+    Building2, Blocks, Settings, Sun, Moon, Shield, Cpu, Menu, X as XIcon, LogOut
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
@@ -19,11 +19,13 @@ const NAV_ITEMS = [
     { to: '/progress-tracking', label: 'Progress Tracking', Icon: TrendingUp },
     { to: '/resume-comparison', label: 'Resume Comparison', Icon: GitCompare },
     { to: '/industry-alignment', label: 'Industry Alignment', Icon: Building2 },
+    { to: '/my-projects', label: 'My Projects', Icon: Blocks },
     { to: '/admin', label: 'Admin Portal', Icon: Shield },
     { to: '/settings', label: 'Settings', Icon: Settings },
 ]
 
 export default function Layout() {
+    const { user, logout } = useAuth()
     const [privacy, setPrivacy] = useState(() => localStorage.getItem('cse_privacy') === 'true')
     const [theme, setTheme] = useState(() => localStorage.getItem('cse_theme') || 'dark')
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -79,7 +81,7 @@ export default function Layout() {
                     )}
 
                     <nav className="sidebar__nav" aria-label="Main navigation">
-                        {NAV_ITEMS.map(({ to, label, Icon }) => (
+                        {NAV_ITEMS.filter(({ to }) => to !== '/admin' || user?.isAdmin).map(({ to, label, Icon }) => (
                             <NavLink
                                 key={to}
                                 to={to}
@@ -91,6 +93,13 @@ export default function Layout() {
                             </NavLink>
                         ))}
                     </nav>
+
+                    <div className="sidebar__footer">
+                        <button className="nav-item nav-item--logout" onClick={logout}>
+                            <LogOut className="nav-item__icon" size={16} />
+                            Logout
+                        </button>
+                    </div>
                 </aside>
 
                 {/* ── Main ── */}
@@ -107,7 +116,7 @@ export default function Layout() {
 
 /* ── Navbar ─────────────────────────────────────────── */
 function Navbar({ privacy, setPrivacy, theme, setTheme, onMenuToggle }: { privacy: boolean; setPrivacy: (v: boolean) => void; theme: string; setTheme: (v: string) => void; onMenuToggle: () => void }) {
-    const { user } = useAuth()
+    const { user, logout } = useAuth()
     const [onDevice, setOnDevice] = useState(false)
     const initials = user?.name
         ? user.name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)
@@ -171,6 +180,15 @@ function Navbar({ privacy, setPrivacy, theme, setTheme, onMenuToggle }: { privac
                 <div className="navbar__avatar" title={user?.name ?? 'Profile'}>
                     {initials}
                 </div>
+
+                <button
+                    className="navbar__btn navbar__logout"
+                    title="Logout"
+                    aria-label="Logout"
+                    onClick={logout}
+                >
+                    <LogOut size={15} />
+                </button>
             </div>
         </header>
     )

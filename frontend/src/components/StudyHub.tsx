@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, Suspense, lazy } from 'react'
-import { X, BookOpen, CheckCircle2, ChevronRight, BrainCircuit, Lightbulb, Clock, MessageSquare, Send, Sparkles, Pin, Sun, Moon } from 'lucide-react'
+import { X, BookOpen, CheckCircle2, ChevronRight, BrainCircuit, Lightbulb, Clock, MessageSquare, Send, Sparkles, Pin, Sun, Moon, Target, Zap, RotateCcw, AlertCircle, Code2 } from 'lucide-react'
 import { getStudyNotes, getStudyQuiz, studyChat, submitContribution, type StudyNotesResult, type QuizResult } from '../api/client'
 const ReactMarkdown = lazy(() => import('react-markdown'))
 import remarkGfm from 'remark-gfm'
 import { useResume } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
+import InterviewSimulator from './InterviewSimulator'
 
 interface StudyHubProps {
     skill: string
@@ -12,7 +13,7 @@ interface StudyHubProps {
     onVerified: (skill: string) => void
 }
 
-type Tab = 'notes' | 'quiz' | 'ask'
+type Tab = 'notes' | 'quiz' | 'ask' | 'interview'
 
 export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) {
     const { masteredSkills } = useResume()
@@ -21,12 +22,18 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
     const [notes, setNotes] = useState<StudyNotesResult | null>(null)
     const [quiz, setQuiz] = useState<QuizResult | null>(null)
     const [loading, setLoading] = useState(true)
+    const [loadError, setLoadError] = useState('')
 
     // Quiz state
     const [currentQ, setCurrentQ] = useState(0)
     const [answers, setAnswers] = useState<number[]>([])
     const [quizFinished, setQuizFinished] = useState(false)
     const [score, setScore] = useState(0)
+    const [showExplanation, setShowExplanation] = useState(false)
+    const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
+
+    // Interactive notes state
+    const [expandedTryIt, setExpandedTryIt] = useState<Record<number, boolean>>({})
 
     // Chat state
     const [query, setQuery] = useState('')
@@ -44,22 +51,38 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
         localStorage.setItem(`notes_${skill}`, personalNotes)
     }, [personalNotes, skill])
 
+    // Stabilize masteredSkills to prevent duplicate API calls on every render
+    const skillsKey = masteredSkills.join(',')
+
     useEffect(() => {
+        let cancelled = false
         setLoading(true)
+        setLoadError('')
         // Check if already pinned
         const pinned = JSON.parse(localStorage.getItem('pinned_notes') || '[]')
         setIsPinned(pinned.includes(skill))
 
+        const skills = skillsKey ? skillsKey.split(',') : []
         Promise.all([
-            getStudyNotes(skill, masteredSkills),
+            getStudyNotes(skill, skills),
             getStudyQuiz(skill)
         ]).then(([n, q]) => {
+            if (cancelled) return
             setNotes(n)
             setQuiz(q)
+            // If both are fallback, show a warning but still display
+            if ((n as any)?.is_fallback && (q as any)?.is_fallback) {
+                setLoadError('AI service returned limited content. Some sections may be incomplete.')
+            }
         }).catch(err => {
+            if (cancelled) return
             console.error(err)
-        }).finally(() => setLoading(false))
-    }, [skill, masteredSkills])
+            setLoadError('Failed to load study materials. You can still use the Interview Simulator and AI Chat.')
+        }).finally(() => {
+            if (!cancelled) setLoading(false)
+        })
+        return () => { cancelled = true }
+    }, [skill, skillsKey])  // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -97,17 +120,28 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
     }
 
     const handleAnswer = (idx: number) => {
+        if (showExplanation) return // prevent double-click during reveal
+        setSelectedAnswer(idx)
+        setShowExplanation(true)
+
         const newAns = [...answers]
         newAns[currentQ] = idx
         setAnswers(newAns)
+    }
 
+    const handleNextQuestion = () => {
+        setShowExplanation(false)
+        setSelectedAnswer(null)
         if (quiz && currentQ < quiz.questions.length - 1) {
-            setTimeout(() => setCurrentQ(v => v + 1), 600)
+            setCurrentQ(v => v + 1)
         } else if (quiz) {
-            const correct = newAns.filter((a, i) => a === quiz.questions[i].correct_index).length
-            setScore(correct)
+            const correct = answers.filter((a, i) => a === quiz.questions[i]?.correct_index).length
+            // Also count the current question if correct
+            const finalAnswers = [...answers]
+            const totalCorrect = finalAnswers.filter((a, i) => a === quiz.questions[i]?.correct_index).length
+            setScore(totalCorrect)
             setQuizFinished(true)
-            if (correct === quiz.questions.length) {
+            if (totalCorrect === quiz.questions.length) {
                 onVerified(skill)
             }
         }
@@ -131,6 +165,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                 <div className="spinner study-spinner"></div>
                 <h2>Gathering Learning Materials...</h2>
                 <p>Personalizing notes for {skill} based on your career goal.</p>
+                <p style={{ fontSize: 12, opacity: 0.5, marginTop: 8 }}>This may take 15-30 seconds for new topics</p>
             </div>
         </div>
     )
@@ -151,6 +186,12 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
                         </button>
                     </div>
+
+                    {loadError && (
+                        <div className="sidebar-warning" style={{ padding: '8px 12px', margin: '0 8px 8px', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 8, fontSize: 12, color: '#fbbf24' }}>
+                            {loadError}
+                        </div>
+                    )}
 
                     <div className="sidebar-mastery-card">
                         <p>Mastery Progress</p>
@@ -182,6 +223,13 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                         >
                             <CheckCircle2 size={18} />
                             <span>Knowledge Check</span>
+                        </button>
+                        <button
+                            className={`ws-nav-item ${tab === 'interview' ? 'active' : ''}`}
+                            onClick={() => setTab('interview')}
+                        >
+                            <Target size={18} />
+                            <span>Mock Interview</span>
                         </button>
                     </div>
 
@@ -239,6 +287,17 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                     </header>
 
                     <div className="workspace-content">
+                        {tab === 'notes' && !notes && (
+                            <div className="workspace-pane fade-in" style={{ textAlign: 'center', padding: '48px 24px' }}>
+                                <BrainCircuit size={48} style={{ opacity: 0.3, marginBottom: 16 }} />
+                                <h3>Notes unavailable</h3>
+                                <p style={{ color: 'var(--text-secondary)', marginBottom: 16 }}>Study materials couldn't be loaded. Try the AI Assistant or Mock Interview instead.</p>
+                                <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+                                    <button className="btn btn--ghost" onClick={() => setTab('ask')}>AI Assistant</button>
+                                    <button className="btn btn--primary" onClick={() => setTab('interview')}>Mock Interview</button>
+                                </div>
+                            </div>
+                        )}
                         {tab === 'notes' && notes && (
                             <div className="workspace-pane fade-in">
                                 <div className="notes-hero">
@@ -273,23 +332,67 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                                 <div className="card-num">{i + 1}</div>
                                                 <h3>{c.subheading}</h3>
                                                 <div className="content-prose">
-                                                    <p style={{ lineHeight: 1.6, marginBottom: 12 }}>{c.explanation}</p>
+                                                    <Suspense fallback={<p>{c.explanation}</p>}>
+                                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                            {c.explanation}
+                                                        </ReactMarkdown>
+                                                    </Suspense>
 
                                                     {c.algorithm && (
                                                         <div className="algo-block" style={{ marginBottom: 16 }}>
                                                             <strong style={{ display: 'block', color: 'var(--cyan)', marginBottom: 4 }}>Algorithm / Steps:</strong>
-                                                            <p style={{ whiteSpace: 'pre-line', fontSize: 13, background: 'rgba(34, 211, 238, 0.05)', padding: 12, borderRadius: 8, borderLeft: '2px solid var(--cyan)' }}>{c.algorithm}</p>
+                                                            <div style={{ fontSize: 13, background: 'rgba(34, 211, 238, 0.05)', padding: 12, borderRadius: 8, borderLeft: '2px solid var(--cyan)' }}>
+                                                                <Suspense fallback={<p style={{ whiteSpace: 'pre-line' }}>{c.algorithm}</p>}>
+                                                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                                        {c.algorithm}
+                                                                    </ReactMarkdown>
+                                                                </Suspense>
+                                                            </div>
                                                         </div>
                                                     )}
 
                                                     {c.example && (
                                                         <div className="example-block">
-                                                            <div className="example-label">Code Output / Example</div>
-                                                            <pre>{c.example}</pre>
+                                                            <div className="example-label"><Code2 size={14} /> Code Example</div>
+                                                            <div className="example-content">
+                                                                <Suspense fallback={<pre>{c.example}</pre>}>
+                                                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                                        {c.example.includes('```') ? c.example : `\`\`\`\n${c.example}\n\`\`\``}
+                                                                    </ReactMarkdown>
+                                                                </Suspense>
+                                                            </div>
                                                         </div>
                                                     )}
 
-                                                    {c.complexity && (
+                                                    {c.key_takeaway && (
+                                                        <div className="takeaway-box">
+                                                            <Zap size={16} />
+                                                            <div>
+                                                                <strong>Key Takeaway</strong>
+                                                                <p>{c.key_takeaway}</p>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {c.try_it && (
+                                                        <div className="try-it-box">
+                                                            <button
+                                                                className="try-it-toggle"
+                                                                onClick={() => setExpandedTryIt(prev => ({ ...prev, [i]: !prev[i] }))}
+                                                            >
+                                                                <Target size={16} />
+                                                                <span>Try It Yourself</span>
+                                                                <ChevronRight size={16} className={expandedTryIt[i] ? 'rotated' : ''} />
+                                                            </button>
+                                                            {expandedTryIt[i] && (
+                                                                <div className="try-it-content">
+                                                                    <p>{c.try_it}</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    {c.complexity && c.complexity !== 'N/A' && (
                                                         <div style={{ marginTop: 16, display: 'flex', gap: 6, alignItems: 'center', fontSize: 13 }}>
                                                             <strong style={{ color: 'var(--orange)' }}>Complexity:</strong> <span>{c.complexity}</span>
                                                         </div>
@@ -369,56 +472,159 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                             </div>
                         )}
 
+                        {tab === 'quiz' && !quiz && (
+                            <div className="workspace-pane fade-in" style={{ textAlign: 'center', padding: '48px 24px' }}>
+                                <CheckCircle2 size={48} style={{ opacity: 0.3, marginBottom: 16 }} />
+                                <h3>Quiz unavailable</h3>
+                                <p style={{ color: 'var(--text-secondary)', marginBottom: 16 }}>Quiz couldn't be loaded. Try the Mock Interview for a comprehensive skill assessment.</p>
+                                <button className="btn btn--primary" onClick={() => setTab('interview')}>Try Mock Interview</button>
+                            </div>
+                        )}
                         {tab === 'quiz' && quiz && (
                             <div className="workspace-pane fade-in">
                                 {!quizFinished ? (
-                                    <div className="ws-quiz-box">
-                                        <div className="quiz-progress-bar">
-                                            <div
-                                                className="q-fill"
-                                                style={{ width: `${((currentQ + 1) / quiz.questions.length) * 100}%` }}
-                                            />
-                                        </div>
-                                        <div className="q-count">QUESTION {currentQ + 1} OF {quiz.questions.length}</div>
-                                        <h2 className="q-text">{quiz.questions[currentQ].question}</h2>
-
-                                        <div className="q-options">
-                                            {quiz.questions[currentQ].options.map((opt, i) => (
-                                                <button
+                                    <div className="quiz-container">
+                                        {/* Progress dots */}
+                                        <div className="quiz-dots">
+                                            {quiz.questions.map((_, i) => (
+                                                <div
                                                     key={i}
-                                                    className={`q-opt ${answers[currentQ] === i ? 'selected' : ''}`}
-                                                    onClick={() => handleAnswer(i)}
-                                                >
-                                                    <span className="q-letter">{String.fromCharCode(65 + i)}</span>
-                                                    {opt}
-                                                </button>
+                                                    className={`quiz-dot ${i === currentQ ? 'active' : ''} ${i < currentQ ? (answers[i] === quiz.questions[i].correct_index ? 'correct' : 'wrong') : ''}`}
+                                                />
                                             ))}
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div className="ws-result-box">
-                                        <div className={`result-score ${score === quiz.questions.length ? 'pass' : 'fail'}`}>
-                                            {score}/{quiz.questions.length}
+
+                                        <div className="quiz-meta-row">
+                                            <span className="quiz-counter">Question {currentQ + 1} of {quiz.questions.length}</span>
+                                            {quiz.questions[currentQ].difficulty && (
+                                                <span className={`quiz-difficulty quiz-difficulty--${quiz.questions[currentQ].difficulty}`}>
+                                                    {quiz.questions[currentQ].difficulty}
+                                                </span>
+                                            )}
                                         </div>
-                                        <h2>{score === quiz.questions.length ? 'Mastery Verified!' : 'Needs Review'}</h2>
-                                        <p>{score === quiz.questions.length
-                                            ? `Excellent work! You've successfully passed the verification stage for ${skill}.`
-                                            : `You got some wrong. Review the concepts and chat with the AI assistant to clear your doubts before retrying.`}
-                                        </p>
-                                        {score === quiz.questions.length ? (
-                                            <button className="btn btn--primary" onClick={onClose}>Finish & Earn Credits</button>
-                                        ) : (
-                                            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-                                                <button className="btn btn--ghost" onClick={() => setTab('notes')}>Review Notes</button>
-                                                <button className="btn btn--ghost" onClick={() => {
-                                                    setQuizFinished(false)
-                                                    setCurrentQ(0)
-                                                    setAnswers([])
-                                                }}>Retry Quiz</button>
+
+                                        <h2 className="quiz-question-text">
+                                            <Suspense fallback={<span>{quiz.questions[currentQ].question}</span>}>
+                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                    {quiz.questions[currentQ].question}
+                                                </ReactMarkdown>
+                                            </Suspense>
+                                        </h2>
+
+                                        <div className="quiz-options-grid">
+                                            {quiz.questions[currentQ].options.map((opt, i) => {
+                                                const isSelected = selectedAnswer === i
+                                                const isCorrect = i === quiz.questions[currentQ].correct_index
+                                                const revealed = showExplanation
+                                                let optClass = 'quiz-option'
+                                                if (revealed && isCorrect) optClass += ' quiz-option--correct'
+                                                else if (revealed && isSelected && !isCorrect) optClass += ' quiz-option--wrong'
+                                                else if (isSelected) optClass += ' quiz-option--selected'
+
+                                                return (
+                                                    <button
+                                                        key={i}
+                                                        className={optClass}
+                                                        onClick={() => handleAnswer(i)}
+                                                        disabled={showExplanation}
+                                                    >
+                                                        <span className="quiz-option-letter">{String.fromCharCode(65 + i)}</span>
+                                                        <span className="quiz-option-text">{opt}</span>
+                                                        {revealed && isCorrect && <CheckCircle2 size={18} className="quiz-icon-correct" />}
+                                                        {revealed && isSelected && !isCorrect && <X size={18} className="quiz-icon-wrong" />}
+                                                    </button>
+                                                )
+                                            })}
+                                        </div>
+
+                                        {showExplanation && (
+                                            <div className={`quiz-explanation ${selectedAnswer === quiz.questions[currentQ].correct_index ? 'quiz-explanation--correct' : 'quiz-explanation--wrong'}`}>
+                                                <div className="quiz-explanation-header">
+                                                    {selectedAnswer === quiz.questions[currentQ].correct_index
+                                                        ? <><CheckCircle2 size={18} /> Correct!</>
+                                                        : <><AlertCircle size={18} /> Not quite</>
+                                                    }
+                                                </div>
+                                                <p>{quiz.questions[currentQ].explanation}</p>
+                                                <button className="btn btn--primary btn--sm quiz-next-btn" onClick={handleNextQuestion}>
+                                                    {currentQ < quiz.questions.length - 1 ? 'Next Question →' : 'See Results'}
+                                                </button>
                                             </div>
                                         )}
                                     </div>
+                                ) : (
+                                    <div className="quiz-results">
+                                        <div className={`quiz-score-ring ${score === quiz.questions.length ? 'perfect' : score >= quiz.questions.length * 0.6 ? 'pass' : 'fail'}`}>
+                                            <div className="quiz-score-num">{score}/{quiz.questions.length}</div>
+                                            <div className="quiz-score-label">{score === quiz.questions.length ? 'Perfect!' : score >= quiz.questions.length * 0.6 ? 'Good Job' : 'Keep Learning'}</div>
+                                        </div>
+
+                                        <h2 style={{ textAlign: 'center', marginBottom: 8 }}>
+                                            {score === quiz.questions.length ? 'Mastery Verified!' : 'Review & Retry'}
+                                        </h2>
+                                        <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: 24, fontSize: 14 }}>
+                                            {score === quiz.questions.length
+                                                ? `Outstanding! You've demonstrated mastery of ${skill}. Your skill is now verified.`
+                                                : `You got ${score} out of ${quiz.questions.length} correct. Review the explanations below, then give it another shot.`
+                                            }
+                                        </p>
+
+                                        {/* Question review */}
+                                        <div className="quiz-review-list">
+                                            {quiz.questions.map((q, i) => {
+                                                const wasCorrect = answers[i] === q.correct_index
+                                                return (
+                                                    <div key={i} className={`quiz-review-item ${wasCorrect ? 'quiz-review--correct' : 'quiz-review--wrong'}`}>
+                                                        <div className="quiz-review-header">
+                                                            <span className="quiz-review-num">Q{i + 1}</span>
+                                                            {wasCorrect
+                                                                ? <CheckCircle2 size={16} className="quiz-icon-correct" />
+                                                                : <X size={16} className="quiz-icon-wrong" />
+                                                            }
+                                                        </div>
+                                                        <p className="quiz-review-question">{q.question}</p>
+                                                        {!wasCorrect && (
+                                                            <div className="quiz-review-answer">
+                                                                <span>Your answer: <strong>{q.options[answers[i]] || 'Skipped'}</strong></span>
+                                                                <span>Correct: <strong style={{ color: 'var(--green)' }}>{q.options[q.correct_index]}</strong></span>
+                                                            </div>
+                                                        )}
+                                                        <p className="quiz-review-explanation">{q.explanation}</p>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+
+                                        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 24 }}>
+                                            {score === quiz.questions.length ? (
+                                                <button className="btn btn--primary" onClick={onClose}>
+                                                    <CheckCircle2 size={18} /> Finish & Earn Credits
+                                                </button>
+                                            ) : (
+                                                <>
+                                                    <button className="btn btn--ghost" onClick={() => setTab('notes')}>
+                                                        <BookOpen size={16} /> Review Notes
+                                                    </button>
+                                                    <button className="btn btn--primary" onClick={() => {
+                                                        setQuizFinished(false)
+                                                        setCurrentQ(0)
+                                                        setAnswers([])
+                                                        setSelectedAnswer(null)
+                                                        setShowExplanation(false)
+                                                    }}>
+                                                        <RotateCcw size={16} /> Retry Quiz
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
                                 )}
+                            </div>
+                        )}
+
+                        {tab === 'interview' && (
+                            <div className="workspace-pane fade-in">
+                                <InterviewSimulator skill={skill} />
                             </div>
                         )}
                     </div>

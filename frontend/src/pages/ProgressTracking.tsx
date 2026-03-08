@@ -3,27 +3,17 @@ import { useNavigate } from 'react-router-dom'
 import { useResume } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
 import { loadHistory, getHistoryOrDemo } from '../utils/history'
-import { Star, Award, Zap, Trophy, Pin, Sparkles, BookOpen, TrendingUp, Shield } from 'lucide-react'
+import { Star, Award, Zap, Trophy, TrendingUp } from 'lucide-react'
 import StudyHub from '../components/StudyHub'
-
-
-const HEATMAP = [
-    { month: 'Month 1', skills: ['DSA', 'Python', 'React', 'SQL', 'Git'], bright: 0 },
-    { month: 'Month 2', skills: ['DSA', 'Python', 'React', 'SQL', 'Git'], bright: 2 },
-    { month: 'Month 3', skills: ['DSA', 'Python', 'React', 'SQL', 'Git'], bright: 5 },
-]
 
 export default function ProgressTracking() {
     const navigate = useNavigate()
     const { analysis, masteredSkills, markSkillMastered } = useResume()
     const { user } = useAuth()
     const [selectedSkill, setSelectedSkill] = useState<string | null>(null)
-    const score = analysis?.final_score ?? 74
+    const score = analysis?.final_score ?? 0
     const realHistory = loadHistory(user?.email)
     const hist = getHistoryOrDemo(realHistory)
-
-    // Load pinned notes
-    const pinnedSkills: string[] = JSON.parse(localStorage.getItem('pinned_notes') || '[]')
 
     const allSkills = [
         ...(analysis?.detected_skills ?? []).map(s => s.toLowerCase()),
@@ -58,7 +48,7 @@ export default function ProgressTracking() {
         { icon: Trophy, label: 'Industry Elite', done: score >= 90, sub: score >= 90 ? 'Perfect Alignment' : 'Target: 90% Score', scoreVal: 90 },
     ]
 
-    const nextSkill = (analysis?.missing_core_skills ?? []).find(s => !masteredSkills.includes(s.toLowerCase())) ?? 'Advanced Algorithms'
+    const nextSkill = (analysis?.missing_core_skills ?? []).find(s => !masteredSkills.includes(s.toLowerCase())) ?? null
 
     if (!analysis) {
         return (
@@ -125,7 +115,7 @@ export default function ProgressTracking() {
                         <div style={{ fontSize: 20 }}>⚡</div>
                         <div>
                             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--cyan)', textTransform: 'uppercase' }}>Velocity</div>
-                            <div style={{ fontSize: 16, fontWeight: 700 }}>+{(hist[hist.length - 1].value - hist[0].value)}% Growth Trend</div>
+                            <div style={{ fontSize: 16, fontWeight: 700 }}>{hist.length >= 2 ? `+${hist[hist.length - 1].value - hist[0].value}% Growth Trend` : 'Awaiting data'}</div>
                         </div>
                     </div>
                 </div>
@@ -136,7 +126,7 @@ export default function ProgressTracking() {
                         <div style={{ fontSize: 20 }}>🔥</div>
                         <div>
                             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase' }}>Next Target</div>
-                            <div style={{ fontSize: 16, fontWeight: 700 }}>{nextSkill}</div>
+                            <div style={{ fontSize: 16, fontWeight: 700 }}>{nextSkill ?? 'All caught up!'}</div>
                         </div>
                     </div>
                 </div>
@@ -152,7 +142,7 @@ export default function ProgressTracking() {
                         </div>
                         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                             <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                                <div style={{ width: 10, height: 10, borderRadius: 2, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }} />
+                                <div style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--bg-glass)', border: '1px solid var(--border)' }} />
                                 <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Missing</span>
                             </div>
                             <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
@@ -182,9 +172,9 @@ export default function ProgressTracking() {
                                             title={`${row.label}: ${s.name}\nStatus: ${s.isMastered ? 'Mastered' : 'Missing'}`}
                                             style={{
                                                 aspectRatio: '1/1', borderRadius: 4,
-                                                background: s.isMastered ? `rgba(34,211,238, 0.4)` : 'rgba(255,255,255,0.02)',
-                                                border: s.isMastered ? '1px solid rgba(34,211,238,0.3)' : '1px solid rgba(255,255,255,0.05)',
-                                                boxShadow: s.isMastered ? 'inset 0 0 10px rgba(34,211,238,0.1)' : 'none',
+                                                background: s.isMastered ? `rgba(var(--cyan-rgb), 0.4)` : 'var(--bg-glass)',
+                                                border: s.isMastered ? '1px solid rgba(var(--cyan-rgb),0.3)' : '1px solid var(--border)',
+                                                boxShadow: s.isMastered ? 'inset 0 0 10px rgba(var(--cyan-rgb),0.1)' : 'none',
                                                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                                 cursor: 'help',
                                                 position: 'relative'
@@ -197,7 +187,7 @@ export default function ProgressTracking() {
                                             onMouseLeave={(e) => {
                                                 e.currentTarget.style.transform = 'scale(1)'
                                                 e.currentTarget.style.zIndex = '1'
-                                                e.currentTarget.style.background = s.isMastered ? `rgba(34,211,238, 0.4)` : 'rgba(255,255,255,0.02)'
+                                                e.currentTarget.style.background = s.isMastered ? `rgba(var(--cyan-rgb), 0.4)` : 'var(--bg-glass)'
                                             }}
                                         />
                                     ))}
@@ -206,7 +196,7 @@ export default function ProgressTracking() {
                         ))}
                     </div>
 
-                    <div style={{ marginTop: 32, padding: 16, background: 'rgba(0,0,0,0.3)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.03)' }}>
+                    <div style={{ marginTop: 32, padding: 16, background: 'var(--bg-input)', borderRadius: 12, border: '1px solid var(--border)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                             <Zap size={12} className="text-cyan" />
                             <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>Verified Mastery detected from resume</div>
@@ -231,7 +221,7 @@ export default function ProgressTracking() {
                     <div className="card-title mb-32">Professional Milestones</div>
                     <div style={{ position: 'relative', paddingLeft: 8 }}>
                         {/* Vertical Progress Line */}
-                        <div style={{ position: 'absolute', left: 23, top: 0, bottom: 0, width: 2, background: 'rgba(255,255,255,0.05)' }} />
+                        <div style={{ position: 'absolute', left: 23, top: 0, bottom: 0, width: 2, background: 'var(--border)' }} />
                         <div style={{
                             position: 'absolute',
                             left: 23,
@@ -250,8 +240,8 @@ export default function ProgressTracking() {
                                 <div key={i} style={{ marginBottom: 40, position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center' }}>
                                     <div style={{
                                         width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        background: m.done ? 'var(--blue)' : isNext ? 'rgba(59,130,246,0.1)' : '#0d1117',
-                                        border: m.done ? 'none' : isNext ? '2px solid var(--blue)' : '1px solid rgba(255,255,255,0.05)',
+                                        background: m.done ? 'var(--blue)' : isNext ? 'rgba(var(--blue-rgb),0.1)' : 'var(--bg-input)',
+                                        border: m.done ? 'none' : isNext ? '2px solid var(--blue)' : '1px solid var(--border)',
                                         boxShadow: m.done ? '0 0 15px rgba(59,130,246,0.4)' : 'none',
                                         zIndex: 2,
                                         transition: 'all 0.3s'
@@ -259,7 +249,7 @@ export default function ProgressTracking() {
                                         <Icon size={14} color={m.done ? '#fff' : isNext ? 'var(--blue)' : 'rgba(255,255,255,0.2)'} />
                                     </div>
                                     <div style={{ marginLeft: 20 }}>
-                                        <div style={{ fontSize: 15, fontWeight: 700, color: m.done ? 'white' : isNext ? 'var(--blue)' : 'var(--text-muted)' }}>{m.label}</div>
+                                        <div style={{ fontSize: 15, fontWeight: 700, color: m.done ? 'var(--text-primary)' : isNext ? 'var(--blue)' : 'var(--text-muted)' }}>{m.label}</div>
                                         <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{m.sub}</div>
                                         {m.done && <div style={{ fontSize: 10, color: 'var(--green)', fontWeight: 800, textTransform: 'uppercase', marginTop: 4 }}>Completed ✓</div>}
                                     </div>

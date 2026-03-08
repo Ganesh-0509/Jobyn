@@ -146,14 +146,14 @@ export default function Settings() {
                         <div className="mb-24">
                             <div className="flex-row justify-between mb-8">
                                 <span className="settings-model-label" style={{ fontWeight: 600 }}>INTELLIGENCE LAYER</span>
-                                <span style={{ color: 'var(--blue)', fontWeight: 800, fontSize: 12 }}>MODEL {health?.model_version ?? 'V2.1'}</span>
+                                <span style={{ color: 'var(--blue)', fontWeight: 800, fontSize: 12 }}>MODEL {health?.model_version ?? '--'}</span>
                             </div>
                             <div className="settings-model-table">
-                                <div className="settings-model-row" style={{ background: 'rgba(255,255,255,0.02)' }}>
+                                <div className="settings-model-row" style={{ background: 'var(--bg-glass)' }}>
                                     <span className="settings-model-label">Accuracy Rating</span>
                                     <span className="settings-model-value" style={{ color: 'var(--cyan)' }}>{health?.accuracy ? `${(health.accuracy * 100).toFixed(1)}%` : '--'}</span>
                                 </div>
-                                <div className="settings-model-row" style={{ background: 'rgba(255,255,255,0.01)' }}>
+                                <div className="settings-model-row" style={{ background: 'var(--bg-glass)' }}>
                                     <span className="settings-model-label">Vocabulary Size</span>
                                     <span className="settings-model-value" style={{ color: 'var(--blue)' }}>{health?.vocabulary_size?.toLocaleString() ?? '--'} words</span>
                                 </div>

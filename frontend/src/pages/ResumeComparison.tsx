@@ -33,7 +33,7 @@ export default function ResumeComparison() {
                     <button className="btn btn--primary" onClick={() => navigate('/resume-analyzer')} style={{ marginTop: 24 }}>
                         Upload Second Version
                     </button>
-                    <div className="card" style={{ marginTop: 40, padding: '24px 32px', textAlign: 'left', background: 'rgba(59,130,246,0.03)' }}>
+                    <div className="card" style={{ marginTop: 40, padding: '24px 32px', textAlign: 'left', background: 'rgba(var(--blue-rgb),0.03)' }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--blue)', marginBottom: 8 }}>WHY USE COMPARISON?</div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                             <div style={{ fontSize: 12, lineHeight: 1.6, color: 'var(--text-secondary)' }}>
@@ -62,7 +62,7 @@ export default function ResumeComparison() {
                 {/* Previous */}
                 <div className="card">
                     <div className="flex items-center justify-between mb-16">
-                        <div className="card-title">Previous Resume</div>
+                        <div className="card-title">First Upload</div>
                         <span className="compare-score">{prevScore}%</span>
                     </div>
                     {[...shared, ...removed].slice(0, 8).map(s => (
@@ -78,7 +78,7 @@ export default function ResumeComparison() {
                 {/* Current */}
                 <div className="card">
                     <div className="flex items-center justify-between mb-16">
-                        <div className="card-title">Current Resume</div>
+                        <div className="card-title">Latest Upload</div>
                         <span className="compare-score">{currScore}%</span>
                     </div>
                     {shared.slice(0, 5).map(s => (
@@ -97,7 +97,7 @@ export default function ResumeComparison() {
                     <TrendingUp size={20} color={diff >= 0 ? 'var(--green)' : 'var(--red)'} style={diff < 0 ? { transform: 'scaleY(-1)' } : undefined} />
                     <div>
                         <div className={`diff-positive`} style={{ color: diff >= 0 ? 'var(--green)' : 'var(--red)' }}>
-                            {diff >= 0 ? `+${diff}%` : `${diff}%`} improvement from previous version
+                            {diff >= 0 ? `+${diff}%` : `${diff}%`} change from first upload
                         </div>
                         <div className="diff-info">
                             + {added.length} skills added &nbsp;&nbsp; − {removed.length} skills removed

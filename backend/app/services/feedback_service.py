@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 
-from app.core.supabase_client import get_client
+from app.core.supabase_client import get_supabase
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ def submit_feedback(
     # Remove None values — let Supabase use column defaults
     row = {k: v for k, v in row.items() if v is not None}
 
-    sb = get_client()
+    sb = get_supabase()
     result = sb.table("prediction_feedback").insert(row).execute()
 
     if result.data:
@@ -76,7 +76,7 @@ def get_feedback_summary() -> dict:
       - count of corrections (predicted ≠ correct)
       - score_feedback distribution
     """
-    sb = get_client()
+    sb = get_supabase()
     result = sb.table("prediction_feedback").select("*").execute()
     rows = result.data or []
 
@@ -104,7 +104,7 @@ def get_correction_pairs() -> list[dict]:
 
     Useful for retraining: each row is a labelled sample the model got wrong.
     """
-    sb = get_client()
+    sb = get_supabase()
     result = (
         sb.table("prediction_feedback")
         .select("predicted_role, correct_role, analysis_id, user_email, created_at")

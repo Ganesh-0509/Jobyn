@@ -2,23 +2,30 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { supabase } from '../lib/supabase'
 import type { Session, User as SupaUser } from '@supabase/supabase-js'
 
-export interface User { name: string; email: string }
+export interface User { name: string; email: string; isAdmin: boolean }
 interface AuthState {
     user: User | null
     session: Session | null
     loading: boolean
     login: (email: string, password: string) => Promise<void>
     signup: (name: string, email: string, password: string) => Promise<void>
+    loginWithGoogle: () => Promise<void>
     logout: () => void
 }
 
 const Ctx = createContext<AuthState | null>(null)
+
+const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || 'admin@campussync.ai,demo@campussync.ai')
+    .split(',')
+    .map((e: string) => e.trim().toLowerCase())
+    .filter(Boolean)
 
 function toAppUser(su: SupaUser | null | undefined): User | null {
     if (!su || !su.email) return null
     return {
         name: su.user_metadata?.name || su.email.split('@')[0],
         email: su.email,
+        isAdmin: ADMIN_EMAILS.includes(su.email.toLowerCase()),
     }
 }
 
@@ -60,6 +67,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             options: { data: { name } },
         })
         if (error) throw new Error(error.message)
+
+        // Supabase may not auto-login after signup (e.g. email confirmation enabled).
+        // Explicitly sign in so the session is available immediately.
+        const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password })
+        if (loginErr) throw new Error(loginErr.message)
+    }
+
+    const loginWithGoogle = async () => {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${window.location.origin}/dashboard`,
+            },
+        })
+        if (error) throw new Error(error.message)
     }
 
     const logout = () => {
@@ -67,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     return (
-        <Ctx.Provider value={{ user, session, loading, login, signup, logout }}>
+        <Ctx.Provider value={{ user, session, loading, login, signup, loginWithGoogle, logout }}>
             {children}
         </Ctx.Provider>
     )

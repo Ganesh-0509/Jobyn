@@ -232,38 +232,4 @@ export function getIndustryAlignment(score: number): { service: number; product:
     }
 }
 
-export function getImprovementPlan(
-    missingCore: string[],
-    missingOptional: string[],
-    recs: Array<{ skill: string; priority: string }>
-) {
-    const highPri = recs.filter(r => r.priority === 'HIGH').map(r => r.skill)
-    const medPri = recs.filter(r => r.priority === 'MEDIUM').map(r => r.skill)
 
-    return [
-        {
-            days: 'Day 1–2',
-            title: missingCore[0] ? `${missingCore[0]} Fundamentals` : 'Data Structures & Algorithms Practice',
-            tags: missingCore.slice(0, 3).length ? missingCore.slice(0, 3) : ['Arrays', 'Linked Lists', 'Trees'],
-            done: false,
-        },
-        {
-            days: 'Day 3–4',
-            title: highPri[0] ? `${highPri[0]} Deep Dive` : 'Backend Framework Deep Dive',
-            tags: highPri.slice(0, 3).length ? highPri.slice(0, 3) : ['Node.js', 'Express', 'REST API Design'],
-            done: false,
-        },
-        {
-            days: 'Day 5–6',
-            title: medPri[0] ? `${medPri[0]} Basics` : 'System Design Basics',
-            tags: medPri.slice(0, 3).length ? medPri.slice(0, 3) : ['Scalability', 'Load Balancing', 'Caching'],
-            done: false,
-        },
-        {
-            days: 'Day 7',
-            title: 'Build Mini Project',
-            tags: ['Full-stack app', 'Deploy to cloud'],
-            done: false,
-        },
-    ]
-}

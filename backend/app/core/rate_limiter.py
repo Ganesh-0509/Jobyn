@@ -12,13 +12,14 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from app.core.settings import settings
 
-limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
+limiter = Limiter(key_func=get_remote_address, default_limits=[settings.RATE_LIMIT_DEFAULT])
 
 # Pre-built rate-limit decorators for different endpoint tiers
-upload_limit = limiter.limit("10/minute")
-ai_limit     = limiter.limit("20/minute")
-heavy_limit  = limiter.limit("30/minute")
+upload_limit = limiter.limit(settings.RATE_LIMIT_UPLOAD)
+ai_limit     = limiter.limit(settings.RATE_LIMIT_AI)
+heavy_limit  = limiter.limit(settings.RATE_LIMIT_HEAVY)
 
 
 async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
