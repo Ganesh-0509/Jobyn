@@ -1,0 +1,53 @@
+# ─── Render Blueprint — CampusSync Edge ───────────────────
+# Deploy both frontend (static site) and backend (web service)
+# from a single repo.
+#
+# Usage: Push to GitHub → Render Dashboard → New Blueprint → connect repo
+# Render auto-detects this file and creates both services.
+
+services:
+  # ── Backend: FastAPI + ML ──────────────────────────────────
+  - type: web
+    name: campussync-edge-api
+    runtime: python
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: SUPABASE_URL
+        sync: false          # set manually in Render dashboard
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: BYTEZ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false          # set to your frontend URL, e.g. https://campussync-edge.onrender.com
+
+  # ── Frontend: Vite Static Site ─────────────────────────────
+  - type: web
+    name: campussync-edge
+    runtime: static
+    region: oregon
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        sync: false          # set to backend URL, e.g. https://campussync-edge-api.onrender.com
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false

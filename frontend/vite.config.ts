@@ -6,12 +6,6 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['onnxruntime-web'],
   },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}'],
-  },
   build: {
     target: 'es2022',
     rollupOptions: {

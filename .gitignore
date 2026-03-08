@@ -12,8 +12,8 @@ dist/
 *.docx
 !backend/supabase_schema.sql
 backend/models/*.pkl
-backend/models/*.onnx
 backend/uploads/
 .vscode/
 .idea/
 frontend/public/ort/*.wasm
+.pytest_cache/
