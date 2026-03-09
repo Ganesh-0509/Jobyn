@@ -43,10 +43,9 @@ logging.basicConfig(
 
 log = logging.getLogger("main")
 
-# ---- Critical env‑var guard -------------------------------------------------
+# ---- Env‑var check ----------------------------------------------------------
 if not os.getenv("BYTEZ_API_KEY"):
-    log.error("BYTEZ_API_KEY is missing – the AI service will not start.")
-    raise SystemExit(1)
+    log.warning("BYTEZ_API_KEY is missing – Bytez-powered features will be unavailable.")
 
 
 # ── Lifespan ───────────────────────────────────────────────────────────────────

@@ -11,7 +11,7 @@ dist/
 *.pdf
 *.docx
 !backend/supabase_schema.sql
-backend/models/*.pkl
+# backend/models/*.pkl   ← tracked so Render has trained models
 backend/uploads/
 .vscode/
 .idea/
