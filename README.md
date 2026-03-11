@@ -1,7 +1,8 @@
 <p align="center">
   <img src="https://img.shields.io/badge/⚡-CampusSync_Edge_AI-blue?style=for-the-badge&labelColor=0a0f1a" alt="CampusSync Edge AI" />
 </p>
-
+<h2><a href="https://campussync-edge.onrender.com/"> Deployed Link</a></h2>
+---
 <h1 align="center">CampusSync Edge AI</h1>
 
 <p align="center">
