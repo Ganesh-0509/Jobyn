@@ -1,8 +1,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/⚡-CampusSync_Edge_AI-blue?style=for-the-badge&labelColor=0a0f1a" alt="CampusSync Edge AI" />
 </p>
-
-<h1 align="center">CampusSync Edge AI</h1>
+</a><h1 align="center">CampusSync Edge AI</h1>
 
 <p align="center">
   <b>AI-Powered Career Intelligence Platform for Engineering Students</b><br/>
@@ -10,6 +9,8 @@
 </p>
 
 <p align="center">
+  <a href="https://campussync-edge.onrender.com/">
+  <img src="https://img.shields.io/badge/Deployed_Link-neon?style=flat-square&logo=render" />
   <img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" />
   <img src="https://img.shields.io/badge/React_18-61DAFB?style=flat-square&logo=react&logoColor=black" />
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" />
