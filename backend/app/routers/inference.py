@@ -2,8 +2,8 @@
 inference.py — ML inference API router.
 
 Endpoints:
-  GET  /health   → model load status + key metrics
-  POST /predict  → full resume intelligence prediction
+    GET/HEAD /health → lightweight service health check
+    POST     /predict → full resume intelligence prediction
 """
 
 from __future__ import annotations
@@ -11,40 +11,23 @@ import logging
 
 from fastapi import APIRouter, HTTPException
 
-from app.schemas     import ResumeInput, ResumePrediction, HealthResponse
+from app.schemas     import ResumeInput, ResumePrediction
 from app.predictor   import predict_resume
-from app.model_loader import is_loaded, get_metadata, get_vocabulary
+from app.model_loader import is_loaded
 from app.inference_utils import Timer
 
 log = logging.getLogger("inference")
 router = APIRouter(tags=["ML Inference"])
 
 
-# ── GET /health ────────────────────────────────────────────────────────────────
+# ── GET/HEAD /health ───────────────────────────────────────────────────────────
 
-@router.get("/health", response_model=HealthResponse, summary="Model health check")
-def health_check() -> HealthResponse:
+@router.api_route("/health", methods=["GET", "HEAD"], summary="Service health check")
+def health_check() -> dict[str, str]:
     """
-    Returns model load status and key performance metrics.
-    Use this to verify the inference layer is ready before sending predictions.
+    Lightweight health endpoint for uptime probes.
     """
-    if not is_loaded():
-        return HealthResponse(
-            status       = "models_not_loaded",
-            model_loaded = False,
-        )
-
-    meta = get_metadata()
-    vocab = get_vocabulary()
-
-    return HealthResponse(
-        status          = "ready",
-        model_loaded    = True,
-        model_version   = meta.get("version"),
-        vocabulary_size = len(vocab),
-        trained_on      = meta.get("trained_on_records"),
-        accuracy        = meta.get("accuracy"),
-    )
+    return {"status": "ok"}
 
 
 # ── POST /predict ──────────────────────────────────────────────────────────────

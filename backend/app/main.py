@@ -128,7 +128,7 @@ app.include_router(project_generator.router)
 
 from app.core.cache import cache as _app_cache
 
-@app.get("/", tags=["Status"])
+@app.api_route("/", methods=["GET", "HEAD"], tags=["Status"], summary="Service root status")
 def root():
     db   = check_connection()
     meta = get_metadata() if is_loaded() else {}
