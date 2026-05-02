@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import LogoMark from '../components/LogoMark'
 import { isValidEmail, isValidPassword, isValidName, sanitizeText } from '../utils/sanitize'
 import CharacterAssistant from '../components/CharacterAssistant'
 
@@ -79,7 +80,7 @@ export default function Signup() {
                 <div className="signup-v2__showcase-content">
                     {/* Brand */}
                     <div className="auth-v2__logo" style={{ justifyContent: 'center', marginBottom: 32 }}>
-                        <div className="auth-v2__logo-icon">⚡</div>
+                        <div className="auth-v2__logo-icon"><LogoMark size={30} /></div>
                         <div className="auth-v2__logo-text">
                             <div className="auth-v2__logo-name">CampusSync</div>
                             <div className="auth-v2__logo-tag">Edge AI</div>

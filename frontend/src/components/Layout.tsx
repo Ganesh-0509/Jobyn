@@ -5,6 +5,7 @@ import {
     Building2, Blocks, Settings, Sun, Moon, Shield, Cpu, Menu, X as XIcon, LogOut
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import LogoMark from './LogoMark'
 import { useAuth } from '../context/AuthContext'
 import { PrivacyContext } from '../context/PrivacyContext'
 import { isOnDeviceReady } from '../utils/onDevicePredictor'
@@ -27,17 +28,23 @@ const NAV_ITEMS = [
 export default function Layout() {
     const { user, logout } = useAuth()
     const [privacy, setPrivacy] = useState(() => localStorage.getItem('cse_privacy') === 'true')
-    const [theme, setTheme] = useState(() => localStorage.getItem('cse_theme') || 'dark')
+    const [theme, setTheme] = useState(() => localStorage.getItem('cse_theme') || 'light')
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
     useEffect(() => { localStorage.setItem('cse_privacy', String(privacy)) }, [privacy])
 
     useEffect(() => {
-        if (theme === 'light') {
-            document.documentElement.classList.add('light-mode')
-        } else {
-            document.documentElement.classList.remove('light-mode')
-        }
+        // The new theme is the default, so we only need to toggle a class for a potential 'dark-mode'
+        // For now, we remove the old 'light-mode' class to avoid conflicts.
+        document.documentElement.classList.remove('light-mode');
+        
+        // If you decide to implement a dark theme later, you could do:
+        // if (theme === 'dark') {
+        //   document.documentElement.classList.add('dark-mode');
+        // } else {
+        //   document.documentElement.classList.remove('dark-mode');
+        // }
+
         localStorage.setItem('cse_theme', theme)
     }, [theme])
 
@@ -52,7 +59,7 @@ export default function Layout() {
                 {/* ── Sidebar ── */}
                 <aside className={`sidebar ${mobileMenuOpen ? 'sidebar--mobile-open' : ''}`}>
                     <div className="sidebar__logo">
-                        <div className="sidebar__logo-icon">⚡</div>
+                        <div className="sidebar__logo-icon"><LogoMark size={28} /></div>
                         <div className="sidebar__logo-name">CampusSync</div>
                         <div className="sidebar__logo-sub">Edge AI</div>
                         <button

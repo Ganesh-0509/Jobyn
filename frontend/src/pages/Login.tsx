@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import LogoMark from '../components/LogoMark'
 import { isValidEmail, isValidPassword } from '../utils/sanitize'
 
 type CharState = 'idle' | 'looking' | 'hiding' | 'happy' | 'error'
@@ -286,7 +287,7 @@ export default function Login() {
                 {/* ── TOP: Character section ── */}
                 <div className="auth-v2__header">
                     <div className="auth-v2__logo">
-                        <div className="auth-v2__logo-icon">⚡</div>
+                        <div className="auth-v2__logo-icon"><LogoMark size={30} /></div>
                         <div className="auth-v2__logo-text">
                             <div className="auth-v2__logo-name">CampusSync</div>
                             <div className="auth-v2__logo-tag">Edge AI</div>

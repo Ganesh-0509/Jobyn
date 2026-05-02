@@ -9,6 +9,8 @@
         "preview": "vite preview"
     },
     "dependencies": {
+        "@react-three/drei": "^9.122.0",
+        "@react-three/fiber": "^8.18.0",
         "@supabase/supabase-js": "^2.98.0",
         "@xyflow/react": "^12.10.1",
         "dompurify": "^3.3.1",
@@ -18,12 +20,14 @@
         "react-dom": "^18.3.1",
         "react-markdown": "^10.1.0",
         "react-router-dom": "^6.22.3",
-        "remark-gfm": "^4.0.1"
+        "remark-gfm": "^4.0.1",
+        "three": "^0.164.0"
     },
     "devDependencies": {
         "@types/dompurify": "^3.0.5",
         "@types/react": "^18.3.1",
         "@types/react-dom": "^18.3.1",
+        "@types/three": "^0.183.1",
         "@vitejs/plugin-react": "^4.3.1",
         "typescript": "^5.5.3",
         "vite": "^5.4.2"

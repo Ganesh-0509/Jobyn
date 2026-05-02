@@ -1,5 +1,4 @@
 import { Component, ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
 
 interface Props {
     children: ReactNode
@@ -14,11 +13,10 @@ interface State {
 
 /** Functional wrapper so we can use react-router navigate inside a class boundary */
 function DashboardButton() {
-    const navigate = useNavigate()
     return (
         <button
             className="btn btn--outline"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => window.location.href = '/dashboard'}
         >
             Go to Dashboard
         </button>
