@@ -1,185 +1,221 @@
 import { Link } from 'react-router-dom'
-import { useEffect, useState } from 'react'
-import LogoMark from '../components/LogoMark'
-import { Canvas } from '@react-three/fiber'
-import CharacterScene from '../components/3d/Character'
+import { useEffect, useState, useRef } from 'react'
 
 const STATS = [
-    { val: '74%', lbl: 'Readiness score', tone: 'green' },
-    { val: '18', lbl: 'Skills detected', tone: 'amber' },
-    { val: '5', lbl: 'Missing skills', tone: 'red' },
-    { val: '68%', lbl: 'Interview score', tone: 'green' },
+    { val: '82.1%', lbl: 'ML model accuracy', tone: 'green' },
+    { val: '7', lbl: 'Engineering roles scored', tone: 'accent' },
+    { val: '30+', lbl: 'Interview questions', tone: '' },
+    { val: '16k+', lbl: 'Skill connections mapped', tone: '' },
 ]
 
-const STEPS = [
+const SIMULATOR_QUESTIONS = [
     {
-        num: 'Step 01',
-        icon: '📄',
-        title: 'Upload your resume',
-        desc: 'Drop your PDF or DOCX. Our AI instantly extracts every skill, project, and experience - no manual input needed.',
+        role: 'Backend SDE',
+        question: 'Explain the difference between optimistic and pessimistic locking in database transaction management.',
+        simulatedAnswer: 'Optimistic locking assumes transactions can complete without conflict — it checks before committing. Pessimistic locking blocks the resource upfront, preventing concurrent updates from happening at all.',
+        score: '84%',
+        conceptsCovered: ['ACID', 'Concurrency', 'Dist. Consensus'],
     },
     {
-        num: 'Step 02',
-        icon: '📊',
-        title: 'Get your readiness score',
-        desc: 'A precise readiness percentage for your target role, with a full breakdown of what is working and what is missing.',
+        role: 'Frontend SDE',
+        question: 'What is the Virtual DOM reconciliation algorithm in React, and how does the key prop optimize array rendering performance?',
+        simulatedAnswer: 'The Virtual DOM compares the virtual tree with the actual tree using diffing. The key prop helps React uniquely identify elements across renders, avoiding unnecessary DOM re-creation.',
+        score: '91%',
+        conceptsCovered: ['Fiber', 'Diffing', 'Key Reconciliation'],
     },
     {
-        num: 'Step 03',
-        icon: '🎯',
-        title: 'Follow your action plan',
-        desc: 'AI-generated study paths, interview prep, and project ideas - all tailored to close your specific skill gaps.',
-    },
+        role: 'Data Engineer',
+        question: 'Describe how Apache Spark handles lazy evaluation and action execution in a distributed cluster network.',
+        simulatedAnswer: 'Spark builds a Directed Acyclic Graph (DAG) when transformations are declared. It does not run them immediately. Only when an action like count() or collect() is called, does it optimize the graph and trigger execution.',
+        score: '64%',
+        conceptsCovered: ['DAG Engine', 'Lazy Evaluation', 'Transformations'],
+    }
 ]
 
-const FEATURES = [
-    {
-        icon: '📄',
-        title: 'Smart resume analysis',
-        desc: 'AI extracts skills, sections and metadata instantly from PDF or DOCX with deterministic weighted scoring.',
-        tag: 'PDF + DOCX',
-    },
-    {
-        icon: '🧠',
-        title: 'Skill graph engine',
-        desc: 'Visual skill dependency graph - see exactly what to learn next and in what order using React Flow.',
-        tag: 'Interactive graph',
-    },
-    {
-        icon: '📊',
-        title: 'ML readiness score',
-        desc: 'RandomForest model with 82.1% accuracy across 7 engineering tracks, exported to ONNX for edge inference.',
-        tag: '82.1% accuracy',
-    },
-    {
-        icon: '🎯',
-        title: 'Skill gap analysis',
-        desc: 'Prioritized gaps with critical/high ratings, reasons, and actionable next steps for every missing skill.',
-        tag: 'Prioritized',
-    },
-    {
-        icon: '🎙️',
-        title: 'Interview simulator',
-        desc: '30+ role-specific technical questions with on-device concept scoring, voice support via Web Speech API.',
-        tag: 'Voice enabled',
-    },
-    {
-        icon: '🛠️',
-        title: 'AI project generator',
-        desc: 'Capstone project specs tailored to your gaps, auto-verified against your GitHub with Gemini AI scoring.',
-        tag: 'GitHub verified',
-    },
-]
 
-const DASHBOARD_METRICS = [
-    { value: '76%', label: 'Readiness score', color: 'var(--forest)' },
-    { value: '87%', label: 'Core skill coverage', color: 'var(--amber)' },
-    { value: '5', label: 'Missing critical', color: 'var(--red)' },
-    { value: 'Job Ready', label: 'Interview status', color: 'var(--forest)' },
-]
-
-const SKILL_COVERAGE = [
-    { label: 'Programming langs', value: 33, tone: 'forest' },
-    { label: 'Frameworks', value: 22, tone: 'amber' },
-    { label: 'Core CS concepts', value: 44, tone: 'forest' },
-    { label: 'Tools & platforms', value: 25, tone: 'amber' },
-]
-
-const SKILL_GAPS = [
-    { name: 'Statistics', level: 'Critical' },
-    { name: 'R language', level: 'High' },
-    { name: 'Apache Spark', level: 'High' },
-    { name: 'Kubernetes', level: 'High' },
-]
-
-const BAND_STATS = [
-    { value: '82%', label: 'ML model accuracy' },
-    { value: '2k+', label: 'Resumes analyzed' },
-    { value: '7', label: 'Engineering roles tracked' },
-    { value: '30+', label: 'Interview questions per role' },
-]
 
 const TESTIMONIALS = [
     {
-        initials: 'AM',
-        author: 'Arjun Mehta',
-        role: 'B.Tech CSE, IIT Madras',
-        quote: 'I had no idea what skills were actually missing until CampusSync showed me. Got my first SDE offer within 3 months of using it.',
+        initials: 'SK',
+        author: 'Siddharth Kapoor',
+        role: 'Infrastructure Engineer, Bangalore',
+        quote: 'It flagged that my distributed databases scaling was a critical gap. I fixed it, cleared the SDE-1 placement round, and the interviewer asked almost exactly the question CampusSync predicted.',
     },
     {
-        initials: 'PR',
-        author: 'Priya Ramachandran',
-        role: 'B.E. IT, Anna University',
-        quote: 'The interview simulator is incredibly realistic. It flagged exactly the concepts I kept blanking on, and I fixed them before my actual interview.',
+        initials: 'AN',
+        author: 'Aparna Nair',
+        role: 'Frontend Engineer, Hyderabad',
+        quote: 'The voice interview simulator is genuinely useful. Speaking answers out loud is completely different from typing them. It caught that I couldn\'t explain transaction concurrency under pressure.',
     },
     {
-        initials: 'KS',
-        author: 'Karthik Subramanian',
-        role: 'M.Tech CS, NIT Trichy',
-        quote: 'The project verifier pushed me to actually complete what I started. My GitHub looks solid now and recruiters actually respond to my applications.',
+        initials: 'RG',
+        author: 'Rohan Gupta',
+        role: 'ML Engineer, Pune',
+        quote: 'The GitHub verifier is something I didn\'t know I needed. I used it to verify my capstone project before submitting job applications — the VERIFIED badge actually came up in my interview.',
     },
 ]
 
-function StatCard({ value, label, tone }: { value: string; label: string; tone: string }) {
-    return (
-        <div className="stat-card reveal">
-            <div className={`stat-num ${tone}`}>{value}</div>
-            <div className="stat-lbl">{label}</div>
-        </div>
-    )
-}
-
 export default function Landing() {
+    const [isLoading, setIsLoading] = useState(true)
+    const [loaderText, setLoaderText] = useState('INITIALIZING ENGINE...')
+    const [loaderPercent, setLoaderPercent] = useState(0)
     const [mobileNav, setMobileNav] = useState(false)
     const [scrolled, setScrolled] = useState(false)
-    const [cursorPos, setCursorPos] = useState({ x: -200, y: -200 })
+    
+    // Interactive states
+    const [activeSimIndex, setActiveSimIndex] = useState(0)
+    const [isSimulating, setIsSimulating] = useState(false)
+    const [simText, setSimText] = useState('')
+    const [animateBars, setAnimateBars] = useState(false)
+    const [hoveredModule, setHoveredModule] = useState<string | null>(null)
+    
+    // Simulated upload states
+    const [dragActive, setDragActive] = useState(false)
+    const [uploadProgress, setUploadProgress] = useState(0)
+    const [isUploading, setIsUploading] = useState(false)
+    const [uploadFinished, setUploadFinished] = useState(false)
 
     useEffect(() => {
-        const onScroll = () => setScrolled(window.scrollY > 12)
-        window.addEventListener('scroll', onScroll, { passive: true })
+        // High fidelity loading sequence
+        const interval = setInterval(() => {
+            setLoaderPercent(prev => {
+                if (prev >= 100) {
+                    clearInterval(interval)
+                    setTimeout(() => setIsLoading(false), 500)
+                    return 100
+                }
+                const increment = Math.floor(Math.random() * 15) + 5
+                const next = Math.min(prev + increment, 100)
+                
+                if (next < 30) setLoaderText('INGESTING NEURAL MODEL (82.1% ACCURACY)...')
+                else if (next < 60) setLoaderText('COMPILING DYNAMIC INTERVIEW GRAPHS...')
+                else if (next < 90) setLoaderText('PROVISIONING EDGE TELEMETRY ENGINE...')
+                else setLoaderText('SYSTEM READY.')
+                
+                return next
+            })
+        }, 120)
 
-        const onMouseMove = (e: MouseEvent) => {
-            setCursorPos({ x: e.clientX, y: e.clientY })
-        }
-        window.addEventListener('mousemove', onMouseMove)
-
-        return () => {
-            window.removeEventListener('scroll', onScroll)
-            window.removeEventListener('mousemove', onMouseMove)
-        }
+        return () => clearInterval(interval)
     }, [])
 
     useEffect(() => {
-        const observer = new IntersectionObserver(
-            entries => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('visible')
-                    }
-                })
-            },
-            { threshold: 0.12 }
+        if (!isLoading) {
+            // Trigger skill bar filling animation
+            setTimeout(() => setAnimateBars(true), 300)
+            
+            // Intersection observer for buttery reveals
+            const observer = new IntersectionObserver(
+                entries => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('visible')
+                        }
+                    })
+                },
+                { threshold: 0.08 }
+            )
+
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el))
+            return () => observer.disconnect()
+        }
+    }, [isLoading])
+
+    // Simulator typing animation effect
+    const startSimulatingText = () => {
+        setIsSimulating(true)
+        setSimText('')
+        const fullAnswer = SIMULATOR_QUESTIONS[activeSimIndex].simulatedAnswer
+        let index = 0
+        
+        const typingInterval = setInterval(() => {
+            if (index < fullAnswer.length) {
+                setSimText(prev => prev + fullAnswer.charAt(index))
+                index++
+            } else {
+                clearInterval(typingInterval)
+                setIsSimulating(false)
+            }
+        }, 25)
+    }
+
+    const handleDrag = (e: React.DragEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (e.type === 'dragenter' || e.type === 'dragover') {
+            setDragActive(true)
+        } else if (e.type === 'dragleave') {
+            setDragActive(false)
+        }
+    }
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setDragActive(false)
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            simulateUpload()
+        }
+    }
+
+    const simulateUpload = () => {
+        if (isUploading || uploadFinished) return
+        setIsUploading(true)
+        setUploadProgress(0)
+        setUploadFinished(false)
+        
+        const uploadInterval = setInterval(() => {
+            setUploadProgress(prev => {
+                if (prev >= 100) {
+                    clearInterval(uploadInterval)
+                    setTimeout(() => {
+                        setIsUploading(false)
+                        setUploadFinished(true)
+                    }, 600)
+                    return 100
+                }
+                return prev + 10
+            })
+        }, 150)
+    }
+
+    if (isLoading) {
+        return (
+            <div className="landing-v2-loader">
+                <div className="loader-box">
+                    <div className="loader-brand-animated">
+                        {"CampusSync".split("").map((char, idx) => (
+                            <span 
+                                key={idx} 
+                                className="loader-char" 
+                                style={{ animationDelay: `${idx * 0.05}s` }}
+                            >
+                                {char}
+                            </span>
+                        ))}
+                    </div>
+                    <div className="loader-sub-animated">EDGE AI ENGINE</div>
+                    <div className="loader-progress-track">
+                        <div className="loader-progress-fill" style={{ width: `${loaderPercent}%` }} />
+                    </div>
+                    <div className="loader-meta-row">
+                        <span className="loader-text">{loaderText}</span>
+                        <span className="loader-percent">{loaderPercent}%</span>
+                    </div>
+                </div>
+            </div>
         )
-
-        document.querySelectorAll('.reveal').forEach(el => observer.observe(el))
-        return () => observer.disconnect()
-    }, [])
+    }
 
     return (
         <div className="landing-v2">
-            <div 
-                className="interactive-glow" 
-                style={{ left: cursorPos.x, top: cursorPos.y }}
-                aria-hidden="true" 
-            />
-            <div className="hero-bg-pattern" aria-hidden="true" />
-
-            <nav className={scrolled ? 'landing-nav landing-nav--scrolled' : 'landing-nav'}>
-                <Link className="logo" to="/">
+            {/* Apple style Frosted Translucent Sticky Navigation */}
+            <nav>
+                <Link className="nav-logo" to="/">
                     <div className="logo-mark">C</div>
                     <div>
-                        <div className="logo-name">CampusSync</div>
-                        <div className="logo-sub">Edge AI</div>
+                        <div className="logo-text">CampusSync</div>
+                        <div className="logo-sub">EDGE AI</div>
                     </div>
                 </Link>
 
@@ -194,241 +230,516 @@ export default function Landing() {
                 <div className={mobileNav ? 'nav-links nav-links--open' : 'nav-links'}>
                     <a href="#how" onClick={() => setMobileNav(false)}>How it works</a>
                     <a href="#features" onClick={() => setMobileNav(false)}>Features</a>
-                    <a href="#dashboard" onClick={() => setMobileNav(false)}>Dashboard</a>
-                    <Link to="/login" onClick={() => setMobileNav(false)}>Sign in</Link>
+                    <a href="#simulator" onClick={() => setMobileNav(false)}>Interview Prep</a>
                     <Link to="/signup" className="btn-nav" onClick={() => setMobileNav(false)}>
-                        Analyze my resume →
+                        Scan Resume Free →
                     </Link>
                 </div>
             </nav>
 
-            <section className="hero">
-                <div className="hero-content">
-                    <div className="badge reveal">
-                        <div className="badge-dot" />
-                        <span>Edge AI - Interview analyzer live</span>
-                    </div>
+            {/* Spacious, Editorial Hero Section */}
+            <div className="hero">
+                <div className="hero-left">
+                    {/* Hero section */}
 
-                    <h1 className="reveal reveal-delay-1">
-                        Know your readiness.<br />
-                        Close every <span className="amber">gap.</span>
+                    <h1 className="reveal reveal-d1">
+                        Know <em>exactly</em> where you stand before placement season.
                     </h1>
 
-                    <p className="hero-sub reveal reveal-delay-2">
-                        AI-powered career intelligence for engineering students. Upload your resume - get your score,
-                        skill gaps, and a personalized action plan in seconds.
+                    <p className="hero-sub reveal reveal-d2">
+                        Upload your resume. CampusSync tells you your readiness score for 7 engineering roles, what skills you're missing, and what to study — no guessing, no generic advice.
                     </p>
 
-                    <div className="cta-row reveal reveal-delay-3">
-                        <Link to="/signup" className="btn-primary">🚀 Start free - instant results</Link>
-                        <a href="#how" className="btn-secondary">See how it works ↓</a>
-                    </div>
-
-                    <div className="hero-3d-character reveal reveal-delay-3" style={{ height: '400px', width: '100%', maxWidth: '800px', margin: '2rem auto 0', position: 'relative' }}>
-                        <Canvas camera={{ position: [0, 4, 10], fov: 50 }} gl={{ preserveDrawingBuffer: true, powerPreference: "high-performance" }}>
-                            <CharacterScene modelUrl="/3dpea.com_Talking.glb" scale={1.5} />
-                        </Canvas>
-                    </div>
-
-                    <div className="stats-grid">
-                        {STATS.map(stat => (
-                            <StatCard key={stat.lbl} value={stat.val} label={stat.lbl} tone={stat.tone} />
-                        ))}
+                    <div className="cta-row reveal reveal-d3">
+                        <Link to="/signup" className="btn-primary">
+                            <span>→</span> Check my readiness
+                        </Link>
+                        <a href="#how" className="btn-secondary">See how it works</a>
                     </div>
                 </div>
-            </section>
 
-            <section className="section" id="how">
+                <div className="hero-visual reveal reveal-d2">
+                    <div style={{ position: 'relative' }}>
+                        <div className="float-card float-top">
+                            <div className="float-icon">✓</div>
+                            <div>
+                                <div className="float-label">ML model active</div>
+                                <div className="float-sub">82.1% accuracy</div>
+                            </div>
+                        </div>
+
+                        <div className="score-card">
+                            <div className="score-header">
+                                <div>
+                                    <div className="score-title">Readiness Report</div>
+                                    <div className="score-sub">Backend SDE track · Analyzed just now</div>
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                    <div className="score-big">78</div>
+                                    <div className="score-label">/ 100</div>
+                                </div>
+                            </div>
+
+                            <div className="bars">
+                                <div className="bar-row">
+                                    <span className="bar-lbl">Systems Design</span>
+                                    <div className="bar-track">
+                                        <div className="bar-fill green" style={{ width: animateBars ? '82%' : '0%' }} />
+                                    </div>
+                                    <span className="bar-pct">82%</span>
+                                </div>
+                                <div className="bar-row">
+                                    <span className="bar-lbl">Algorithms / DSA</span>
+                                    <div className="bar-track">
+                                        <div className="bar-fill" style={{ width: animateBars ? '74%' : '0%' }} />
+                                    </div>
+                                    <span className="bar-pct">74%</span>
+                                </div>
+                                <div className="bar-row">
+                                    <span className="bar-lbl">Frontend Eng</span>
+                                    <div className="bar-track">
+                                        <div className="bar-fill green" style={{ width: animateBars ? '91%' : '0%' }} />
+                                    </div>
+                                    <span className="bar-pct">91%</span>
+                                </div>
+                                <div className="bar-row">
+                                    <span className="bar-lbl">Cloud / Pipelines</span>
+                                    <div className="bar-track">
+                                        <div className="bar-fill amber" style={{ width: animateBars ? '45%' : '0%' }} />
+                                    </div>
+                                    <span className="bar-pct">45%</span>
+                                </div>
+                            </div>
+
+                            <div className="gap-chips">
+                                <span className="chip chip-red">⚠ Apache Spark missing</span>
+                                <span className="chip chip-amber">Server Components</span>
+                                <span className="chip chip-green">✓ React 91%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* STATS STRIP */}
+            <div className="stats-strip">
+                {STATS.map((stat) => (
+                    <div key={stat.lbl} className="stat-item">
+                        <div className={`stat-num ${stat.tone}`}>{stat.val}</div>
+                        <div className="stat-lbl">{stat.lbl}</div>
+                    </div>
+                ))}
+            </div>
+
+            {/* HOW IT WORKS */}
+            <section id="how">
                 <div className="section-inner">
                     <div className="eyebrow reveal">How it works</div>
-                    <h2 className="reveal reveal-delay-1">
-                        Three steps to <span className="amber">job ready.</span>
-                    </h2>
-                    <p className="sec-sub reveal reveal-delay-2">From resume upload to a full career action plan - in under 60 seconds.</p>
-                    <div className="steps">
-                        {STEPS.map((step, index) => (
-                            <div key={step.title} className={`step reveal reveal-delay-${Math.min(index + 1, 3)}`}>
-                                <div className="step-num">{step.num}</div>
-                                <div className="step-icon">{step.icon}</div>
-                                <div className="step-title">{step.title}</div>
-                                <div className="step-desc">{step.desc}</div>
-                                {index < STEPS.length - 1 ? <div className="step-connector" /> : null}
+                    <h2 className="reveal reveal-d1">From resume to roadmap <em>in minutes.</em></h2>
+                    <p className="sec-sub reveal reveal-d2">No account needed to start. Upload your resume and get an honest picture of where you stand.</p>
+                    
+                    <div className="how-tree-container reveal reveal-d3">
+                        {/* Cinematic Laser Splines */}
+                        <svg className="tree-svg" viewBox="0 0 100 420" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="laser-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stopColor="rgba(99, 102, 241, 0.02)" />
+                                    <stop offset="30%" stopColor="rgba(168, 85, 247, 0.4)" />
+                                    <stop offset="50%" stopColor="rgba(99, 102, 241, 0.8)" />
+                                    <stop offset="70%" stopColor="rgba(168, 85, 247, 0.4)" />
+                                    <stop offset="100%" stopColor="rgba(99, 102, 241, 0.02)" />
+                                </linearGradient>
+                            </defs>
+                            
+                            {/* Thin rail pathway */}
+                            <path 
+                                d="M 8 290 C 15 290, 22 210, 29 210 C 36 210, 43 290, 50 290 C 57 290, 64 210, 71 210 C 78 210, 85 290, 92 290" 
+                                fill="none" 
+                                stroke="rgba(255, 255, 255, 0.05)" 
+                                strokeWidth="1" 
+                            />
+
+                            {/* Glowing laser energy tracer */}
+                            <path 
+                                d="M 8 290 C 15 290, 22 210, 29 210 C 36 210, 43 290, 50 290 C 57 290, 64 210, 71 210 C 78 210, 85 290, 92 290" 
+                                fill="none" 
+                                stroke="url(#laser-grad)" 
+                                strokeWidth="1.5" 
+                                className="tree-path tree-path-flow" 
+                            />
+                        </svg>
+
+                        {/* Staggered Compact Floating Nodes */}
+                        <div className="tree-node pos-down" style={{ left: '8%', top: '290px' }}>
+                            <div className="node-point"></div>
+                            <div className="node-card">
+                                <div className="node-badge">01</div>
+                                <h3 className="node-title">Upload Resume</h3>
+                                <p className="node-desc">Submit your resume in seconds with zero signup required.</p>
                             </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            <section className="section" id="dashboard">
-                <div className="section-inner">
-                    <div className="eyebrow reveal">Dashboard preview</div>
-                    <h2 className="reveal reveal-delay-1">
-                        Measure. Improve. <span className="amber">Achieve.</span>
-                    </h2>
-                    <p className="sec-sub reveal reveal-delay-2">Your full career intelligence hub - all in one clean dashboard.</p>
-
-                    <div className="dash-wrap reveal reveal-delay-3">
-                        <div className="dash-bar" aria-hidden="true">
-                            <div className="dot dot-r" />
-                            <div className="dot dot-y" />
-                            <div className="dot dot-g" />
                         </div>
-                        <div className="dash-inner">
-                            <div className="dash-sidebar">
-                                <div className="sb-brand">
-                                    <div className="sb-brand-name">CampusSync</div>
-                                    <div className="sb-brand-tag">EDGE AI</div>
-                                </div>
-                                <div className="sb-item active"><span className="sb-dot" /> Dashboard</div>
-                                <div className="sb-item">Resume analyzer</div>
-                                <div className="sb-item">Readiness score</div>
-                                <div className="sb-item">Skill gap analysis</div>
-                                <div className="sb-item">Improvement plan</div>
-                                <div className="sb-item">Interview readiness</div>
-                                <div className="sb-item">Progress tracking</div>
-                                <div className="sb-item">My projects</div>
-                                <div className="sb-item">Industry alignment</div>
+
+                        <div className="tree-node pos-up" style={{ left: '29%', top: '210px' }}>
+                            <div className="node-point"></div>
+                            <div className="node-card">
+                                <div className="node-badge">02</div>
+                                <h3 className="node-title">AI Analysis</h3>
+                                <p className="node-desc">Advanced models extract your complete profile and experience instantly.</p>
                             </div>
+                        </div>
 
-                            <div className="dash-main">
-                                <div className="dash-hero-card">
-                                    <div className="dash-hero-title">Welcome back, Ganesh Kumar T!</div>
-                                    <div className="dash-hero-sub">AI-powered job readiness intelligence for engineering students.</div>
-                                </div>
+                        <div className="tree-node pos-down" style={{ left: '50%', top: '290px' }}>
+                            <div className="node-point"></div>
+                            <div className="node-card">
+                                <div className="node-badge">03</div>
+                                <h3 className="node-title">Detect Skill Gaps</h3>
+                                <p className="node-desc">Instantly see critical skill gaps mapped against real-world roles.</p>
+                            </div>
+                        </div>
 
-                                <div className="metrics">
-                                    {DASHBOARD_METRICS.map(metric => (
-                                        <div key={metric.label} className="metric">
-                                            <div className="metric-val" style={{ color: metric.color }}>{metric.value}</div>
-                                            <div className="metric-lbl">{metric.label}</div>
-                                        </div>
-                                    ))}
-                                </div>
+                        <div className="tree-node pos-up" style={{ left: '71%', top: '210px' }}>
+                            <div className="node-point"></div>
+                            <div className="node-card">
+                                <div className="node-badge">04</div>
+                                <h3 className="node-title">Personalized Roadmap</h3>
+                                <p className="node-desc">Get a customized learning path built specifically for you.</p>
+                            </div>
+                        </div>
 
-                                <div className="bottom-grid">
-                                    <div className="skill-card">
-                                        <div className="skill-card-title">Skill coverage</div>
-                                        <div className="skill-card-sub">Proficiency across key areas</div>
-                                        {SKILL_COVERAGE.map(skill => (
-                                            <div className="bar-row" key={skill.label}>
-                                                <span className="bar-lbl">{skill.label}</span>
-                                                <div className="bar-track">
-                                                    <div
-                                                        className={skill.tone === 'amber' ? 'bar-fill amber' : 'bar-fill'}
-                                                        style={{ width: `${skill.value}%`, animationDelay: '0.2s' }}
-                                                    />
-                                                </div>
-                                                <span className="bar-pct">{skill.value}%</span>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <div className="skill-card">
-                                        <div className="skill-card-title">Skill gaps</div>
-                                        <div className="skill-card-sub">Top critical skills to focus on</div>
-                                        {SKILL_GAPS.map(gap => (
-                                            <div className="gap-row" key={gap.name}>
-                                                <span className="gap-name">{gap.name}</span>
-                                                <span className={gap.level === 'Critical' ? 'pill pill-critical' : 'pill pill-high'}>
-                                                    {gap.level}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
+                        <div className="tree-node pos-down" style={{ left: '92%', top: '290px' }}>
+                            <div className="node-point"></div>
+                            <div className="node-card">
+                                <div className="node-badge">05</div>
+                                <h3 className="node-title">Interview Practice</h3>
+                                <p className="node-desc">Simulate real-time voice interviews with instant smart grading.</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <div className="stats-band">
-                <div className="stats-band-inner">
-                    {BAND_STATS.map((stat, index) => (
-                        <div key={stat.label} className={`band-stat reveal reveal-delay-${Math.min(index, 3)}`}>
-                            <div className="band-num">{stat.value}</div>
-                            <div className="band-label">{stat.label}</div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            <section className="section" id="features">
-                <div className="section-inner">
-                    <div className="eyebrow reveal">Features</div>
-                    <h2 className="reveal reveal-delay-1">
-                        Everything you need to <span className="amber">land the role.</span>
+            {/* CAMPUSSYNC GROWTH LOOP CENTERPIECE */}
+            <section id="features" style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', overflow: 'hidden' }}>
+                <div className="section-inner" style={{ padding: '80px 0' }}>
+                    <div className="eyebrow reveal" style={{ textAlign: 'center' }}>CampusSync Loop</div>
+                    <h2 className="reveal reveal-d1" style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto 10px' }}>
+                        One connected student growth loop.
                     </h2>
-                    <p className="sec-sub reveal reveal-delay-2">Built specifically for engineering students targeting placements and internships.</p>
-
-                    <div className="features">
-                        {FEATURES.map((feature, index) => (
-                            <div key={feature.title} className={`feat reveal reveal-delay-${Math.min((index % 3) + 1, 3)}`}>
-                                <div className="feat-icon">{feature.icon}</div>
-                                <div className="feat-title">{feature.title}</div>
-                                <div className="feat-desc">{feature.desc}</div>
-                                <div className="feat-tag">{feature.tag}</div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            <section className="section">
-                <div className="section-inner">
-                    <div className="eyebrow reveal">Student stories</div>
-                    <h2 className="reveal reveal-delay-1">
-                        From campus to <span className="amber">career.</span>
-                    </h2>
-                    <p className="sec-sub reveal reveal-delay-2">Engineering students using CampusSync to land their first roles.</p>
-
-                    <div className="tgrid">
-                        {TESTIMONIALS.map((testimonial, index) => (
-                            <div key={testimonial.author} className={`tcard reveal reveal-delay-${Math.min(index + 1, 3)}`}>
-                                <div className="stars">★★★★★</div>
-                                <div className="tcard-quote">"{testimonial.quote}"</div>
-                                <div className="tcard-footer">
-                                    <div className="tcard-avatar">{testimonial.initials}</div>
-                                    <div>
-                                        <div className="tcard-author">{testimonial.author}</div>
-                                        <div className="tcard-role">{testimonial.role}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            <div className="cta-section">
-                <div className="cta-box reveal">
-                    <h2>Ready to close every gap?</h2>
-                    <p>
-                        Upload your resume and get your full readiness report in under 60 seconds.<br />
-                        Free, instant, no signup required to start.
+                    <p className="sec-sub reveal reveal-d2" style={{ textAlign: 'center', maxWidth: '520px', margin: '0 auto 40px' }}>
+                        Placement preparation isn't a series of separate tasks. It's a continuous, synchronized system built for your success.
                     </p>
-                    <div className="cta-btns">
-                        <Link to="/signup" className="btn-light">🚀 Start free - instant results</Link>
-                        <a href="#how" className="btn-amber-outline">See how it works</a>
+
+                    {/* Compact Loop Metaphor centerpiece */}
+                    <div className="loop-centerpiece reveal reveal-d3">
+                        <div className="loop-line-wrap">
+                            <svg className="loop-svg" viewBox="0 0 800 60" preserveAspectRatio="none">
+                                <line x1="50" y1="30" x2="750" y2="30" stroke="rgba(255, 255, 255, 0.04)" strokeWidth="1.5" />
+                                <line x1="50" y1="30" x2="750" y2="30" stroke="url(#loop-glow)" strokeWidth="2" className="loop-pulse-line" />
+                                <defs>
+                                    <linearGradient id="loop-glow" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stopColor="rgba(99, 102, 241, 0.1)" />
+                                        <stop offset="50%" stopColor="rgba(168, 85, 247, 0.8)" />
+                                        <stop offset="100%" stopColor="rgba(99, 102, 241, 0.1)" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                        </div>
+                        <div className="loop-stages">
+                            <div className="loop-stage">
+                                <div className="stage-icon">📄</div>
+                                <span className="stage-label">Resume Ingestion</span>
+                            </div>
+                            <div className="stage-arrow-indicator">➔</div>
+                            <div className="loop-stage">
+                                <div className="stage-icon">🕸️</div>
+                                <span className="stage-label">Skill Assessment</span>
+                            </div>
+                            <div className="stage-arrow-indicator">➔</div>
+                            <div className="loop-stage">
+                                <div className="stage-icon">📚</div>
+                                <span className="stage-label">Dynamic Roadmap</span>
+                            </div>
+                            <div className="stage-arrow-indicator">➔</div>
+                            <div className="loop-stage">
+                                <div className="stage-icon">🎙️</div>
+                                <span className="stage-label">Smart Practice</span>
+                            </div>
+                            <div className="stage-arrow-indicator">➔</div>
+                            <div className="loop-stage placement-node">
+                                <div className="stage-icon">🎓</div>
+                                <span className="stage-label">Placement Ready</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 3 Premium Simple Concept Cards */}
+                    <div className="concept-row reveal reveal-d4">
+                        <div className="concept-card">
+                            <div className="concept-icon-tag">01</div>
+                            <h3 className="concept-title">Career Sync</h3>
+                            <p className="concept-desc">
+                                Tracks skills, learning, interviews, and placement readiness together.
+                            </p>
+                        </div>
+                        <div className="concept-card">
+                            <div className="concept-icon-tag">02</div>
+                            <h3 className="concept-title">Adaptive Roadmaps</h3>
+                            <p className="concept-desc">
+                                Personalized learning paths based on your goals and gaps.
+                            </p>
+                        </div>
+                        <div className="concept-card">
+                            <div className="concept-icon-tag">03</div>
+                            <h3 className="concept-title">Smart Practice</h3>
+                            <p className="concept-desc">
+                                Real interview simulations with instant feedback and progress tracking.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* SIMULATOR SECTION */}
+            <section id="simulator">
+                <div className="section-inner">
+                    <div className="split">
+                        <div className="split-text">
+                            <div className="eyebrow reveal">Interview prep</div>
+                            <h2 className="reveal reveal-d1">Practice until <em>answers feel obvious.</em></h2>
+                            <p className="sec-sub reveal reveal-d2">
+                                Real questions, real feedback. The simulator runs entirely on-device for speed — no waiting for an API call to grade your answer.
+                            </p>
+                            
+                            <div className="steps reveal reveal-d3">
+                                <div className="step-item" style={{ padding: '14px 0' }}>
+                                    <div className="step-num">→</div>
+                                    <div>
+                                        <div className="step-title">Role-specific questions</div>
+                                        <div className="step-desc" style={{ fontSize: '13px' }}>Different question bank for each of 6 roles. Backend, Frontend, ML, Data, DevOps, and Full-Stack tracks.</div>
+                                    </div>
+                                </div>
+                                <div className="step-item" style={{ padding: '14px 0' }}>
+                                    <div className="step-num">→</div>
+                                    <div>
+                                        <div className="step-title">Voice practice mode</div>
+                                        <div className="step-desc" style={{ fontSize: '13px' }}>Speak your answer using Web Speech API. Good for training under pressure before real interviews.</div>
+                                    </div>
+                                </div>
+                                <div className="step-item" style={{ padding: '14px 0' }}>
+                                    <div className="step-num">→</div>
+                                    <div>
+                                        <div className="step-title">Concepts + gaps detected</div>
+                                        <div className="step-desc" style={{ fontSize: '13px' }}>Instant breakdown of what you covered well and what's still missing from a complete answer.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="split-visual reveal reveal-d2">
+                            <div className="sim-card">
+                                <div className="sim-bar">
+                                    <div className="sim-dots">
+                                        <div className="sim-dot r" />
+                                        <div className="sim-dot y" />
+                                        <div className="sim-dot g" />
+                                    </div>
+                                    <span className="sim-title">interview_arena · {SIMULATOR_QUESTIONS[activeSimIndex].role}</span>
+                                </div>
+                                
+                                <div className="sim-body">
+                                    <div className="sim-tabs">
+                                        {SIMULATOR_QUESTIONS.map((q, idx) => (
+                                            <button 
+                                                key={q.role}
+                                                className={`sim-tab-btn ${activeSimIndex === idx ? 'active' : ''}`}
+                                                onClick={() => {
+                                                    setActiveSimIndex(idx)
+                                                    setSimText('')
+                                                    setIsSimulating(false)
+                                                }}
+                                            >
+                                                {q.role}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    
+                                    <div className="sim-q">
+                                        <div className="sim-q-label">QUESTION</div>
+                                        {SIMULATOR_QUESTIONS[activeSimIndex].question}
+                                    </div>
+                                    
+                                    <div className="sim-answer">
+                                        {simText || <span style={{ color: 'var(--text3)', fontStyle: 'italic' }}>Click response simulation below to speak...</span>}
+                                    </div>
+                                    
+                                    <div className="sim-score-row">
+                                        <div>
+                                            <div style={{ fontSize: '11px', color: 'var(--text3)', marginBottom: '2px' }}>ACCURACY SCORE</div>
+                                            <div className="sim-score">{SIMULATOR_QUESTIONS[activeSimIndex].score}</div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '11px', color: 'var(--text3)', marginBottom: '6px' }}>COVERED</div>
+                                            <div className="sim-chips">
+                                                {SIMULATOR_QUESTIONS[activeSimIndex].conceptsCovered.map((c) => (
+                                                    <span key={c} className="chip chip-green">{c}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="sim-btn-container">
+                                    <button 
+                                        className="btn-sim-action"
+                                        disabled={isSimulating}
+                                        onClick={startSimulatingText}
+                                    >
+                                        🎙️ {isSimulating ? 'Simulating Voice Input...' : 'Simulate Voice Response'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* GITHUB VERIFIER SECTION */}
+            <section style={{ background: 'var(--bg2)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+                <div className="section-inner">
+                    <div className="split reverse">
+                        <div className="split-text">
+                            <div className="eyebrow reveal">GitHub verifier</div>
+                            <h2 className="reveal reveal-d1">Prove your projects are <em>actually yours.</em></h2>
+                            <p className="sec-sub reveal reveal-d2">
+                                Recruiters can't verify GitHub projects during a resume screen. CampusSync does it automatically — commit history, file structure, code quality, and AI authenticity check.
+                            </p>
+                            <p className="reveal reveal-d3" style={{ fontSize: '14px', color: 'var(--text2)', lineHeight: '1.7' }}>
+                                Paste your repo URL. The verifier fetches metadata, languages, commit timeline, and file tree in parallel — then Gemini AI checks it against 5 authenticity criteria. You get a structured verdict you can share with recruiters.
+                            </p>
+                            <div style={{ marginTop: '20px' }} className="reveal reveal-d3">
+                                <span className="chip chip-green" style={{ fontSize: '13px', padding: '5px 12px' }}>VERIFIED</span>
+                                <span className="chip chip-amber" style={{ fontSize: '13px', padding: '5px 12px', marginLeft: '6px' }}>PARTIAL</span>
+                                <span className="chip chip-red" style={{ fontSize: '13px', padding: '5px 12px', marginLeft: '6px' }}>SUSPICIOUS</span>
+                            </div>
+                        </div>
+                        
+                        <div className="split-visual reveal reveal-d2">
+                            <div className="verify-card">
+                                <div className="verify-header">
+                                    <span style={{ fontSize: '14px' }}>⚡</span>
+                                    <span className="verify-title">github.com/you/campus-sync-edge-ai</span>
+                                </div>
+                                <div className="verify-body">
+                                    <div className="verify-row">
+                                        <span className="verify-criterion">Commit history consistent</span>
+                                        <span className="verdict v-pass">PASS</span>
+                                    </div>
+                                    <div className="verify-row">
+                                        <span className="verify-criterion">Language matches claimed stack</span>
+                                        <span className="verdict v-pass">PASS</span>
+                                    </div>
+                                    <div className="verify-row">
+                                        <span className="verify-criterion">File structure non-trivial</span>
+                                        <span className="verdict v-pass">PASS</span>
+                                    </div>
+                                    <div className="verify-row">
+                                        <span className="verify-criterion">Code complexity adequate</span>
+                                        <span className="verdict v-pass">PASS</span>
+                                    </div>
+                                    <div className="verify-row">
+                                        <span className="verify-criterion">Not a copied tutorial repo</span>
+                                        <span className="verdict v-warn">REVIEW</span>
+                                    </div>
+                                    <div className="verify-final">
+                                        ✓ VERIFIED — Project is authentic with minor flags
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* TESTIMONIALS */}
+            <section>
+                <div className="section-inner">
+                    <div className="eyebrow reveal">Student feedback</div>
+                    <h2 className="reveal reveal-d1">From students who <em>actually got placed.</em></h2>
+                    <p className="sec-sub reveal reveal-d2">Real feedback from students who used CampusSync to identify their gaps before placement season.</p>
+                    
+                    <div className="tgrid reveal reveal-d3">
+                        {TESTIMONIALS.map((t) => (
+                            <div key={t.author} className="tcard">
+                                <div className="stars">★★★★★</div>
+                                <p className="tcard-quote">"{t.quote}"</p>
+                                <div className="tcard-footer">
+                                    <div className="tcard-av">{t.initials}</div>
+                                    <div>
+                                        <div className="tcard-name">{t.author}</div>
+                                        <div className="tcard-role">{t.role}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* CTA DRAG AND DROP */}
+            <div className="cta-section">
+                <div className="cta-inner">
+                    <h2 className="reveal">Ready to find out where you actually stand?</h2>
+                    <p className="reveal reveal-d1">Upload your resume and get a detailed readiness report for 7 engineering roles — free, takes under 60 seconds.</p>
+                    
+                    <div 
+                        className={`dropzone reveal reveal-d2 ${uploadFinished ? 'success' : ''}`} 
+                        id="drop"
+                        onDragEnter={handleDrag}
+                        onDragOver={handleDrag}
+                        onDragLeave={handleDrag}
+                        onDrop={handleDrop}
+                        onClick={simulateUpload}
+                    >
+                        {isUploading ? (
+                            <div>
+                                <div className="drop-icon">⏳</div>
+                                <div className="drop-txt" style={{ color: '#9E9A94' }}>Analyzing resume ({uploadProgress}%)</div>
+                            </div>
+                        ) : uploadFinished ? (
+                            <div className="drop-success">✓ Resume analyzed — redirecting to your report...</div>
+                        ) : (
+                            <div>
+                                <div className="drop-icon">📄</div>
+                                <div className="drop-txt">Drag & drop your resume here</div>
+                                <div className="drop-sub">PDF or DOCX · Encrypted at rest · Never stored longer than needed</div>
+                            </div>
+                        )}
+                    </div>
+                    
+                    <div className="cta-btns reveal reveal-d3">
+                        <Link to="/signup" className="btn-light">→ Scan Resume Free</Link>
+                        <a href="https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai" target="_blank" rel="noreferrer" className="btn-outline">View on GitHub ↗</a>
                     </div>
                 </div>
             </div>
 
+            {/* FOOTER */}
             <footer>
                 <div className="foot-brand">
-                    <div className="foot-logo-mark">C</div>
+                    <div className="logo-mark" style={{ width: '28px', height: '28px', fontSize: '15px' }}>C</div>
                     <div>
                         <div className="foot-name">CampusSync Edge AI</div>
-                        <div className="foot-tag">AI-powered career intelligence for engineering students</div>
+                        <div className="foot-tag">Career Intelligence for Engineers</div>
                     </div>
                 </div>
                 <div className="foot-links">
-                    <a href="#">Privacy</a>
-                    <a href="#">Terms</a>
-                    <a href="https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai" target="_blank" rel="noreferrer">GitHub</a>
-                    <a href="#">Contact</a>
+                    <a href="https://campussync-edge.onrender.com" target="_blank" rel="noreferrer">Live app ↗</a>
+                    <a href="https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai" target="_blank" rel="noreferrer">GitHub ↗</a>
+                    <Link to="/privacy">Privacy</Link>
+                    <Link to="/docs">Docs</Link>
+                    <Link to="/terms">Terms</Link>
                 </div>
-                <div className="foot-copy">© 2026 CampusSync</div>
+                <div className="foot-copy">© 2026 CampusSync Edge AI · Built by Ganesh</div>
             </footer>
         </div>
     )

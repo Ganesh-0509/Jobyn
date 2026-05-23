@@ -23,6 +23,9 @@ const MyProjects = lazy(() => import('./pages/MyProjects'))
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
 const Settings = lazy(() => import('./pages/Settings'))
 const NotFound = lazy(() => import('./pages/NotFound'))
+const Privacy = lazy(() => import('./pages/Privacy'))
+const Docs = lazy(() => import('./pages/Docs'))
+const Terms = lazy(() => import('./pages/Terms'))
 
 /** Global page loading spinner for lazy chunks */
 function PageLoader() {
@@ -72,6 +75,9 @@ function AppRoutes() {
         <Routes>
             {/* Landing — always accessible */}
             <Route path="/" element={<Landing />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/docs" element={<Docs />} />
+            <Route path="/terms" element={<Terms />} />
 
             {/* Auth routes */}
             <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />

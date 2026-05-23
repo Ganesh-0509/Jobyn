@@ -187,8 +187,8 @@ export default function Signup() {
                         Sign up with Google
                     </button>
 
-                    <div style={{ marginTop: 12, fontSize: 11, color: 'var(--text-muted)', textAlign: 'center' }}>
-                        By signing up you agree to our Terms of Service.<br />
+                    <div style={{ marginTop: 12, fontSize: 11, color: '#9E9A94', textAlign: 'center', lineHeight: 1.5 }}>
+                        By signing up, you agree to our <Link to="/terms" style={{ color: 'var(--blue)', textDecoration: 'underline' }}>Terms of Service</Link> & <Link to="/privacy" style={{ color: 'var(--blue)', textDecoration: 'underline' }}>Privacy Policy</Link>.<br />
                         Your resume data never leaves your device. 🔒
                     </div>
 
