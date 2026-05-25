@@ -230,7 +230,7 @@ export default function Settings() {
                                 {health ? (
                                     <span className="st-status-badge st-status-badge--ok"><span className="live-dot" /> Live</span>
                                 ) : healthLoading ? (
-                                    <span className="st-status-badge st-status-badge--muted">Checking...</span>
+                                    <span className="st-status-badge st-status-badge--muted">Checking…</span>
                                 ) : (
                                     <span className="st-status-badge st-status-badge--err">Offline</span>
                                 )}

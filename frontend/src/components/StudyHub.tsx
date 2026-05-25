@@ -224,7 +224,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
         <div className="study-modal" role="dialog" aria-label="Loading study materials">
             <div className="study-content study-content--loading">
                 <div className="spinner study-spinner"></div>
-                <h2>Gathering Learning Materials...</h2>
+                <h2>Gathering Learning Materials…</h2>
                 <p>Personalizing notes for {skill} based on your career goal.</p>
                 <p style={{ fontSize: 12, opacity: 0.5, marginTop: 8 }}>This may take 15-30 seconds for new topics</p>
             </div>
@@ -599,7 +599,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                         <div key={i} className={`msg msg--${m.role}`}>
                                             <div className="msg-content">
                                                 {m.role === 'assistant' ? (
-                                                    <Suspense fallback={<span>Loading...</span>}>
+                                                    <Suspense fallback={<span>Loading…</span>}>
                                                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                                             {m.content}
                                                         </ReactMarkdown>
@@ -610,7 +610,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                     ))}
                                     {chatLoading && (
                                         <div className="msg msg--assistant">
-                                            <div className="msg-content loading-dots">Thinking...</div>
+                                            <div className="msg-content loading-dots">Thinking…</div>
                                         </div>
                                     )}
                                     <div ref={chatEndRef} />

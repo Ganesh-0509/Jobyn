@@ -348,7 +348,7 @@ export default function ImprovementPlan() {
                     <div className="hero" style={{ padding: '16px 20px', marginBottom: 20, border: '1px solid var(--border)', textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'center' }}>
                             <div className="spinner spinner--sm" />
-                            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Loading market forecast...</span>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Loading market forecast…</span>
                         </div>
                     </div>
                 )}
@@ -439,7 +439,7 @@ export default function ImprovementPlan() {
                 {planLoading && (
                     <div className="card" style={{ padding: '40px', textAlign: 'center' }}>
                         <div className="spinner spinner--sm" style={{ margin: '0 auto 12px' }} />
-                        <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Building your dependency-aware learning plan...</p>
+                        <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Building your dependency-aware learning plan…</p>
                     </div>
                 )}
                 {planError && !planLoading && (

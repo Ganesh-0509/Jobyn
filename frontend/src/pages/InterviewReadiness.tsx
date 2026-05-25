@@ -327,7 +327,7 @@ export default function InterviewReadiness() {
                         <div className="ir-arena__idle-icon"><Target size={28} /></div>
                         <p>Get a role-specific question for <strong>{role}</strong>. Answer by voice or typing.</p>
                         <button type="button" className="btn btn--primary" onClick={fetchQuestion} disabled={loading}>
-                            {loading ? <><Clock size={14} /> Loading...</> : <><ChevronRight size={14} /> Start Question</>}
+                            {loading ? <><Clock size={14} /> Loading…</> : <><ChevronRight size={14} /> Start Question</>}
                         </button>
                         {fetchError && <div className="ir-arena__error"><AlertCircle size={14} /> {fetchError}</div>}
                     </div>

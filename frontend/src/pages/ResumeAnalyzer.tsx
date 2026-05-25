@@ -207,7 +207,7 @@ export default function ResumeAnalyzer() {
                                 onClick={e => { e.stopPropagation(); handleUpload() }}
                             >
                                 {loading ? (
-                                    <><span className="spinner-sm" /> Analyzing...</>
+                                    <><span className="spinner-sm" /> Analyzing…</>
                                 ) : (
                                     <><Sparkles size={16} /> Analyze Resume</>
                                 )}

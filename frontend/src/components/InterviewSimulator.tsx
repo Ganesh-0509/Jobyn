@@ -241,7 +241,7 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
         <div className="interview-sim">
             <div className="interview-loading fade-in">
                 <div className="spinner study-spinner" />
-                <h3>AI Interviewer is thinking...</h3>
+                <h3>AI Interviewer is thinking…</h3>
                 <p>Preparing your next challenge</p>
             </div>
         </div>
@@ -342,7 +342,7 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
         <div className="interview-sim">
             <div className="interview-loading fade-in">
                 <div className="spinner study-spinner" />
-                <h3>Evaluating your answer...</h3>
+                <h3>Evaluating your answer…</h3>
                 <p>The interviewer is reviewing your response</p>
             </div>
         </div>

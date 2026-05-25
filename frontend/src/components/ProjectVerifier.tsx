@@ -108,7 +108,7 @@ export default function ProjectVerifier({ project, onVerified }: Props) {
                         >
                             {loading ? (
                                 <>
-                                    <Loader2 size={16} className="spin" /> Analyzing...
+                                    <Loader2 size={16} className="spin" /> Analyzing…
                                 </>
                             ) : (
                                 <>
@@ -136,7 +136,7 @@ export default function ProjectVerifier({ project, onVerified }: Props) {
                             <div style={{ marginBottom: 12 }}>
                                 <div className="spinner" />
                             </div>
-                            Fetching repo data from GitHub & running AI analysis...
+                            Fetching repo data from GitHub & running AI analysis…
                             <br />
                             <span style={{ fontSize: 12 }}>This may take 10-20 seconds</span>
                         </div>

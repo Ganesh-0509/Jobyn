@@ -572,7 +572,7 @@ export default function Landing() {
                                     </div>
                                     
                                     <div className="sim-answer">
-                                        {simText || <span style={{ color: 'var(--text3)', fontStyle: 'italic' }}>Click response simulation below to speak...</span>}
+                                        {simText || <span style={{ color: 'var(--text3)', fontStyle: 'italic' }}>Click response simulation below to speak…</span>}
                                     </div>
                                     
                                     <div className="sim-score-row">
@@ -709,7 +709,7 @@ export default function Landing() {
                                 <div className="drop-txt" style={{ color: '#9E9A94' }}>Analyzing resume ({uploadProgress}%)</div>
                             </div>
                         ) : uploadFinished ? (
-                            <div className="drop-success">✓ Resume analyzed - redirecting to your report...</div>
+                            <div className="drop-success">✓ Resume analyzed - redirecting to your report…</div>
                         ) : (
                             <div>
                                 <div className="drop-icon">📄</div>
