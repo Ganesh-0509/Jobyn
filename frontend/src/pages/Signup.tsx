@@ -46,8 +46,14 @@ export default function Signup() {
             setCharState('success')
             setTimeout(() => navigate('/dashboard'), 1500)
         } catch (err: unknown) {
-            setCharState('error')
-            setError(err instanceof Error ? err.message : 'Signup failed. Please try again.')
+            if (err instanceof Error && err.message === 'VerificationEmailSent') {
+                setCharState('success')
+                setError('Registration successful! Please check your email inbox to verify your account before logging in.')
+                setTimeout(() => navigate('/login'), 5000)
+            } else {
+                setCharState('error')
+                setError(err instanceof Error ? err.message : 'Signup failed. Please try again.')
+            }
         } finally { setLoading(false) }
     }
 
@@ -167,7 +173,7 @@ export default function Signup() {
 
                     <div className="auth-divider">or</div>
 
-                    <button
+                    <button type="button"
                         className="google-btn"
                         onClick={async () => {
                             try {
@@ -187,7 +193,7 @@ export default function Signup() {
                         Sign up with Google
                     </button>
 
-                    <div style={{ marginTop: 12, fontSize: 11, color: '#9E9A94', textAlign: 'center', lineHeight: 1.5 }}>
+                    <div style={{ marginTop: 12, fontSize: 12, color: '#9E9A94', textAlign: 'center', lineHeight: 1.5 }}>
                         By signing up, you agree to our <Link to="/terms" style={{ color: 'var(--blue)', textDecoration: 'underline' }}>Terms of Service</Link> & <Link to="/privacy" style={{ color: 'var(--blue)', textDecoration: 'underline' }}>Privacy Policy</Link>.<br />
                         Your resume data never leaves your device. 🔒
                     </div>

@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-/* Web Speech API — not all TS libs ship these declarations */
+/* Web Speech API - not all TS libs ship these declarations */
 interface SpeechRecognition extends EventTarget {
     continuous: boolean
     interimResults: boolean

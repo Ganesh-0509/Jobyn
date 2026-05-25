@@ -1,5 +1,5 @@
 /**
- * sanitize.ts — input validation & XSS sanitization utilities.
+ * sanitize.ts - input validation & XSS sanitization utilities.
  *
  * Uses DOMPurify to strip malicious HTML/JS from user-supplied text.
  * Provides validation helpers for common inputs (email, resume text, skills).
@@ -52,7 +52,7 @@ export function isValidSkill(skill: string): boolean {
 
 /** Validate resume text length (sanity check before sending to backend) */
 export function isValidResumeText(text: string): { valid: boolean; message: string } {
-    if (text.length < 50) return { valid: false, message: 'Resume text is too short — is the file empty?' }
+    if (text.length < 50) return { valid: false, message: 'Resume text is too short - is the file empty?' }
     if (text.length > 500_000) return { valid: false, message: 'Resume text exceeds 500KB. Please use a shorter document.' }
     return { valid: true, message: '' }
 }

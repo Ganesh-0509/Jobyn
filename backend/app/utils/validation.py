@@ -58,3 +58,44 @@ def validate_resume_text(text: str) -> tuple[bool, str]:
     if len(text) > MAX_RESUME_TEXT:
         return False, f"Resume text exceeds {MAX_RESUME_TEXT} characters."
     return True, ""
+
+
+def sanitize_filename(filename: str) -> str:
+    """
+    Remove path traversal sequences, strip leading/trailing spaces/dots,
+    and restrict character set to alphanumeric, dots, dashes, and underscores.
+    """
+    import os
+    # 1. Get base name (prevent path traversal like ../)
+    base = os.path.basename(filename)
+    
+    # 2. Split name and extension
+    name, ext = os.path.splitext(base)
+    
+    # 3. Clean filename name portion (keep alphanumeric, space, underscore, dash)
+    cleaned_name = re.sub(r'[^a-zA-Z0-9_\-\s]', '', name).strip()
+    
+    # 4. Clean extension portion (only allow alphanumeric file formats like pdf, docx)
+    cleaned_ext = re.sub(r'[^a-zA-Z0-9]', '', ext).lower().strip()
+    
+    # 5. Fallback if everything was stripped
+    if not cleaned_name:
+        cleaned_name = "uploaded_file"
+        
+    # 6. Re-assemble and limit length
+    safe_filename = f"{cleaned_name}.{cleaned_ext}"
+    if len(safe_filename) > 100:
+        safe_filename = safe_filename[-100:]
+        
+    return safe_filename
+
+
+def sanitize_recursive(val: any) -> any:
+    """Recursively sanitize strings inside nested objects (dicts, lists, primitives)."""
+    if isinstance(val, str):
+        return sanitize_text(val)
+    elif isinstance(val, dict):
+        return {k: sanitize_recursive(v) for k, v in val.items()}
+    elif isinstance(val, list):
+        return [sanitize_recursive(i) for i in val]
+    return val

@@ -48,7 +48,7 @@ def _fmt(analysis: dict) -> dict:
 # ── GET /history/{resume_id} ───────────────────────────────────────────────────
 
 @router.get("/history/{resume_id}")
-def get_history(resume_id: int):
+def get_history(resume_id: int, user: AuthUser = Depends(get_current_user)):
     """
     Chronological list of all role analyses for a given resume.
     Shows score progression over multiple submissions.
@@ -57,11 +57,15 @@ def get_history(resume_id: int):
         sb = get_supabase()
 
         resume_resp = sb.table("resumes").select(
-            "id, filename, detected_skills, sections_detected, links, created_at"
+            "id, user_email, filename, detected_skills, sections_detected, links, created_at"
         ).eq("id", resume_id).single().execute()
 
         if not resume_resp.data:
             raise HTTPException(status_code=404, detail=f"Resume {resume_id} not found.")
+
+        # IDOR prevention check
+        if resume_resp.data.get("user_email") and resume_resp.data["user_email"] != user.email:
+            raise HTTPException(status_code=403, detail="Forbidden: You do not own this resource.")
 
         analyses_resp = sb.table("role_analyses").select("*").eq(
             "resume_id", resume_id
@@ -84,7 +88,7 @@ def get_history(resume_id: int):
 # ── GET /compare/{resume_id} ───────────────────────────────────────────────────
 
 @router.get("/compare/{resume_id}")
-def compare_roles(resume_id: int):
+def compare_roles(resume_id: int, user: AuthUser = Depends(get_current_user)):
     """
     Latest analysis score per role for a resume.
     Useful for comparing how the candidate fits different roles.
@@ -93,11 +97,15 @@ def compare_roles(resume_id: int):
         sb = get_supabase()
 
         resume_resp = sb.table("resumes").select(
-            "id, filename"
+            "id, user_email, filename"
         ).eq("id", resume_id).single().execute()
 
         if not resume_resp.data:
             raise HTTPException(status_code=404, detail=f"Resume {resume_id} not found.")
+
+        # IDOR prevention check
+        if resume_resp.data.get("user_email") and resume_resp.data["user_email"] != user.email:
+            raise HTTPException(status_code=403, detail="Forbidden: You do not own this resource.")
 
         # Fetch all analyses ordered newest-first, then keep latest per role
         all_resp = sb.table("role_analyses").select("*").eq(
@@ -201,11 +209,14 @@ def role_stats():
 # ── GET /session/latest/{email} ────────────────────────────────────────────────
 
 @router.get("/session/latest/{email}")
-def get_latest_session(email: str):
+def get_latest_session(email: str, user: AuthUser = Depends(get_current_user)):
     """
     Finds the latest resume for a user and returns its most recent analysis.
-    Used for frontend session persistence if local storage is cleared.
+    Enforces authentication and email-level IDOR prevention checks.
     """
+    if email.strip().lower() != user.email.lower():
+        raise HTTPException(status_code=403, detail="Forbidden: You cannot retrieve session details for another user.")
+
     try:
         sb = get_supabase()
 
@@ -286,20 +297,51 @@ def export_dataset():
 # ── DELETE /history/{analysis_id} ──────────────────────────────────────────────
 @router.delete("/history/analysis/{analysis_id}")
 def delete_analysis(analysis_id: int, user: AuthUser = Depends(get_current_user)):
-    """Delete a single role analysis entry. Requires authentication."""
+    """Delete a single role analysis entry. Enforces ownership check."""
     try:
         sb = get_supabase()
+
+        # 1. Fetch analysis to get resume_id
+        analysis_resp = sb.table("role_analyses").select("resume_id").eq("id", analysis_id).execute()
+        if not analysis_resp.data:
+            raise HTTPException(status_code=404, detail="Analysis not found.")
+
+        resume_id = analysis_resp.data[0]["resume_id"]
+
+        # 2. Fetch resume to check ownership
+        resume_resp = sb.table("resumes").select("user_email").eq("id", resume_id).execute()
+        if not resume_resp.data:
+            raise HTTPException(status_code=404, detail="Associated resume not found.")
+
+        if resume_resp.data[0].get("user_email") and resume_resp.data[0]["user_email"] != user.email:
+            raise HTTPException(status_code=403, detail="Forbidden: You do not own this resource.")
+
+        # 3. Delete analysis
         sb.table("role_analyses").delete().eq("id", analysis_id).execute()
         return {"status": "deleted", "id": analysis_id}
+    except HTTPException:
+        raise
     except Exception as e:
         raise _db_error(e)
 
 @router.delete("/history/resume/{resume_id}")
 def delete_resume(resume_id: int, user: AuthUser = Depends(get_current_user)):
-    """Delete an entire resume record and all its associated analyses. Requires authentication."""
+    """Delete an entire resume record and all its associated analyses. Enforces ownership check."""
     try:
         sb = get_supabase()
+
+        # 1. Fetch resume to check ownership
+        resume_resp = sb.table("resumes").select("user_email").eq("id", resume_id).execute()
+        if not resume_resp.data:
+            raise HTTPException(status_code=404, detail="Resume not found.")
+
+        if resume_resp.data[0].get("user_email") and resume_resp.data[0]["user_email"] != user.email:
+            raise HTTPException(status_code=403, detail="Forbidden: You do not own this resource.")
+
+        # 2. Delete resume
         sb.table("resumes").delete().eq("id", resume_id).execute()
         return {"status": "deleted", "id": resume_id}
+    except HTTPException:
+        raise
     except Exception as e:
         raise _db_error(e)

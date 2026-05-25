@@ -23,7 +23,13 @@ heavy_limit  = limiter.limit(settings.RATE_LIMIT_HEAVY)
 
 
 async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
-    """Custom 429 response for rate-limited requests."""
+    """Custom 429 response for rate-limited requests with logging for suspicious traffic patterns."""
+    import logging
+    logger = logging.getLogger("security")
+    client_ip = request.client.host if request.client else "unknown"
+    logger.warning(
+        f"SUSPICIOUS TRAFFIC PATTERN: Client IP {client_ip} triggered rate limit on {request.method} {request.url.path}."
+    )
     return JSONResponse(
         status_code=429,
         content={

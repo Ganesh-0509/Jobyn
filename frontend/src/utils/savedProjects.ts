@@ -1,5 +1,5 @@
 /**
- * savedProjects.ts — persist AI-generated capstone projects in localStorage
+ * savedProjects.ts - persist AI-generated capstone projects in localStorage
  * so students can revisit, track status, and export them later.
  */
 

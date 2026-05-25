@@ -80,7 +80,7 @@ export default function Docs() {
                     </p>
                     <ul style={{ paddingLeft: '20px', marginBottom: '24px', fontSize: '14px', color: 'var(--muted)', lineHeight: 1.7 }}>
                         <li style={{ marginBottom: '8px' }}><strong style={{ color: 'var(--text)' }}>Zero Server Latency:</strong> Inference pipelines (text extraction, semantic mapping) run natively inside your hardware threads.</li>
-                        <li style={{ marginBottom: '8px' }}><strong style={{ color: 'var(--text)' }}>Zero Cloud Retention:</strong> Resumes and voice inputs are parsed inside the local sandbox—never uploaded to standard cloud datastores.</li>
+                        <li style={{ marginBottom: '8px' }}><strong style={{ color: 'var(--text)' }}>Zero Cloud Retention:</strong> Resumes and voice inputs are parsed inside the local sandbox-never uploaded to standard cloud datastores.</li>
                         <li><strong style={{ color: 'var(--text)' }}>Offline Availability:</strong> Track and evaluate placement skills even without an active internet connection.</li>
                     </ul>
 
@@ -94,17 +94,17 @@ export default function Docs() {
                         <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', padding: '16px', borderRadius: '12px' }}>
                             <div style={{ color: 'var(--blue)', fontSize: '18px', fontWeight: 800, marginBottom: '6px' }}>01</div>
                             <h4 style={{ fontSize: '13px', fontWeight: 700, marginBottom: '4px' }}>Ingestion</h4>
-                            <p style={{ fontSize: '11px', color: 'var(--muted)', margin: 0 }}>Parse and structure technical portfolios locally.</p>
+                            <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>Parse and structure technical portfolios locally.</p>
                         </div>
                         <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', padding: '16px', borderRadius: '12px' }}>
                             <div style={{ color: 'var(--purple)', fontSize: '18px', fontWeight: 800, marginBottom: '6px' }}>02</div>
                             <h4 style={{ fontSize: '13px', fontWeight: 700, marginBottom: '4px' }}>Assessment</h4>
-                            <p style={{ fontSize: '11px', color: 'var(--muted)', margin: 0 }}>Map technical experience delta against industry frameworks.</p>
+                            <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>Map technical experience delta against industry frameworks.</p>
                         </div>
                         <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', padding: '16px', borderRadius: '12px' }}>
                             <div style={{ color: 'var(--cyan)', fontSize: '18px', fontWeight: 800, marginBottom: '6px' }}>03</div>
                             <h4 style={{ fontSize: '13px', fontWeight: 700, marginBottom: '4px' }}>Simulations</h4>
-                            <p style={{ fontSize: '11px', color: 'var(--muted)', margin: 0 }}>Simulate live SDE technical rounds offline.</p>
+                            <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>Simulate live SDE technical rounds offline.</p>
                         </div>
                     </div>
                 </div>
@@ -152,8 +152,8 @@ export default function Docs() {
                             background: 'rgba(255,255,255,0.02)',
                             borderBottom: '1px solid var(--border)'
                         }}>
-                            <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>Terminal</span>
-                            <button
+                            <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>Terminal</span>
+                            <button type="button"
                                 onClick={() => handleCopy('git clone https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai.git\ncd Campus-Sync-Edge-Ai\nnpm install')}
                                 style={{
                                     background: 'none',
@@ -163,7 +163,7 @@ export default function Docs() {
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: 6,
-                                    fontSize: '11px'
+                                    fontSize: 12
                                 }}
                             >
                                 {copiedText ? <Check size={12} color="var(--green)" /> : <Copy size={12} />}
@@ -207,8 +207,8 @@ export default function Docs() {
                             background: 'rgba(255,255,255,0.02)',
                             borderBottom: '1px solid var(--border)'
                         }}>
-                            <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>Terminal</span>
-                            <button
+                            <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>Terminal</span>
+                            <button type="button"
                                 onClick={() => handleCopy('npm run dev')}
                                 style={{
                                     background: 'none',
@@ -218,7 +218,7 @@ export default function Docs() {
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: 6,
-                                    fontSize: '11px'
+                                    fontSize: 12
                                 }}
                             >
                                 {copiedText ? <Check size={12} color="var(--green)" /> : <Copy size={12} />}
@@ -352,7 +352,7 @@ export default function Docs() {
                             <div style={{ display: 'flex', gap: 12 }}>
                                 <span
                                     style={{
-                                        fontSize: '11px',
+                                        fontSize: 12,
                                         fontFamily: 'var(--font-mono)',
                                         color: activeCodeTab === 'js' ? 'var(--blue)' : 'var(--muted)',
                                         cursor: 'pointer',
@@ -364,7 +364,7 @@ export default function Docs() {
                                 </span>
                                 <span
                                     style={{
-                                        fontSize: '11px',
+                                        fontSize: 12,
                                         fontFamily: 'var(--font-mono)',
                                         color: activeCodeTab === 'python' ? 'var(--blue)' : 'var(--muted)',
                                         cursor: 'pointer',
@@ -503,7 +503,7 @@ def run_role_inference(input_features):
                     </Link>
                     <span style={{ fontSize: '14px', fontWeight: 700, letterSpacing: '-0.3px' }}>CampusSync Edge Docs</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '11px', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>
                     v1.2.0 · Local AI Mode
                 </div>
             </header>
@@ -567,7 +567,7 @@ def run_role_inference(input_features):
                             return (
                                 <div key={category}>
                                     <h4 style={{
-                                        fontSize: '11px',
+                                        fontSize: 12,
                                         fontWeight: 700,
                                         color: 'var(--muted)',
                                         textTransform: 'uppercase',
@@ -582,7 +582,7 @@ def run_role_inference(input_features):
                                             const isSelected = activePage === page.id
                                             return (
                                                 <li key={page.id}>
-                                                    <button
+                                                    <button type="button"
                                                         onClick={() => setActivePage(page.id)}
                                                         style={{
                                                             width: '100%',
@@ -640,7 +640,7 @@ def run_role_inference(input_features):
                             Was this page helpful?
                         </span>
                         <div style={{ display: 'flex', gap: 10 }}>
-                            <button style={{
+                            <button type="button" style={{
                                 background: 'rgba(255,255,255,0.02)',
                                 border: '1px solid var(--border)',
                                 borderRadius: '8px',
@@ -650,7 +650,7 @@ def run_role_inference(input_features):
                                 fontWeight: 600,
                                 cursor: 'pointer'
                             }}>Yes</button>
-                            <button style={{
+                            <button type="button" style={{
                                 background: 'rgba(255,255,255,0.02)',
                                 border: '1px solid var(--border)',
                                 borderRadius: '8px',
@@ -674,7 +674,7 @@ def run_role_inference(input_features):
                     overflowY: 'auto'
                 }} className="docs-toc">
                     <h4 style={{
-                        fontSize: '11px',
+                        fontSize: 12,
                         fontWeight: 700,
                         color: 'var(--muted)',
                         textTransform: 'uppercase',

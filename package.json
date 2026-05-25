@@ -1,5 +1,11 @@
 {
   "dependencies": {
     "three": "^0.164.0"
+  },
+  "scripts": {
+    "doctor": "react-doctor"
+  },
+  "devDependencies": {
+    "react-doctor": "^0.2.5"
   }
 }

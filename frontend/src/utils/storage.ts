@@ -1,5 +1,5 @@
 /**
- * storage.ts — shared localStorage utility with consistent prefix.
+ * storage.ts - shared localStorage utility with consistent prefix.
  *
  * All keys are prefixed with `cse_` to avoid collisions.
  * User-scoped keys additionally get the user email prefix.

@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from typing import List
 
 from app.services.project_generator_service import project_generator_service
 from app.services.project_verifier_service import project_verifier_service
+from app.core.rate_limiter import ai_limit, heavy_limit
 
 router = APIRouter(prefix="/projects", tags=["Project Generation"])
 
@@ -18,7 +19,8 @@ class VerifyRequest(BaseModel):
     role: str
 
 @router.post("/generate")
-async def generate_project(req: ProjectRequest):
+@ai_limit
+async def generate_project(request: Request, req: ProjectRequest):
     """
     Generates a custom capstone project using an LLM to help
     a student acquire the specified missing skills for a given role.
@@ -31,7 +33,8 @@ async def generate_project(req: ProjectRequest):
     return result
 
 @router.post("/verify")
-async def verify_project(req: VerifyRequest):
+@heavy_limit
+async def verify_project(request: Request, req: VerifyRequest):
     """
     Verifies a student's GitHub repo against the original project spec.
     Fetches repo data via GitHub API, then uses AI to score completion.

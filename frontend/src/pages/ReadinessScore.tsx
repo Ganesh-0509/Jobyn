@@ -77,7 +77,7 @@ export default function ReadinessScore() {
                                 padding: '4px 10px', borderRadius: 20,
                                 background: prediction.model_version.includes('onnx') ? 'rgba(var(--green-rgb),0.1)' : 'rgba(var(--blue-rgb),0.1)',
                                 border: `1px solid ${prediction.model_version.includes('onnx') ? 'rgba(var(--green-rgb),0.2)' : 'rgba(var(--blue-rgb),0.2)'}`,
-                                fontSize: 11, color: prediction.model_version.includes('onnx') ? 'var(--green)' : 'var(--blue)',
+                                fontSize: 12, color: prediction.model_version.includes('onnx') ? 'var(--green)' : 'var(--blue)',
                                 fontWeight: 600
                             }}>
                                 {prediction.model_version.includes('onnx') ? <Shield size={12} /> : <Cloud size={12} />}
@@ -105,7 +105,7 @@ export default function ReadinessScore() {
                                         {score < 50 ? <AlertCircle size={14} /> : <TrendingUp size={14} />}
                                     </div>
                                     <div style={{
-                                        fontSize: 11, textTransform: 'uppercase',
+                                        fontSize: 12, textTransform: 'uppercase',
                                         color: score < 50 ? 'var(--orange)' : 'var(--blue)',
                                         fontWeight: 800, letterSpacing: 0.5
                                     }}>
@@ -131,7 +131,7 @@ export default function ReadinessScore() {
 
                                 {bestFit && bestFit.predicted_role !== analysis?.role && (
                                     <>
-                                    <button
+                                    <button type="button"
                                         className="btn btn--primary btn--sm"
                                         onClick={async () => {
                                             if (!currentFile || !bestFit.predicted_role) return
@@ -175,7 +175,7 @@ export default function ReadinessScore() {
                                 <span>{b.label}</span>
                                 <span style={{ color: 'var(--text-muted)' }}>
                                     {Math.round(b.pct)}%
-                                    <span style={{ fontSize: 10, marginLeft: 4 }}>(×{b.weight}%)</span>
+                                    <span style={{ fontSize: 12, marginLeft: 4 }}>(×{b.weight}%)</span>
                                 </span>
                             </div>
                             <div className="progress-track">
@@ -184,7 +184,7 @@ export default function ReadinessScore() {
                         </div>
                     ))}
 
-                    <div style={{ marginTop: 14, padding: '10px 12px', background: 'var(--bg-input)', borderRadius: 8, fontSize: 11, color: 'var(--text-muted)' }}>
+                    <div style={{ marginTop: 14, padding: '10px 12px', background: 'var(--bg-input)', borderRadius: 8, fontSize: 12, color: 'var(--text-muted)' }}>
                         Final Score = ({corePct}×0.35) + ({projectPct}×0.25) + ({atsPct}×0.20) + ({structPct}×0.10) + ({optPct}×0.10) = <strong style={{ color: 'var(--blue)' }}>{score}</strong>
                     </div>
                 </div>

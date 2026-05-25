@@ -73,7 +73,7 @@ function AppRoutes() {
     return (
         <Suspense fallback={<PageLoader />}>
         <Routes>
-            {/* Landing — always accessible */}
+            {/* Landing - always accessible */}
             <Route path="/" element={<Landing />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/docs" element={<Docs />} />

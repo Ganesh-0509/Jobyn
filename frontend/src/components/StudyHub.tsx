@@ -92,7 +92,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
             setNotes(n)
             setQuiz(q)
             // Populate section map from any detailed_content returned with overview
-            // SKIP section index 4 (LeetCode) — it must always load from the
+            // SKIP section index 4 (LeetCode) - it must always load from the
             // dedicated section endpoint so the LeetCode-specific prompt is used.
             if (n?.detailed_content?.length) {
                 const sMap: Record<number, DetailedContent> = {}
@@ -239,7 +239,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                     <div className="sidebar-brand">
                         <Sparkles size={20} className="glow-icon" />
                         <span>Focus Mode</span>
-                        <button
+                        <button type="button"
                             className="theme-toggle-btn"
                             onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
                             aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -258,7 +258,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                         <p>Mastery Progress</p>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <div style={{ width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, background: allSectionsRead ? 'var(--green)' : 'rgba(255,255,255,0.08)', color: allSectionsRead ? '#fff' : 'var(--text-muted)', flexShrink: 0 }}>
+                                <div style={{ width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, background: allSectionsRead ? 'var(--green)' : 'rgba(255,255,255,0.08)', color: allSectionsRead ? '#fff' : 'var(--text-muted)', flexShrink: 0 }}>
                                     {allSectionsRead ? '✓' : `${visitedSections.size}`}
                                 </div>
                                 <span style={{ fontSize: 12, color: allSectionsRead ? 'var(--green)' : 'var(--text-secondary)' }}>
@@ -266,7 +266,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                 </span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <div style={{ width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, background: quizPassed ? 'var(--green)' : 'rgba(255,255,255,0.08)', color: quizPassed ? '#fff' : 'var(--text-muted)', flexShrink: 0 }}>
+                                <div style={{ width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, background: quizPassed ? 'var(--green)' : 'rgba(255,255,255,0.08)', color: quizPassed ? '#fff' : 'var(--text-muted)', flexShrink: 0 }}>
                                     {quizPassed ? '✓' : '○'}
                                 </div>
                                 <span style={{ fontSize: 12, color: quizPassed ? 'var(--green)' : 'var(--text-secondary)' }}>
@@ -278,28 +278,28 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
 
                     <div className="workspace-nav-group">
                         <h6>Main Navigation</h6>
-                        <button
+                        <button type="button"
                             className={`ws-nav-item ${tab === 'notes' ? 'active' : ''}`}
                             onClick={() => setTab('notes')}
                         >
                             <BookOpen size={18} />
                             <span>Course Guide</span>
                         </button>
-                        <button
+                        <button type="button"
                             className={`ws-nav-item ${tab === 'ask' ? 'active' : ''}`}
                             onClick={() => setTab('ask')}
                         >
                             <MessageSquare size={18} />
                             <span>AI Assistant</span>
                         </button>
-                        <button
+                        <button type="button"
                             className={`ws-nav-item ${tab === 'quiz' ? 'active' : ''}`}
                             onClick={() => setTab('quiz')}
                         >
                             <CheckCircle2 size={18} />
                             <span>Knowledge Check</span>
                         </button>
-                        <button
+                        <button type="button"
                             className={`ws-nav-item ${tab === 'interview' ? 'active' : ''}`}
                             onClick={() => setTab('interview')}
                         >
@@ -322,7 +322,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                         <div className="workspace-nav-group">
                             <h6>Mastery Curriculum</h6>
                             {notes.sub_roadmap.map((step, idx) => (
-                                <button
+                                <button type="button"
                                     key={idx}
                                     className={`curriculum-item ${idx === activeSectionIdx && tab === 'notes' ? 'curriculum-item--active' : ''} ${sections[idx] ? 'curriculum-item--loaded' : ''} ${visitedSections.has(idx) ? 'curriculum-item--visited' : ''}`}
                                     onClick={() => { setTab('notes'); goToSection(idx) }}
@@ -337,7 +337,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                     )}
 
                     <div className="sidebar-footer">
-                        <button
+                        <button type="button"
                             className={`btn-pin ${isPinned ? 'pinned' : ''}`}
                             onClick={togglePin}
                         >
@@ -356,7 +356,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                 <span>Mastery Course • Level {skill.toLowerCase() === 'dsa' ? 'Pro' : 'Core'}</span>
                             </div>
                         </div>
-                        <button className="btn-close-ws" onClick={onClose}><X size={24} /></button>
+                        <button type="button" className="btn-close-ws" onClick={onClose}><X size={24} /></button>
                     </header>
 
                     <div className="workspace-content">
@@ -366,8 +366,8 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                 <h3>Notes unavailable</h3>
                                 <p style={{ color: 'var(--text-secondary)', marginBottom: 16 }}>Study materials couldn't be loaded. Try the AI Assistant or Mock Interview instead.</p>
                                 <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-                                    <button className="btn btn--ghost" onClick={() => setTab('ask')}>AI Assistant</button>
-                                    <button className="btn btn--primary" onClick={() => setTab('interview')}>Mock Interview</button>
+                                    <button type="button" className="btn btn--ghost" onClick={() => setTab('ask')}>AI Assistant</button>
+                                    <button type="button" className="btn btn--primary" onClick={() => setTab('interview')}>Mock Interview</button>
                                 </div>
                             </div>
                         )}
@@ -382,7 +382,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                 {/* Section progress bar */}
                                 <div className="section-progress-bar">
                                     {Array.from({ length: totalSections }).map((_, i) => (
-                                        <button
+                                        <button type="button"
                                             key={i}
                                             className={`section-dot ${i === activeSectionIdx ? 'active' : ''} ${sections[i] ? 'loaded' : ''} ${visitedSections.has(i) ? 'visited' : ''}`}
                                             onClick={() => goToSection(i)}
@@ -458,7 +458,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
 
                                                 {sections[activeSectionIdx].try_it && (
                                                     <div className="try-it-box">
-                                                        <button
+                                                        <button type="button"
                                                             className="try-it-toggle"
                                                             onClick={() => setExpandedTryIt(prev => ({ ...prev, [activeSectionIdx]: !prev[activeSectionIdx] }))}
                                                         >
@@ -545,7 +545,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
 
                                 {/* Section Navigation Arrows */}
                                 <div className="section-nav-arrows">
-                                    <button
+                                    <button type="button"
                                         className="section-arrow section-arrow--prev"
                                         onClick={() => goToSection(activeSectionIdx - 1)}
                                         disabled={activeSectionIdx === 0}
@@ -556,14 +556,14 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                         {notes.sub_roadmap?.[activeSectionIdx]?.title || `Section ${activeSectionIdx + 1}`}
                                     </div>
                                     {activeSectionIdx < totalSections - 1 ? (
-                                        <button
+                                        <button type="button"
                                             className="section-arrow section-arrow--next"
                                             onClick={() => goToSection(activeSectionIdx + 1)}
                                         >
                                             Next <ChevronRight size={20} />
                                         </button>
                                     ) : (
-                                        <button
+                                        <button type="button"
                                             className="section-arrow section-arrow--next section-arrow--quiz"
                                             onClick={() => setTab('quiz')}
                                         >
@@ -623,7 +623,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                         onChange={(e) => setQuery(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleChat()}
                                     />
-                                    <button className="btn-send" onClick={handleChat} disabled={chatLoading}><Send size={18} /></button>
+                                    <button type="button" className="btn-send" onClick={handleChat} disabled={chatLoading}><Send size={18} /></button>
                                 </div>
                             </div>
                         )}
@@ -633,7 +633,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                 <CheckCircle2 size={48} style={{ opacity: 0.3, marginBottom: 16 }} />
                                 <h3>Quiz unavailable</h3>
                                 <p style={{ color: 'var(--text-secondary)', marginBottom: 16 }}>Quiz couldn't be loaded. Try the Mock Interview for a comprehensive skill assessment.</p>
-                                <button className="btn btn--primary" onClick={() => setTab('interview')}>Try Mock Interview</button>
+                                <button type="button" className="btn btn--primary" onClick={() => setTab('interview')}>Try Mock Interview</button>
                             </div>
                         )}
                         {tab === 'quiz' && quiz && (
@@ -678,7 +678,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                                 else if (isSelected) optClass += ' quiz-option--selected'
 
                                                 return (
-                                                    <button
+                                                    <button type="button"
                                                         key={i}
                                                         className={optClass}
                                                         onClick={() => handleAnswer(i)}
@@ -702,7 +702,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                                     }
                                                 </div>
                                                 <p>{quiz.questions[currentQ].explanation}</p>
-                                                <button className="btn btn--primary btn--sm quiz-next-btn" onClick={handleNextQuestion}>
+                                                <button type="button" className="btn btn--primary btn--sm quiz-next-btn" onClick={handleNextQuestion}>
                                                     {currentQ < quiz.questions.length - 1 ? 'Next Question →' : 'See Results'}
                                                 </button>
                                             </div>
@@ -777,19 +777,19 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                             return (
                                                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 24 }}>
                                                     {mastered ? (
-                                                        <button className="btn btn--primary" onClick={onClose}>
+                                                        <button type="button" className="btn btn--primary" onClick={onClose}>
                                                             <CheckCircle2 size={18} /> Finish & Earn Credits
                                                         </button>
                                                     ) : quizPassed && !allSectionsRead ? (
-                                                        <button className="btn btn--primary" onClick={() => { setTab('notes'); goToSection(Array.from({ length: totalSections }, (_, i) => i).find(i => !visitedSections.has(i)) ?? 0) }}>
+                                                        <button type="button" className="btn btn--primary" onClick={() => { setTab('notes'); goToSection(Array.from({ length: totalSections }, (_, i) => i).find(i => !visitedSections.has(i)) ?? 0) }}>
                                                             <BookOpen size={16} /> Go to Unread Section
                                                         </button>
                                                     ) : (
                                                         <>
-                                                            <button className="btn btn--ghost" onClick={() => setTab('notes')}>
+                                                            <button type="button" className="btn btn--ghost" onClick={() => setTab('notes')}>
                                                                 <BookOpen size={16} /> Review Notes
                                                             </button>
-                                                            <button className="btn btn--primary" onClick={() => {
+                                                            <button type="button" className="btn btn--primary" onClick={() => {
                                                                 setQuizFinished(false)
                                                                 setCurrentQ(0)
                                                                 setAnswers([])

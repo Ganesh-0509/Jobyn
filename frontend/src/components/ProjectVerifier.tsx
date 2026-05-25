@@ -81,7 +81,7 @@ export default function ProjectVerifier({ project, onVerified }: Props) {
                         <div>
                             <h4 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>Verify with GitHub</h4>
                             <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>
-                                Submit your public GitHub repo — we'll analyze commits, code, and structure against the project spec
+                                Submit your public GitHub repo - we'll analyze commits, code, and structure against the project spec
                             </p>
                         </div>
                     </div>
@@ -100,7 +100,7 @@ export default function ProjectVerifier({ project, onVerified }: Props) {
                             }}
                             onKeyDown={e => e.key === 'Enter' && handleVerify()}
                         />
-                        <button
+                        <button type="button"
                             className="btn btn--primary"
                             onClick={handleVerify}
                             disabled={loading || !url.trim()}
@@ -138,7 +138,7 @@ export default function ProjectVerifier({ project, onVerified }: Props) {
                             </div>
                             Fetching repo data from GitHub & running AI analysis...
                             <br />
-                            <span style={{ fontSize: 11 }}>This may take 10-20 seconds</span>
+                            <span style={{ fontSize: 12 }}>This may take 10-20 seconds</span>
                         </div>
                     )}
                 </div>
@@ -204,11 +204,11 @@ function VerificationReport({ result, onReVerify }: { result: VerificationResult
                 gap: 10, marginBottom: 20,
             }}>
                 {[
-                    { icon: <GitCommitHorizontal size={14} />, label: 'Commits', value: result.commit_count },
-                    { icon: <FileCode size={14} />, label: 'Files', value: result.file_count },
-                    { icon: <Code2 size={14} />, label: 'Languages', value: result.languages?.join(', ') || '—' },
-                ].map((s, i) => (
-                    <div key={i} style={{
+                    { id: 'commits', icon: <GitCommitHorizontal size={14} />, label: 'Commits', value: result.commit_count },
+                    { id: 'files', icon: <FileCode size={14} />, label: 'Files', value: result.file_count },
+                    { id: 'languages', icon: <Code2 size={14} />, label: 'Languages', value: result.languages?.join(', ') || '-' },
+                ].map((s) => (
+                    <div key={s.id} style={{
                         padding: '10px 14px', borderRadius: 8,
                         background: 'var(--bg-input)', border: '1px solid var(--border)',
                         fontSize: 12,
@@ -248,8 +248,8 @@ function VerificationReport({ result, onReVerify }: { result: VerificationResult
                 {result.strengths?.length > 0 && (
                     <div style={{ padding: 14, borderRadius: 10, background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.15)' }}>
                         <h5 style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--green)', fontWeight: 700 }}>✓ Strengths</h5>
-                        {result.strengths.map((s, i) => (
-                            <div key={i} style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4, display: 'flex', gap: 6 }}>
+                        {result.strengths.map((s) => (
+                            <div key={s} style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4, display: 'flex', gap: 6 }}>
                                 <ChevronRight size={12} style={{ flexShrink: 0, marginTop: 2 }} /> {s}
                             </div>
                         ))}
@@ -258,8 +258,8 @@ function VerificationReport({ result, onReVerify }: { result: VerificationResult
                 {result.improvements?.length > 0 && (
                     <div style={{ padding: 14, borderRadius: 10, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)' }}>
                         <h5 style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--orange)', fontWeight: 700 }}>↑ To Improve</h5>
-                        {result.improvements.map((s, i) => (
-                            <div key={i} style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4, display: 'flex', gap: 6 }}>
+                        {result.improvements.map((s) => (
+                            <div key={s} style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4, display: 'flex', gap: 6 }}>
                                 <ChevronRight size={12} style={{ flexShrink: 0, marginTop: 2 }} /> {s}
                             </div>
                         ))}
@@ -281,7 +281,7 @@ function VerificationReport({ result, onReVerify }: { result: VerificationResult
                     <ExternalLink size={14} /> View on GitHub
                 </a>
                 <div style={{ display: 'flex', gap: 8 }}>
-                    <button className="btn btn--outline" onClick={onReVerify} style={{ fontSize: 13, padding: '6px 14px' }}>
+                    <button type="button" className="btn btn--outline" onClick={onReVerify} style={{ fontSize: 13, padding: '6px 14px' }}>
                         Re-verify
                     </button>
                 </div>
@@ -290,9 +290,9 @@ function VerificationReport({ result, onReVerify }: { result: VerificationResult
             {result.is_rule_based && (
                 <div style={{
                     marginTop: 12, padding: '8px 12px', borderRadius: 6,
-                    background: 'rgba(59,130,246,0.08)', fontSize: 11, color: 'var(--text-muted)',
+                    background: 'rgba(59,130,246,0.08)', fontSize: 12, color: 'var(--text-muted)',
                 }}>
-                    ℹ️ AI verification was unavailable — this is a rule-based analysis. Re-verify later for a detailed AI review.
+                    ℹ️ AI verification was unavailable - this is a rule-based analysis. Re-verify later for a detailed AI review.
                 </div>
             )}
         </div>

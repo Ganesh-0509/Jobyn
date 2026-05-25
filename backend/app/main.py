@@ -108,6 +108,46 @@ app.add_middleware(
     allow_headers     = ["*"],
 )
 
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+# ── HTTP Response Security Headers Middleware ────────────────────────────────
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    return response
+
+# ── Auth & Request Auditing Middleware ───────────────────────────────────────
+@app.middleware("http")
+async def audit_auth_requests(request: Request, call_next):
+    client_ip = request.client.host if request.client else "unknown"
+    path = request.url.path
+    
+    # Log auth/sensitive actions specifically
+    if "auth" in path.lower() or "admin" in path.lower():
+        log.info(f"AUDIT LOG: Sensitive route access on '{path}' by client IP {client_ip}")
+        
+    response = await call_next(request)
+    return response
+
+# ── Global API Error and Exception Logger ─────────────────────────────────────
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    client_ip = request.client.host if request.client else "unknown"
+    log.critical(
+        f"API ERROR ALERT: Client {client_ip} triggered unhandled Exception on {request.method} {request.url.path}. "
+        f"Message: {str(exc)}",
+        exc_info=True
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Security Event: An internal error occurred. Administrators have been alerted."}
+    )
+
 from app.routers import ai_insight
 from app.routers import feedback as feedback_router
 from app.routers import project_generator

@@ -34,8 +34,7 @@ export default function ProjectGeneratorModal({ role, skills, onClose }: Props) 
             .then((res: ProjectResult) => setProject(res))
             .catch((err: Error) => setError(err.message || "Failed to generate project"))
             .finally(() => setLoading(false))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [role, skillsKey])
+    }, [role, skillsKey, skills])
 
     const handleCopy = () => {
         if (!project) return
@@ -96,7 +95,7 @@ export default function ProjectGeneratorModal({ role, skills, onClose }: Props) 
                             </p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="btn-icon" style={{ padding: 8, background: 'var(--bg-border)', borderRadius: '50%', border: 'none', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                    <button type="button" onClick={onClose} className="btn-icon" style={{ padding: 8, background: 'var(--bg-border)', borderRadius: '50%', border: 'none', cursor: 'pointer', color: 'var(--text-primary)' }}>
                         <X size={20} />
                     </button>
                 </div>
@@ -134,7 +133,7 @@ export default function ProjectGeneratorModal({ role, skills, onClose }: Props) 
                 {/* Footer */}
                 <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', background: 'var(--bg-glass)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', gap: 8 }}>
-                        <button
+                        <button type="button"
                             onClick={handleCopy}
                             className="btn btn--outline"
                             disabled={!project || loading}
@@ -143,7 +142,7 @@ export default function ProjectGeneratorModal({ role, skills, onClose }: Props) 
                             {copied ? <Check size={15} color="var(--green)" /> : <Copy size={15} />}
                             {copied ? 'Copied!' : 'Copy Markdown'}
                         </button>
-                        <button
+                        <button type="button"
                             onClick={handleDownload}
                             className="btn btn--outline"
                             disabled={!project || loading}
@@ -153,8 +152,8 @@ export default function ProjectGeneratorModal({ role, skills, onClose }: Props) 
                         </button>
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={onClose} className="btn btn--outline">Close</button>
-                        <button
+                        <button type="button" onClick={onClose} className="btn btn--outline">Close</button>
+                        <button type="button"
                             className="btn btn--primary"
                             disabled={!project || loading || saved}
                             onClick={handleSave}

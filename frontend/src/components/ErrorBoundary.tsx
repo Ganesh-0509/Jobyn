@@ -14,7 +14,7 @@ interface State {
 /** Functional wrapper so we can use react-router navigate inside a class boundary */
 function DashboardButton() {
     return (
-        <button
+        <button type="button"
             className="btn btn--outline"
             onClick={() => window.location.href = '/dashboard'}
         >
@@ -24,7 +24,7 @@ function DashboardButton() {
 }
 
 /**
- * Global error boundary — catches any unhandled JS error in the React tree
+ * Global error boundary - catches any unhandled JS error in the React tree
  * and shows a recoverable error screen instead of a white page.
  */
 export default class ErrorBoundary extends Component<Props, State> {
@@ -55,7 +55,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                         <div className="error-boundary-icon">⚠️</div>
                         <h2 className="error-boundary-title">Something went wrong</h2>
                         <p className="error-boundary-msg">
-                            An unexpected error occurred. Your data is safe — try refreshing or going back.
+                            An unexpected error occurred. Your data is safe - try refreshing or going back.
                         </p>
                         {this.state.error && (
                             <details className="error-boundary-details">
@@ -66,7 +66,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                             </details>
                         )}
                         <div className="error-boundary-actions">
-                            <button className="btn btn--primary" onClick={this.handleReset}>
+                            <button type="button" className="btn btn--primary" onClick={this.handleReset}>
                                 Try Again
                             </button>
                             <DashboardButton />

@@ -14,7 +14,7 @@ from app.services.role_matrix import VALID_ROLES
 from app.core.supabase_client import get_supabase
 from app.services.encryption_service import encrypt_text, is_encryption_enabled
 from app.core.auth import optional_user, AuthUser
-from app.utils.validation import validate_email, validate_resume_text
+from app.utils.validation import validate_email, validate_resume_text, sanitize_filename
 from app.core.rate_limiter import upload_limit
 from typing import Optional
 import logging
@@ -40,7 +40,8 @@ async def upload_resume(
     scoring against all roles and choosing the highest match.
     Result is persisted to Supabase automatically.
     """
-    if not file.filename.lower().endswith((".pdf", ".docx")):
+    safe_filename = sanitize_filename(file.filename)
+    if not safe_filename.lower().endswith((".pdf", ".docx")):
         raise HTTPException(status_code=400, detail="Only PDF and DOCX files are supported.")
 
     auto_detect = (role == "auto")
@@ -63,7 +64,7 @@ async def upload_resume(
             raise HTTPException(status_code=413, detail=f"File too large. Maximum size is {_settings.MAX_UPLOAD_BYTES // 1_000_000}MB.")
 
         # ── Core deterministic pipeline ──────────────────────────────────────
-        parsed  = parse_resume(file_bytes, file.filename)
+        parsed  = parse_resume(file_bytes, safe_filename)
 
         # Validate extracted text
         text_ok, text_msg = validate_resume_text(parsed["raw_text"])
@@ -99,7 +100,7 @@ async def upload_resume(
                 })
             result["role_matches"] = role_matches
             result["auto_detected"] = True
-            log.info("Auto-detected role: %s (score=%s) for %s", best_role, result["final_score"], file.filename)
+            log.info("Auto-detected role: %s (score=%s) for %s", best_role, result["final_score"], safe_filename)
         else:
             result = calculate_role_readiness(
                 resume_skills=skills,
@@ -109,7 +110,7 @@ async def upload_resume(
             )
             result["auto_detected"] = False
 
-        result["filename"]          = file.filename
+        result["filename"]          = safe_filename
         result["detected_skills"]   = skills
         result["sections_detected"] = parsed["sections_detected"]
         result["raw_text"]          = parsed["raw_text"]
@@ -128,7 +129,7 @@ async def upload_resume(
 
                 # ── Save / update resume row ────────────────────────────────
                 resume_data = {
-                    "filename":          file.filename,
+                    "filename":          safe_filename,
                     "raw_text":          encrypt_text(parsed["raw_text"]),
                     "detected_skills":   skills,
                     "sections_detected": parsed["sections_detected"],
@@ -141,7 +142,7 @@ async def upload_resume(
                 existing = (
                     sb.table("resumes")
                     .select("id")
-                    .eq("filename", file.filename)
+                    .eq("filename", safe_filename)
                     .eq("user_email", effective_email)
                     .limit(1)
                     .execute()

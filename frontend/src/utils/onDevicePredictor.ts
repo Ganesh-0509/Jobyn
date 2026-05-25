@@ -70,7 +70,7 @@ async function _doInit(): Promise<boolean> {
         // Models loaded successfully
         return true
     } catch (e) {
-        console.warn('[OnDevice] Models not found — server-side inference used', e)
+        console.warn('[OnDevice] Models not found - server-side inference used', e)
         return false
     }
 }
@@ -87,7 +87,7 @@ function buildFeatureVector(
     const skillSet = new Set(skills.map(s => s.toLowerCase()))
     const vec = new Float32Array(vocabulary.length + 5)
 
-    // Binary skill encoding — O(V) with Set lookup instead of O(V²)
+    // Binary skill encoding - O(V) with Set lookup instead of O(V²)
     vocabulary.forEach((v, i) => {
         vec[i] = skillSet.has(v.toLowerCase()) ? 1 : 0
     })
@@ -133,7 +133,7 @@ export async function predictOnDevice(
     coreCov: number,
     optCov: number,
 ): Promise<OnDeviceResult> {
-    // Lazy init — loads ONNX + models on first prediction, not at app start
+    // Lazy init - loads ONNX + models on first prediction, not at app start
     if (!scoreSession) {
         const ok = await initOnDevice()
         if (!ok) throw new Error('On-device models could not be loaded')

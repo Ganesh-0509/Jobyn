@@ -59,12 +59,15 @@ function saveSession(record: SessionRecord, email?: string) {
 function useWebSpeech() {
     const [transcript, setTranscript] = useState('')
     const [listening, setListening] = useState(false)
-    const [supported, setSupported] = useState(true)
+    const [supported] = useState(() => {
+        const SR = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null
+        return !!SR
+    })
     const recRef = useRef<SpeechRecognition | null>(null)
 
     useEffect(() => {
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-        if (!SR) { setSupported(false); return }
+        const SR = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null
+        if (!SR) return
         const rec = new SR()
         rec.continuous = true
         rec.interimResults = true
@@ -117,7 +120,7 @@ export default function InterviewReadiness() {
         return { total, avgScore, bestScore, winRate, conceptsCovered: allCovered, conceptsMissed: allMissed }
     }, [log])
 
-    /* ── Practice targets — missing skills not yet practiced ── */
+    /* ── Practice targets - missing skills not yet practiced ── */
     const targets = useMemo(() => {
         const coreGaps = analysis?.missing_core_skills ?? []
         const optGaps = analysis?.missing_optional_skills ?? []
@@ -169,7 +172,7 @@ export default function InterviewReadiness() {
         } catch {
             setResult({
                 score: 0, grade: 'Error', detected_concepts: [], missing_concepts: [],
-                total_concepts: 0, feedback: 'Evaluation failed — check connection.', tip: 'Try again.',
+                total_concepts: 0, feedback: 'Evaluation failed - check connection.', tip: 'Try again.',
             })
             setPhase('done')
         } finally { setEval(false) }
@@ -187,7 +190,7 @@ export default function InterviewReadiness() {
                     <div className="ir-locked__icon"><Lock size={48} strokeWidth={1.2} /></div>
                     <h1 className="ir-locked__title">Interview Arena Locked</h1>
                     <p className="ir-locked__sub">Upload your resume to unlock AI-powered mock interviews tailored to your role, skill gaps, and career level.</p>
-                    <button className="btn btn--primary" onClick={() => navigate('/resume-analyzer')} style={{ marginTop: 24 }}>
+                    <button type="button" className="btn btn--primary" onClick={() => navigate('/resume-analyzer')} style={{ marginTop: 24 }}>
                         <Sparkles size={16} /> Analyze Your Resume
                     </button>
                     <div className="ir-locked__features">
@@ -312,7 +315,7 @@ export default function InterviewReadiness() {
                     <MessageSquare size={16} />
                     <span>Live Interview Practice</span>
                     {phase !== 'idle' && (
-                        <button className="btn btn--ghost btn--sm" onClick={reset} style={{ marginLeft: 'auto' }}>
+                        <button type="button" className="btn btn--ghost btn--sm" onClick={reset} style={{ marginLeft: 'auto' }}>
                             <RefreshCw size={12} /> New Question
                         </button>
                     )}
@@ -323,7 +326,7 @@ export default function InterviewReadiness() {
                     <div className="ir-arena__idle">
                         <div className="ir-arena__idle-icon"><Target size={28} /></div>
                         <p>Get a role-specific question for <strong>{role}</strong>. Answer by voice or typing.</p>
-                        <button className="btn btn--primary" onClick={fetchQuestion} disabled={loading}>
+                        <button type="button" className="btn btn--primary" onClick={fetchQuestion} disabled={loading}>
                             {loading ? <><Clock size={14} /> Loading...</> : <><ChevronRight size={14} /> Start Question</>}
                         </button>
                         {fetchError && <div className="ir-arena__error"><AlertCircle size={14} /> {fetchError}</div>}
@@ -346,7 +349,7 @@ export default function InterviewReadiness() {
                         <div className="ir-input-area">
                             {supported && (
                                 <div className="ir-voice-row">
-                                    <button
+                                    <button type="button"
                                         className={`ir-voice-btn ${listening ? 'ir-voice-btn--rec' : ''}`}
                                         onClick={listening ? stop : start}
                                     >
@@ -363,7 +366,7 @@ export default function InterviewReadiness() {
                             />
                             <div className="ir-input-footer">
                                 <span className="ir-word-count">{transcript.split(/\s+/).filter(Boolean).length} words</span>
-                                <button className="btn btn--primary" onClick={evalAnswer} disabled={!transcript.trim() || evalLoading}>
+                                <button type="button" className="btn btn--primary" onClick={evalAnswer} disabled={!transcript.trim() || evalLoading}>
                                     {evalLoading ? 'Evaluating...' : 'Submit Answer'}
                                 </button>
                             </div>
@@ -418,7 +421,7 @@ export default function InterviewReadiness() {
                             </div>
                         )}
 
-                        <button className="btn btn--primary" onClick={reset} style={{ marginTop: 12 }}>
+                        <button type="button" className="btn btn--primary" onClick={reset} style={{ marginTop: 12 }}>
                             <ChevronRight size={14} /> Next Question
                         </button>
                     </div>
@@ -428,7 +431,7 @@ export default function InterviewReadiness() {
             {/* ── Session History ─────────────────────────────── */}
             {log.length > 0 && (
                 <div className="ir-history-card">
-                    <button className="ir-history__toggle" onClick={() => setShowHistory(!showHistory)}>
+                    <button type="button" className="ir-history__toggle" onClick={() => setShowHistory(!showHistory)}>
                         <Clock size={14} />
                         <span>Session History ({log.length})</span>
                         <ChevronDown size={14} className={showHistory ? 'rotated' : ''} />

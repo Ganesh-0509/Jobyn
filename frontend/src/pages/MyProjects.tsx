@@ -120,7 +120,7 @@ export default function MyProjects() {
                     { key: 'in-progress' as const, label: 'In Progress', color: 'var(--orange)', bg: 'rgba(245,158,11,0.08)' },
                     { key: 'verified' as const, label: 'Verified', color: 'var(--green)', bg: 'rgba(34,197,94,0.08)' },
                 ]).map(({ key, label, color, bg }) => (
-                    <button
+                    <button type="button"
                         key={key}
                         onClick={() => setFilterStatus(key)}
                         className="card"
@@ -145,17 +145,17 @@ export default function MyProjects() {
                 <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6 }}>
                     <strong style={{ color: 'var(--text-primary)' }}>How verification works:</strong>{' '}
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                        <span style={{ background: 'var(--blue)', color: 'white', borderRadius: 10, width: 18, height: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700 }}>1</span>
+                        <span style={{ background: 'var(--blue)', color: 'white', borderRadius: 10, width: 18, height: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>1</span>
                         Save a project
                     </span>
                     {' → '}
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                        <span style={{ background: 'var(--orange)', color: 'white', borderRadius: 10, width: 18, height: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700 }}>2</span>
+                        <span style={{ background: 'var(--orange)', color: 'white', borderRadius: 10, width: 18, height: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>2</span>
                         Build it & push to GitHub
                     </span>
                     {' → '}
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                        <span style={{ background: 'var(--green)', color: 'white', borderRadius: 10, width: 18, height: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700 }}>3</span>
+                        <span style={{ background: 'var(--green)', color: 'white', borderRadius: 10, width: 18, height: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>3</span>
                         Submit repo URL for AI verification
                     </span>
                 </div>
@@ -191,7 +191,7 @@ export default function MyProjects() {
                             then click "Save to My Projects" to track it here.
                         </p>
                     </div>
-                    <button className="btn btn--primary" onClick={() => navigate('/skill-gap')}>
+                    <button type="button" className="btn btn--primary" onClick={() => navigate('/skill-gap')}>
                         Go to Skill Gap Analysis
                     </button>
                 </div>
@@ -229,7 +229,7 @@ export default function MyProjects() {
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
                                         <span style={{
-                                            fontSize: 11, fontWeight: 600, padding: '3px 10px',
+                                            fontSize: 12, fontWeight: 600, padding: '3px 10px',
                                             borderRadius: 20, background: meta.bg, color: meta.color,
                                             display: 'inline-flex', alignItems: 'center', gap: 4,
                                         }}>
@@ -237,7 +237,7 @@ export default function MyProjects() {
                                         </span>
                                         {hasVerification && (
                                             <span style={{
-                                                fontSize: 11, fontWeight: 700, padding: '3px 10px',
+                                                fontSize: 12, fontWeight: 700, padding: '3px 10px',
                                                 borderRadius: 20, background: 'var(--bg-input)',
                                                 color: verScore! >= 75 ? 'var(--green)' : verScore! >= 50 ? 'var(--orange)' : 'var(--red)',
                                                 border: '1px solid var(--border)',
@@ -245,7 +245,7 @@ export default function MyProjects() {
                                                 Score: {verScore}/100
                                             </span>
                                         )}
-                                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                                             {new Date(p.savedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                                         </span>
                                     </div>
@@ -253,7 +253,7 @@ export default function MyProjects() {
                                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
                                         {p.skills.map(s => (
                                             <span key={s} style={{
-                                                fontSize: 11, padding: '2px 8px', borderRadius: 6,
+                                                fontSize: 12, padding: '2px 8px', borderRadius: 6,
                                                 background: 'var(--bg-input)', color: 'var(--text-secondary)',
                                                 border: '1px solid var(--border)',
                                             }}>
@@ -270,14 +270,14 @@ export default function MyProjects() {
                             {/* Expanded content */}
                             {isOpen && (
                                 <>
-                                    {/* Workflow bar — contextual actions based on status */}
+                                    {/* Workflow bar - contextual actions based on status */}
                                     <div style={{
                                         padding: '12px 24px', background: 'var(--bg-glass)',
                                         borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)',
                                         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap',
                                     }}>
                                         {p.status === 'saved' && (
-                                            <button
+                                            <button type="button"
                                                 className="btn btn--primary"
                                                 onClick={() => handleStartProject(p.id)}
                                                 style={{ fontSize: 13, padding: '6px 16px', display: 'flex', alignItems: 'center', gap: 6 }}
@@ -286,7 +286,7 @@ export default function MyProjects() {
                                             </button>
                                         )}
                                         {p.status === 'in-progress' && !isVerifyOpen && (
-                                            <button
+                                            <button type="button"
                                                 className="btn btn--primary"
                                                 onClick={() => setVerifyOpen(p.id)}
                                                 style={{ fontSize: 13, padding: '6px 16px', display: 'flex', alignItems: 'center', gap: 6 }}
@@ -307,7 +307,7 @@ export default function MyProjects() {
                                                         <Github size={14} /> View Repo
                                                     </a>
                                                 )}
-                                                <button
+                                                <button type="button"
                                                     className="btn btn--outline"
                                                     onClick={() => setVerifyOpen(isVerifyOpen ? null : p.id)}
                                                     style={{ fontSize: 13, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 5 }}
@@ -316,7 +316,7 @@ export default function MyProjects() {
                                                 </button>
                                             </div>
                                         )}
-                                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                                             {p.status === 'saved' && '→ Start building, then submit your GitHub repo for verification'}
                                             {p.status === 'in-progress' && '→ Done coding? Submit your GitHub repo link below'}
                                             {p.status === 'verified' && `✓ Verified on ${new Date(p.verifiedAt!).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`}
@@ -352,7 +352,7 @@ export default function MyProjects() {
                                         flexWrap: 'wrap', gap: 8,
                                     }}>
                                         <div style={{ display: 'flex', gap: 8 }}>
-                                            <button
+                                            <button type="button"
                                                 className="btn btn--outline"
                                                 onClick={() => handleCopy(p.id, p.markdown)}
                                                 style={{ fontSize: 13, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 5 }}
@@ -360,7 +360,7 @@ export default function MyProjects() {
                                                 {isCopied ? <Check size={14} color="var(--green)" /> : <Copy size={14} />}
                                                 {isCopied ? 'Copied!' : 'Copy'}
                                             </button>
-                                            <button
+                                            <button type="button"
                                                 className="btn btn--outline"
                                                 onClick={() => handleDownload(p)}
                                                 style={{ fontSize: 13, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 5 }}
@@ -368,7 +368,7 @@ export default function MyProjects() {
                                                 <Download size={14} /> Download
                                             </button>
                                         </div>
-                                        <button
+                                        <button type="button"
                                             className="btn btn--outline"
                                             onClick={() => handleDelete(p.id)}
                                             style={{

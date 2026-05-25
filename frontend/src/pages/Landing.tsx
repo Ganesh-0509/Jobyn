@@ -12,7 +12,7 @@ const SIMULATOR_QUESTIONS = [
     {
         role: 'Backend SDE',
         question: 'Explain the difference between optimistic and pessimistic locking in database transaction management.',
-        simulatedAnswer: 'Optimistic locking assumes transactions can complete without conflict — it checks before committing. Pessimistic locking blocks the resource upfront, preventing concurrent updates from happening at all.',
+        simulatedAnswer: 'Optimistic locking assumes transactions can complete without conflict - it checks before committing. Pessimistic locking blocks the resource upfront, preventing concurrent updates from happening at all.',
         score: '84%',
         conceptsCovered: ['ACID', 'Concurrency', 'Dist. Consensus'],
     },
@@ -51,7 +51,7 @@ const TESTIMONIALS = [
         initials: 'RG',
         author: 'Rohan Gupta',
         role: 'ML Engineer, Pune',
-        quote: 'The GitHub verifier is something I didn\'t know I needed. I used it to verify my capstone project before submitting job applications — the VERIFIED badge actually came up in my interview.',
+        quote: 'The GitHub verifier is something I didn\'t know I needed. I used it to verify my capstone project before submitting job applications - the VERIFIED badge actually came up in my interview.',
     },
 ]
 
@@ -102,7 +102,7 @@ export default function Landing() {
     useEffect(() => {
         if (!isLoading) {
             // Trigger skill bar filling animation
-            setTimeout(() => setAnimateBars(true), 300)
+            const timer = setTimeout(() => setAnimateBars(true), 300)
             
             // Intersection observer for buttery reveals
             const observer = new IntersectionObserver(
@@ -117,7 +117,10 @@ export default function Landing() {
             )
 
             document.querySelectorAll('.reveal').forEach(el => observer.observe(el))
-            return () => observer.disconnect()
+            return () => {
+                clearTimeout(timer)
+                observer.disconnect()
+            }
         }
     }, [isLoading])
 
@@ -219,7 +222,7 @@ export default function Landing() {
                     </div>
                 </Link>
 
-                <button
+                <button type="button"
                     className="nav-toggle"
                     onClick={() => setMobileNav(v => !v)}
                     aria-label="Toggle navigation"
@@ -247,7 +250,7 @@ export default function Landing() {
                     </h1>
 
                     <p className="hero-sub reveal reveal-d2">
-                        Upload your resume. CampusSync tells you your readiness score for 7 engineering roles, what skills you're missing, and what to study — no guessing, no generic advice.
+                        Upload your resume. CampusSync tells you your readiness score for 7 engineering roles, what skills you're missing, and what to study - no guessing, no generic advice.
                     </p>
 
                     <div className="cta-row reveal reveal-d3">
@@ -507,7 +510,7 @@ export default function Landing() {
                             <div className="eyebrow reveal">Interview prep</div>
                             <h2 className="reveal reveal-d1">Practice until <em>answers feel obvious.</em></h2>
                             <p className="sec-sub reveal reveal-d2">
-                                Real questions, real feedback. The simulator runs entirely on-device for speed — no waiting for an API call to grade your answer.
+                                Real questions, real feedback. The simulator runs entirely on-device for speed - no waiting for an API call to grade your answer.
                             </p>
                             
                             <div className="steps reveal reveal-d3">
@@ -549,7 +552,7 @@ export default function Landing() {
                                 <div className="sim-body">
                                     <div className="sim-tabs">
                                         {SIMULATOR_QUESTIONS.map((q, idx) => (
-                                            <button 
+                                            <button type="button" 
                                                 key={q.role}
                                                 className={`sim-tab-btn ${activeSimIndex === idx ? 'active' : ''}`}
                                                 onClick={() => {
@@ -574,11 +577,11 @@ export default function Landing() {
                                     
                                     <div className="sim-score-row">
                                         <div>
-                                            <div style={{ fontSize: '11px', color: 'var(--text3)', marginBottom: '2px' }}>ACCURACY SCORE</div>
+                                            <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: '2px' }}>ACCURACY SCORE</div>
                                             <div className="sim-score">{SIMULATOR_QUESTIONS[activeSimIndex].score}</div>
                                         </div>
                                         <div>
-                                            <div style={{ fontSize: '11px', color: 'var(--text3)', marginBottom: '6px' }}>COVERED</div>
+                                            <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: '6px' }}>COVERED</div>
                                             <div className="sim-chips">
                                                 {SIMULATOR_QUESTIONS[activeSimIndex].conceptsCovered.map((c) => (
                                                     <span key={c} className="chip chip-green">{c}</span>
@@ -589,7 +592,7 @@ export default function Landing() {
                                 </div>
                                 
                                 <div className="sim-btn-container">
-                                    <button 
+                                    <button type="button" 
                                         className="btn-sim-action"
                                         disabled={isSimulating}
                                         onClick={startSimulatingText}
@@ -611,10 +614,10 @@ export default function Landing() {
                             <div className="eyebrow reveal">GitHub verifier</div>
                             <h2 className="reveal reveal-d1">Prove your projects are <em>actually yours.</em></h2>
                             <p className="sec-sub reveal reveal-d2">
-                                Recruiters can't verify GitHub projects during a resume screen. CampusSync does it automatically — commit history, file structure, code quality, and AI authenticity check.
+                                Recruiters can't verify GitHub projects during a resume screen. CampusSync does it automatically - commit history, file structure, code quality, and AI authenticity check.
                             </p>
                             <p className="reveal reveal-d3" style={{ fontSize: '14px', color: 'var(--text2)', lineHeight: '1.7' }}>
-                                Paste your repo URL. The verifier fetches metadata, languages, commit timeline, and file tree in parallel — then Gemini AI checks it against 5 authenticity criteria. You get a structured verdict you can share with recruiters.
+                                Paste your repo URL. The verifier fetches metadata, languages, commit timeline, and file tree in parallel - then Gemini AI checks it against 5 authenticity criteria. You get a structured verdict you can share with recruiters.
                             </p>
                             <div style={{ marginTop: '20px' }} className="reveal reveal-d3">
                                 <span className="chip chip-green" style={{ fontSize: '13px', padding: '5px 12px' }}>VERIFIED</span>
@@ -651,7 +654,7 @@ export default function Landing() {
                                         <span className="verdict v-warn">REVIEW</span>
                                     </div>
                                     <div className="verify-final">
-                                        ✓ VERIFIED — Project is authentic with minor flags
+                                        ✓ VERIFIED - Project is authentic with minor flags
                                     </div>
                                 </div>
                             </div>
@@ -689,7 +692,7 @@ export default function Landing() {
             <div className="cta-section">
                 <div className="cta-inner">
                     <h2 className="reveal">Ready to find out where you actually stand?</h2>
-                    <p className="reveal reveal-d1">Upload your resume and get a detailed readiness report for 7 engineering roles — free, takes under 60 seconds.</p>
+                    <p className="reveal reveal-d1">Upload your resume and get a detailed readiness report for 7 engineering roles - free, takes under 60 seconds.</p>
                     
                     <div 
                         className={`dropzone reveal reveal-d2 ${uploadFinished ? 'success' : ''}`} 
@@ -706,7 +709,7 @@ export default function Landing() {
                                 <div className="drop-txt" style={{ color: '#9E9A94' }}>Analyzing resume ({uploadProgress}%)</div>
                             </div>
                         ) : uploadFinished ? (
-                            <div className="drop-success">✓ Resume analyzed — redirecting to your report...</div>
+                            <div className="drop-success">✓ Resume analyzed - redirecting to your report...</div>
                         ) : (
                             <div>
                                 <div className="drop-icon">📄</div>

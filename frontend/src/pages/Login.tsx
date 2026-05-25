@@ -79,7 +79,7 @@ function AnimatedCharacter({ state }: { state: CharState }) {
             <circle cx="120" cy="197" r="10" fill="rgba(255,255,255,0.12)" />
             <text x="120" y="201" textAnchor="middle" fontSize="8" fontWeight="700" fill="white">AI</text>
 
-            {/* ── LEFT ARM — pivot from TOP-RIGHT corner (= shoulder) ── */}
+            {/* ── LEFT ARM - pivot from TOP-RIGHT corner (= shoulder) ── */}
             <g style={{
                 transformBox: 'fill-box' as React.CSSProperties['transformBox'],
                 transformOrigin: 'right top',
@@ -94,7 +94,7 @@ function AnimatedCharacter({ state }: { state: CharState }) {
                 <circle cx="74" cy="242" r="4" fill="#e8a570" opacity="0.7" />
             </g>
 
-            {/* ── RIGHT ARM — pivot from TOP-LEFT corner (= shoulder) ── */}
+            {/* ── RIGHT ARM - pivot from TOP-LEFT corner (= shoulder) ── */}
             <g style={{
                 transformBox: 'fill-box' as React.CSSProperties['transformBox'],
                 transformOrigin: 'left top',
@@ -193,15 +193,15 @@ function AnimatedCharacter({ state }: { state: CharState }) {
             {/* Neutral */}
             <path d="M 103,120 Q 120,128 137,120" fill="none" stroke="#b06040" strokeWidth="2.8" strokeLinecap="round"
                 style={{ opacity: (state === 'idle' || state === 'looking') ? 1 : 0, transition: 'opacity 0.3s' }} />
-            {/* Hiding — small nervous */}
+            {/* Hiding - small nervous */}
             <path d="M 108,120 Q 120,125 132,120" fill="none" stroke="#b06040" strokeWidth="2.8" strokeLinecap="round"
                 style={{ opacity: hiding ? 1 : 0, transition: 'opacity 0.3s' }} />
-            {/* Happy — big smile with teeth */}
+            {/* Happy - big smile with teeth */}
             <path d="M 97,117 Q 120,140 143,117" fill="#b06040" stroke="#b06040" strokeWidth="2" strokeLinecap="round"
                 style={{ opacity: happy ? 1 : 0, transition: 'opacity 0.3s' }} />
             <path d="M 98,118 Q 120,133 142,118" fill="white" stroke="none"
                 style={{ opacity: happy ? 1 : 0, transition: 'opacity 0.3s' }} />
-            {/* Error — frown */}
+            {/* Error - frown */}
             <path d="M 103,124 Q 120,116 137,124" fill="none" stroke="#b06040" strokeWidth="2.8" strokeLinecap="round"
                 style={{ opacity: error ? 1 : 0, transition: 'opacity 0.3s' }} />
 
@@ -226,7 +226,7 @@ function AnimatedCharacter({ state }: { state: CharState }) {
 }
 
 /* ──────────────────────────────────────────────────────────────
-   Login Page — Single Card Layout
+   Login Page - Single Card Layout
    Character is directly above the form (same card, connected)
 ────────────────────────────────────────────────────────────── */
 export default function Login() {
@@ -344,7 +344,7 @@ export default function Login() {
 
                     <div className="auth-divider">or</div>
 
-                    <button
+                    <button type="button"
                         className="google-btn"
                         onClick={async () => {
                             try {

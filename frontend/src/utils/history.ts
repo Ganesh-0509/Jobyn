@@ -34,7 +34,7 @@ export function loadHistory(userEmail?: string): HistoryEntry[] {
     catch { return [] }
 }
 
-/** Returns real history only — no synthetic demo data */
+/** Returns real history only - no synthetic demo data */
 export function getHistoryOrDemo(real: HistoryEntry[]): HistoryEntry[] {
     return real
 }

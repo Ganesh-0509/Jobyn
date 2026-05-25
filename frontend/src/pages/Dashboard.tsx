@@ -16,7 +16,6 @@ export default function Dashboard() {
 
     useEffect(() => {
         const ctl = new AbortController()
-        setAnalyticsError(null)
         getAnalytics()
             .then(d => { if (!ctl.signal.aborted) setAnalytics(d) })
             .catch(err => { if (!ctl.signal.aborted) setAnalyticsError(err?.message || 'Failed to load analytics') })
@@ -83,7 +82,7 @@ export default function Dashboard() {
                     {user ? `Welcome back, ${user.name}! ` : ''}
                     AI-powered job readiness intelligence for engineering students.
                 </p>
-                <button className="btn btn--primary" onClick={() => navigate('/resume-analyzer')}>
+                <button type="button" className="btn btn--primary" onClick={() => navigate('/resume-analyzer')}>
                     <Upload size={14} /> {analysis ? 'Re-Upload Resume' : 'Upload Resume'}
                 </button>
             </div>
@@ -133,7 +132,7 @@ export default function Dashboard() {
                 <div className="card card--full-height">
                     <div className="flex items-center justify-between mb-4">
                         <div className="card-title">Skill Gaps</div>
-                        {analysis && <button className="btn btn--ghost btn--sm" style={{ padding: '0 8px' }} onClick={() => navigate('/skill-gap')}>Gaps →</button>}
+                        {analysis && <button type="button" className="btn btn--ghost btn--sm" style={{ padding: '0 8px' }} onClick={() => navigate('/skill-gap')}>Gaps →</button>}
                     </div>
                     <div className="card-subtitle mb-16">Top critical skills to focus on</div>
                     {TOP_MISSING.length > 0 ? (
@@ -192,7 +191,7 @@ export default function Dashboard() {
                                 </p>
                             </div>
 
-                            <button
+                            <button type="button"
                                 className="btn btn--primary btn--sm"
                                 onClick={() => navigate('/resume-analyzer')}
                                 style={{ marginTop: 16, width: '100%', justifyContent: 'center' }}

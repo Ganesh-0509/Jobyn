@@ -36,7 +36,7 @@ function resolveCategory(skill: string): string {
     return 'other'
 }
 
-/* ── XP constants — each action has a clear, documented XP value ──────── */
+/* ── XP constants - each action has a clear, documented XP value ──────── */
 const XP_PER_SKILL_MASTERED = 50   // 50 XP for each skill mastered via study
 const XP_FOR_RESUME_UPLOAD  = 100  // 100 XP for uploading and analyzing a resume
 const XP_PER_HISTORY_ENTRY  = 20   // 20 XP for each re-analysis (shows iteration)
@@ -44,7 +44,7 @@ const XP_PER_COMPLETED_TASK = 10   // 10 XP for each improvement plan task compl
 
 const XP_PER_LEVEL = 150           // fixed XP per level (level 1 = 0-149, level 2 = 150-299, etc.)
 
-/* ── Milestone definitions — thresholds based on scoring.json readiness ── */
+/* ── Milestone definitions - thresholds based on scoring.json readiness ── */
 const MILESTONE_DEFS = [
     { icon: Star,   label: 'Resume Insight',   test: (s: number, a: boolean) => a,        sub: 'Profile analyzed' },
     { icon: Award,  label: 'Growing Talent',    test: (s: number) => s >= 50,              sub: '50% readiness' },
@@ -55,7 +55,7 @@ const MILESTONE_DEFS = [
 /* ── Streak calculation from actual history dates ─────────────────────── */
 function computeStreak(hist: { label: string }[]): number {
     if (hist.length === 0) return 0
-    // labels are like "Mar 1", "Feb 28" — we count how many unique dates exist
+    // labels are like "Mar 1", "Feb 28" - we count how many unique dates exist
     // from the end that are sequential. Since the exact date parse can be fragile,
     // just count consecutive entries from the tail (each entry = 1 day max).
     // History already de-duplicates same-day entries, so length = # distinct days with activity.
@@ -119,7 +119,7 @@ export default function ProgressTracking() {
     const totalSkills   = catStats.reduce((a, c) => a + c.skills.length, 0)
     const overallPct    = totalSkills > 0 ? Math.round((totalVerified / totalSkills) * 100) : 0
 
-    /* ── XP — derived from real, trackable actions ───────────────────── */
+    /* ── XP - derived from real, trackable actions ───────────────────── */
     const totalXp = useMemo(() => {
         let xp = 0
         if (analysis) xp += XP_FOR_RESUME_UPLOAD                            // uploaded resume
@@ -146,7 +146,7 @@ export default function ProgressTracking() {
     /* ── Streak ──────────────────────────────────────────────────────── */
     const streak = computeStreak(hist)
 
-    /* ── Next skill to learn — first missing core, then optional ──────── */
+    /* ── Next skill to learn - first missing core, then optional ──────── */
     const nextSkill = useMemo(() => {
         const masLower = new Set(masteredSkills.map(s => s.toLowerCase()))
         const detLower = new Set((analysis?.detected_skills ?? []).map(s => s.toLowerCase()))
@@ -170,7 +170,7 @@ export default function ProgressTracking() {
                     <h1 className="pt-locked__title">Growth Tracking Locked</h1>
                     <p className="pt-locked__sub">Upload your resume to unlock real-time growth analytics, XP leveling,
                     skill density mapping, and career milestones.</p>
-                    <button className="btn btn--primary" onClick={() => navigate('/resume-analyzer')} style={{ marginTop: 24 }}>
+                    <button type="button" className="btn btn--primary" onClick={() => navigate('/resume-analyzer')} style={{ marginTop: 24 }}>
                         <Sparkles size={16} /> Analyze Your Resume
                     </button>
                     <div className="pt-locked__features">
@@ -211,7 +211,7 @@ export default function ProgressTracking() {
                     </div>
                     <div className="pt-xp-bar__stat" title={velocity !== null ? `Score changed ${velocity > 0 ? '+' : ''}${velocity} pts from first to latest analysis` : 'Need at least 2 analyses to show velocity'}>
                         <TrendingUp size={14} color={velocity !== null && velocity > 0 ? 'var(--green)' : 'var(--text-muted)'} />
-                        <span>{velocity !== null ? `${velocity > 0 ? '+' : ''}${velocity} pts` : '—'}</span>
+                        <span>{velocity !== null ? `${velocity > 0 ? '+' : ''}${velocity} pts` : '-'}</span>
                     </div>
                 </div>
             </div>
@@ -250,7 +250,7 @@ export default function ProgressTracking() {
                     </div>
                 </div>
 
-                {/* Quick stat chips — all dynamic */}
+                {/* Quick stat chips - all dynamic */}
                 <div className="pt-quick-stats">
                     <div className="pt-qstat">
                         <div className="pt-qstat__num">{totalVerified}<span>/{totalSkills}</span></div>
@@ -272,7 +272,7 @@ export default function ProgressTracking() {
                 </div>
             </div>
 
-            {/* ── Skill Radar — Dynamic Category Cards ─────────────────── */}
+            {/* ── Skill Radar - Dynamic Category Cards ─────────────────── */}
             <div className="pt-section-header">
                 <BarChart2 size={18} />
                 <div>
@@ -289,7 +289,7 @@ export default function ProgressTracking() {
                     const isOpen = expandedCat === cat.code
                     return (
                         <div key={cat.code} className={`pt-cat-card ${isOpen ? 'pt-cat-card--open' : ''}`}>
-                            <button className="pt-cat-card__head" onClick={() => setExpandedCat(isOpen ? null : cat.code)}>
+                            <button type="button" className="pt-cat-card__head" onClick={() => setExpandedCat(isOpen ? null : cat.code)}>
                                 <div className="pt-cat-card__icon" style={{ color: cat.color, background: `${cat.color}15` }}>
                                     <Icon size={18} />
                                 </div>
@@ -327,12 +327,12 @@ export default function ProgressTracking() {
                                     </div>
                                     <div className="pt-cat-skills">
                                         {cat.skills.map(s => (
-                                            <button
+                                            <button type="button"
                                                 key={s.name}
                                                 className={`pt-skill-chip ${s.verified ? 'pt-skill-chip--done' : 'pt-skill-chip--missing'}`}
                                                 style={{ '--cat-color': cat.color } as React.CSSProperties}
                                                 onClick={() => !s.verified && setSelectedSkill(s.name)}
-                                                title={s.verified ? `${s.name} — Verified ✓` : `Click to learn ${s.name}`}
+                                                title={s.verified ? `${s.name} - Verified ✓` : `Click to learn ${s.name}`}
                                             >
                                                 {s.verified && <CheckCircle size={12} />}
                                                 {s.name}

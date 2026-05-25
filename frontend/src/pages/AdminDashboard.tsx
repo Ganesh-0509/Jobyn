@@ -25,8 +25,8 @@ export default function AdminDashboard() {
     const [viewingStudent, setViewingStudent] = useState<AdminStudent | null>(null)
     const overlayRef = useRef<HTMLDivElement>(null)
 
-    const fetchData = async () => {
-        setLoading(true)
+    const fetchData = async (showLoading = true) => {
+        if (showLoading) setLoading(true)
         setError(null)
         try {
             const [s, c, d] = await Promise.all([
@@ -46,7 +46,7 @@ export default function AdminDashboard() {
     }
 
     useEffect(() => {
-        fetchData()
+        fetchData(false)
     }, [])
 
     useEffect(() => {
@@ -87,7 +87,7 @@ export default function AdminDashboard() {
 
     if (error && !stats) return (
         <div className="page-content">
-            <ErrorState title="Failed to load admin data" message={error} onRetry={fetchData} />
+            <ErrorState title="Failed to load admin data" message={error} onRetry={() => fetchData()} />
         </div>
     )
 
@@ -97,7 +97,7 @@ export default function AdminDashboard() {
     if (selectedView === 'users') {
         return (
             <div className="page-content animate-fade-in">
-                <button className="btn btn--ghost btn--sm mb-24" onClick={() => setSelectedView(null)}>
+                <button type="button" className="btn btn--ghost btn--sm mb-24" onClick={() => setSelectedView(null)}>
                     <ArrowLeft size={14} /> Back to Command Center
                 </button>
 
@@ -148,14 +148,14 @@ export default function AdminDashboard() {
                                         </td>
                                         <td style={{ padding: '16px 20px' }}>
                                             <div style={{ display: 'flex', gap: 4 }}>
-                                                {s.detected_skills.slice(0, 3).map(sk => <span key={sk} className="tag tag--skill" style={{ fontSize: 10 }}>{sk}</span>)}
+                                                {s.detected_skills.slice(0, 3).map(sk => <span key={sk} className="tag tag--skill" style={{ fontSize: 12 }}>{sk}</span>)}
                                             </div>
                                         </td>
                                         <td style={{ padding: '16px 20px' }}>
-                                            <span style={{ fontSize: 10, opacity: 0.5, fontFamily: 'monospace' }}>#{s.analysis_id}</span>
+                                            <span style={{ fontSize: 12, opacity: 0.5, fontFamily: 'monospace' }}>#{s.analysis_id}</span>
                                         </td>
                                         <td style={{ padding: '16px 20px', textAlign: 'right' }}>
-                                            <button
+                                            <button type="button"
                                                 className="btn btn--ghost btn--sm"
                                                 onClick={(e) => handleDeleteAnalysis(e, s.analysis_id)}
                                                 style={{ color: 'var(--red)', padding: 4 }}
@@ -176,7 +176,7 @@ export default function AdminDashboard() {
                     {viewingStudent && (
                         <div ref={overlayRef} tabIndex={-1} onKeyDown={e => { if (e.key === 'Escape') setViewingStudent(null) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', justifyContent: 'flex-end', outline: 'none' }}>
                             <div style={{ width: 500, background: 'var(--bg-card)', height: '100%', borderLeft: '1px solid var(--border)', padding: 40, overflowY: 'auto', position: 'relative' }}>
-                                <button
+                                <button type="button"
                                     onClick={() => setViewingStudent(null)}
                                     style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
                                 >
@@ -194,15 +194,15 @@ export default function AdminDashboard() {
                                 </div>
 
                                 <div className="card mb-24" style={{ padding: 20 }}>
-                                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--blue)', marginBottom: 8, textTransform: 'uppercase' }}>Target Role Profile</div>
+                                    <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--blue)', marginBottom: 8, textTransform: 'uppercase' }}>Target Role Profile</div>
                                     <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 12 }}>{viewingStudent.role}</div>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                                         <div style={{ padding: 12, background: 'var(--bg-input)', borderRadius: 8 }}>
-                                            <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>Readiness</div>
+                                            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Readiness</div>
                                             <div style={{ fontSize: 16, fontWeight: 800 }}>{viewingStudent.final_score}%</div>
                                         </div>
                                         <div style={{ padding: 12, background: 'var(--bg-input)', borderRadius: 8 }}>
-                                            <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>ATS Score</div>
+                                            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>ATS Score</div>
                                             <div style={{ fontSize: 16, fontWeight: 800 }}>{viewingStudent.ats_score_percent}%</div>
                                         </div>
                                     </div>
@@ -219,15 +219,15 @@ export default function AdminDashboard() {
                                     <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 12 }}>Missing Core Skills</div>
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                                         {viewingStudent.missing_core_skills.length > 0
-                                            ? viewingStudent.missing_core_skills.map(s => <span key={s} className="badge badge--high" style={{ fontSize: 10 }}>{s}</span>)
-                                            : <div style={{ fontSize: 11, color: 'var(--green)' }}>✓ All core skills present</div>
+                                            ? viewingStudent.missing_core_skills.map(s => <span key={s} className="badge badge--high" style={{ fontSize: 12 }}>{s}</span>)
+                                            : <div style={{ fontSize: 12, color: 'var(--green)' }}>✓ All core skills present</div>
                                         }
                                     </div>
                                 </div>
 
                                 <div style={{ padding: 20, background: 'var(--bg-glass)', borderRadius: 12, border: '1px dashed var(--border)' }}>
                                     <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8 }}>Analysis metadata</div>
-                                    <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.8 }}>
+                                    <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.8 }}>
                                         Filename: {viewingStudent.filename}<br />
                                         Analyzed: {new Date(viewingStudent.analyzed_at).toLocaleString()}<br />
                                         Structure Score: {viewingStudent.structure_score_percent}%<br />
@@ -246,7 +246,7 @@ export default function AdminDashboard() {
     if (selectedView === 'database') {
         return (
             <div className="page-content animate-fade-in">
-                <button className="btn btn--ghost btn--sm mb-24" onClick={() => setSelectedView(null)}>
+                <button type="button" className="btn btn--ghost btn--sm mb-24" onClick={() => setSelectedView(null)}>
                     <ArrowLeft size={14} /> Back to Command Center
                 </button>
 
@@ -257,7 +257,7 @@ export default function AdminDashboard() {
                             <h2 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>Vector Engine Console</h2>
                         </div>
                         <div style={{ padding: 20, background: 'var(--bg-secondary)', borderRadius: 8, fontFamily: 'monospace', fontSize: 12, height: 400, overflowY: 'auto', border: '1px solid var(--border)' }}>
-                            <div style={{ color: 'var(--text-secondary)' }}>[CampusSync Edge — System Console]</div>
+                            <div style={{ color: 'var(--text-secondary)' }}>[CampusSync Edge - System Console]</div>
                             <div style={{ color: 'var(--green)', marginTop: 8 }}>{'>'} Status: {stats ? 'Connected' : 'Checking...'}</div>
                             <div style={{ color: 'var(--blue)' }}>{'>'} Pending Reviews: {stats?.pending_reviews ?? '...'}</div>
                             <div style={{ color: 'var(--blue)' }}>{'>'} Approved Content: {stats?.approved_contributions ?? '...'}</div>
@@ -278,11 +278,11 @@ export default function AdminDashboard() {
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                                 <div style={{ padding: 16, background: 'var(--bg-input)', borderRadius: 10, border: '1px solid var(--border)' }}>
-                                    <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>Students</div>
+                                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Students</div>
                                     <div style={{ fontSize: 18, fontWeight: 800 }}>{stats?.active_students ?? '--'}</div>
                                 </div>
                                 <div style={{ padding: 16, background: 'rgba(var(--green-rgb), 0.05)', borderRadius: 10, border: '1px solid rgba(var(--green-rgb), 0.2)' }}>
-                                    <div style={{ fontSize: 10, color: 'var(--green)', marginBottom: 4 }}>Courses Cached</div>
+                                    <div style={{ fontSize: 12, color: 'var(--green)', marginBottom: 4 }}>Courses Cached</div>
                                     <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--green)' }}>{stats?.total_courses_cached ?? '--'}</div>
                                 </div>
                             </div>
@@ -324,7 +324,7 @@ export default function AdminDashboard() {
                         <div className="pulse" style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)' }} />
                         <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--green)' }}>SYSTEM OPERATIONAL</span>
                     </div>
-                    <button className="btn btn--ghost btn--sm" onClick={fetchData}>
+                    <button type="button" className="btn btn--ghost btn--sm" onClick={() => fetchData()}>
                         <RefreshCcw size={14} /> Sync
                     </button>
                 </div>
@@ -343,10 +343,10 @@ export default function AdminDashboard() {
                         <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(var(--blue-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue)' }}>
                             <Users size={18} />
                         </div>
-                        <span style={{ fontSize: 10, color: 'var(--green)', fontWeight: 800 }}>LIVE</span>
+                        <span style={{ fontSize: 12, color: 'var(--green)', fontWeight: 800 }}>LIVE</span>
                     </div>
                     <div style={{ fontSize: 28, fontWeight: 900 }}>{stats?.active_students.toLocaleString() ?? '1,248'}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Active Engineers</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Active Engineers</div>
                     <div style={{ height: 2, background: 'rgba(var(--blue-rgb), 0.1)', marginTop: 16 }}>
                         <div style={{ width: '70%', height: '100%', background: 'var(--blue)' }} />
                     </div>
@@ -357,10 +357,10 @@ export default function AdminDashboard() {
                         <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(var(--green-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--green)' }}>
                             <BookOpen size={18} />
                         </div>
-                        <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 700 }}>+12 Today</span>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700 }}>+12 Today</span>
                     </div>
                     <div style={{ fontSize: 28, fontWeight: 900 }}>{stats?.total_courses_cached ?? '42'}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>AI Learning Tracks</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>AI Learning Tracks</div>
                     <div style={{ height: 2, background: 'rgba(var(--green-rgb), 0.1)', marginTop: 16 }}>
                         <div style={{ width: '45%', height: '100%', background: 'var(--green)' }} />
                     </div>
@@ -374,7 +374,7 @@ export default function AdminDashboard() {
                         <span className="badge badge--medium" style={{ fontSize: 9 }}>TOP PRIORITY</span>
                     </div>
                     <div style={{ fontSize: 28, fontWeight: 900 }}>{stats?.pending_reviews ?? contributions.length}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Pending Moderation</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Pending Moderation</div>
                     <div style={{ height: 2, background: 'rgba(var(--orange-rgb), 0.1)', marginTop: 16 }}>
                         <div style={{ width: `${(stats?.pending_reviews ?? 0) * 10}%`, height: '100%', background: 'var(--orange)' }} />
                     </div>
@@ -391,10 +391,10 @@ export default function AdminDashboard() {
                         <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(var(--purple-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--purple)' }}>
                             <Activity size={18} />
                         </div>
-                        <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 700 }}>99.9% SLI</span>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700 }}>99.9% SLI</span>
                     </div>
                     <div style={{ fontSize: 28, fontWeight: 900 }}>142ms</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>AI Inference Latency</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>AI Inference Latency</div>
                     <div style={{ height: 2, background: 'rgba(var(--purple-rgb), 0.1)', marginTop: 16 }}>
                         <div style={{ width: '60%', height: '100%', background: 'var(--purple)' }} />
                     </div>
@@ -433,16 +433,16 @@ export default function AdminDashboard() {
                                             </div>
                                             <div>
                                                 <div style={{ fontSize: 15, fontWeight: 700 }}>{c.topic.toUpperCase()}</div>
-                                                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                                                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                                                     By <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{c.submitted_by}</span> • {new Date(c.created_at).toLocaleDateString()}
                                                 </div>
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', gap: 8 }}>
-                                            <button className="btn btn--danger btn--sm" onClick={() => handleReject(c.id)}>
+                                            <button type="button" className="btn btn--danger btn--sm" onClick={() => handleReject(c.id)}>
                                                 <X size={14} /> Reject
                                             </button>
-                                            <button className="btn btn--primary btn--sm" onClick={() => handleApprove(c.id)} style={{ background: 'var(--green)' }}>
+                                            <button type="button" className="btn btn--primary btn--sm" onClick={() => handleApprove(c.id)} style={{ background: 'var(--green)' }}>
                                                 <Check size={14} /> Approve
                                             </button>
                                         </div>
@@ -497,7 +497,7 @@ export default function AdminDashboard() {
                                 <div key={i} style={{ flex: 1, height: `${h}%`, background: 'rgba(var(--purple-rgb), 0.3)', borderRadius: '2px 2px 0 0' }} />
                             ))}
                         </div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 12, textAlign: 'center' }}>Traffic intensity (Last 12 Hours)</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 12, textAlign: 'center' }}>Traffic intensity (Last 12 Hours)</div>
                     </div>
                 </div>
             </div>

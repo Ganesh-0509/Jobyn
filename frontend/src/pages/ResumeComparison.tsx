@@ -30,7 +30,7 @@ export default function ResumeComparison() {
                     <div style={{ fontSize: 60, marginBottom: 20 }}>🆚</div>
                     <h1 className="page-title">Version Comparison Locked</h1>
                     <p className="page-subtitle">To see side-by-side improvements, you need to upload at least two versions of your resume.</p>
-                    <button className="btn btn--primary" onClick={() => navigate('/resume-analyzer')} style={{ marginTop: 24 }}>
+                    <button type="button" className="btn btn--primary" onClick={() => navigate('/resume-analyzer')} style={{ marginTop: 24 }}>
                         Upload Second Version
                     </button>
                     <div className="card" style={{ marginTop: 40, padding: '24px 32px', textAlign: 'left', background: 'rgba(var(--blue-rgb),0.03)' }}>

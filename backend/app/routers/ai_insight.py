@@ -1,5 +1,5 @@
 from datetime import date
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from app.services.ai_service import ai_service
@@ -8,8 +8,9 @@ from app.services.curriculum_graph import (
     get_prerequisites, get_unlocked_skills, get_learning_path,
     get_curriculum_overview, can_unlock, CURRICULUM_GRAPH,
 )
-from app.core.rate_limiter import ai_limit
+from app.core.rate_limiter import ai_limit, heavy_limit
 from app.services.knowledge_service import knowledge_service
+from app.core.auth import get_admin_user
 
 router = APIRouter(prefix="/ai", tags=["AI Insights"])
 
@@ -107,7 +108,8 @@ def _resolve_full_path(
 
 
 @router.post("/smart-plan")
-async def build_smart_plan(req: SmartPlanRequest):
+@heavy_limit
+async def build_smart_plan(request: Request, req: SmartPlanRequest):
     """
     Build a dependency-aware learning plan.  Returns an ordered list of
     skills with prerequisites, unlock chains, and day-by-day scheduling.
@@ -189,14 +191,16 @@ async def get_forecast(request: Request, req: ForecastRequest):
     return await ai_service.get_market_forecast(req.role, req.missing_skills)
 
 @router.get("/study/notes")
-async def get_study_notes(skill: str, existing_skills: Optional[str] = None):
+@ai_limit
+async def get_study_notes(request: Request, skill: str, existing_skills: Optional[str] = None):
     """Generates study notes for a specific skill (intro + first section)."""
     if not skill:
         raise HTTPException(status_code=400, detail="Skill name is required.")
     return await ai_service.get_study_materials(skill, existing_skills or "")
 
 @router.get("/study/section")
-async def get_study_section(skill: str, section_idx: int, existing_skills: Optional[str] = None):
+@ai_limit
+async def get_study_section(request: Request, skill: str, section_idx: int, existing_skills: Optional[str] = None):
     """Generates a single study section on-demand for progressive loading."""
     if not skill:
         raise HTTPException(status_code=400, detail="Skill name is required.")
@@ -205,14 +209,16 @@ async def get_study_section(skill: str, section_idx: int, existing_skills: Optio
     return await ai_service.get_study_section(skill, section_idx, existing_skills or "")
 
 @router.get("/study/quiz")
-async def get_study_quiz(skill: str):
+@ai_limit
+async def get_study_quiz(request: Request, skill: str):
     """Generates a verification quiz for a specific skill."""
     if not skill:
         raise HTTPException(status_code=400, detail="Skill name is required.")
     return await ai_service.generate_quiz(skill)
 
 @router.post("/study/chat")
-async def study_chat(req: ChatRequest):
+@ai_limit
+async def study_chat(request: Request, req: ChatRequest):
     """Provides a chat interface for a specific skill."""
     if not req.skill or not req.query:
         raise HTTPException(status_code=400, detail="Skill and query are required.")
@@ -244,7 +250,8 @@ class InterviewEndRequest(BaseModel):
 
 
 @router.post("/interview/start")
-async def start_interview(req: InterviewStartRequest):
+@ai_limit
+async def start_interview(request: Request, req: InterviewStartRequest):
     """Start a mock interview session — returns the first question."""
     if not req.skill:
         raise HTTPException(status_code=400, detail="Skill is required.")
@@ -252,7 +259,8 @@ async def start_interview(req: InterviewStartRequest):
 
 
 @router.post("/interview/answer")
-async def evaluate_interview_answer(req: InterviewAnswerRequest):
+@ai_limit
+async def evaluate_interview_answer(request: Request, req: InterviewAnswerRequest):
     """Evaluate the candidate's answer and return a follow-up question."""
     if not req.skill or not req.answer:
         raise HTTPException(status_code=400, detail="Skill and answer are required.")
@@ -267,7 +275,8 @@ async def evaluate_interview_answer(req: InterviewAnswerRequest):
 
 
 @router.post("/interview/end")
-async def end_interview(req: InterviewEndRequest):
+@ai_limit
+async def end_interview(request: Request, req: InterviewEndRequest):
     """End the interview and return a comprehensive scorecard."""
     if not req.history:
         raise HTTPException(status_code=400, detail="Interview history is required.")
@@ -280,13 +289,23 @@ def _sb():
     return get_supabase()
 
 @router.post("/study/contribute")
-async def submit_contribution(req: ContributionRequest):
+@heavy_limit
+async def submit_contribution(request: Request, req: ContributionRequest):
+    from app.utils.validation import sanitize_plain, sanitize_recursive
+    
+    clean_skill = sanitize_plain(req.skill).lower()
+    clean_submitted_by = sanitize_plain(req.submitted_by)
+    clean_content = sanitize_recursive(req.notes_content)
+    
+    if not clean_skill or not clean_submitted_by or not clean_content:
+        raise HTTPException(status_code=400, detail="Invalid contribution input data.")
+
     try:
         sb = _sb()
         sb.table("contributions").insert({
-            "topic": req.skill.lower(),
-            "submitted_by": req.submitted_by,
-            "content": req.notes_content,
+            "topic": clean_skill,
+            "submitted_by": clean_submitted_by,
+            "content": clean_content,
             "status": "pending",
         }).execute()
         return {"status": "success", "message": "Contribution submitted for review."}
@@ -294,7 +313,7 @@ async def submit_contribution(req: ContributionRequest):
         raise HTTPException(status_code=500, detail=f"Failed to submit contribution: {e}")
 
 @router.get("/admin/contributions")
-async def get_pending_contributions():
+async def get_pending_contributions(admin=Depends(get_admin_user)):
     try:
         sb = _sb()
         resp = (
@@ -309,7 +328,7 @@ async def get_pending_contributions():
         raise HTTPException(status_code=500, detail=f"Failed to fetch contributions: {e}")
 
 @router.post("/admin/contributions/{id}/approve")
-async def approve_contribution(id: int):
+async def approve_contribution(id: int, admin=Depends(get_admin_user)):
     try:
         sb = _sb()
         # Fetch the contribution
@@ -330,7 +349,7 @@ async def approve_contribution(id: int):
         raise HTTPException(status_code=500, detail=f"Approval failed: {e}")
 
 @router.post("/admin/contributions/{id}/reject")
-async def reject_contribution(id: int):
+async def reject_contribution(id: int, admin=Depends(get_admin_user)):
     try:
         sb = _sb()
         resp = sb.table("contributions").update({"status": "rejected"}).eq("id", id).execute()
@@ -343,7 +362,7 @@ async def reject_contribution(id: int):
         raise HTTPException(status_code=500, detail=f"Rejection failed: {e}")
 
 @router.get("/admin/stats")
-async def get_admin_stats():
+async def get_admin_stats(admin=Depends(get_admin_user)):
     try:
         sb = _sb()
 

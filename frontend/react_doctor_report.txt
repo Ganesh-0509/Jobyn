@@ -1,0 +1,852 @@
+﻿[1mreact-doctor[22m [2mv0.2.5[22m
+
+[32mΓ£ö[39m Select projects to scan [2mΓÇ║[22m campussync-edge-frontend
+[90mScanning D:\CampusSync Edge\frontend...[39m
+
+
+
+  [31mΓ£ù[39m [31mreact-doctor/no-eval                          [39m [90m├ù3[39m
+[90m      new Function() is a code injection risk ΓÇö avoid dynamic code execution[39m
+[90m      ΓåÆ Use `JSON.parse` for serialized data, `Function(...)` (still careful) for trusted templates, or refactor to avoid dynamic code execution[39m
+[90m      public/ort/ort-wasm-simd-threaded.jspi.js:51[39m
+[90m      public/ort/ort-wasm-simd-threaded.asyncify.js:49[39m
+[90m      public/ort/ort-wasm-simd-threaded.jsep.js:51[39m
+
+  [31mΓ£ù[39m [31mreact-doctor/effect-needs-cleanup             [39m [90m├ù2[39m
+[90m      useEffect schedules `setTimeout(...)` but never returns a cleanup ΓÇö leaks the registration on every re-run and on unmount. Return a cleanup function that calls clearTimeout(...)[39m
+[90m      ΓåÆ Return a cleanup function that releases the subscription / timer: `return () => target.removeEventListener(name, handler)` for listeners, `return () => clearInterval(id)` / `clearTimeout(id)` for timers, or `return unsubscribe` if the subscribe call already returned one[39m
+[90m      src/pages/ResumeAnalyzer.tsx:65[39m
+[90m      src/pages/Landing.tsx:102[39m
+
+  [31mΓ£ù[39m [31mreact-doctor/no-mutable-in-deps[39m
+[90m      Mutable global "history.*" in deps ΓÇö values like `location.pathname` can change without triggering a re-render, so they can't drive effect re-runs. Subscribe with useSyncExternalStore or read inside the effect[39m
+[90m      ΓåÆ Read mutable values (`location.pathname`, `ref.current`) inside the effect body instead of in the deps array, or subscribe with `useSyncExternalStore`. Mutations to these don't trigger re-renders, so listing them in deps doesn't make the effect react to changes[39m
+[90m      src/components/InterviewSimulator.tsx:140[39m
+
+  [33mΓÜá[39m [33mreact-doctor/button-has-type                  [39m [90m├ù110[39m
+[90m      `<button>` elements must have an explicit `type` attribute.[39m
+[90m      ΓåÆ Set `type="button"` (or `"submit"` / `"reset"`) explicitly on every `<button>`.[39m
+[90m      src/components/StateDisplay.tsx:46[39m
+[90m      src/components/StateDisplay.tsx:77[39m
+[90m      src/components/SkillGraphViz.tsx:190[39m
+[90m      src/pages/ResumeAnalyzer.tsx:185[39m
+[90m      src/pages/ResumeAnalyzer.tsx:199[39m
+[90m      src/pages/ResumeAnalyzer.tsx:202[39m
+[90m      src/pages/ResumeAnalyzer.tsx:297[39m
+[90m      src/pages/ResumeAnalyzer.tsx:305[39m
+[90m      src/pages/Privacy.tsx:118[39m
+[90m      src/pages/Privacy.tsx:151[39m
+[90m      src/pages/Privacy.tsx:184[39m
+[90m      src/pages/ImprovementPlan.tsx:148[39m
+[90m      src/pages/ImprovementPlan.tsx:272[39m
+[90m      src/pages/ImprovementPlan.tsx:313[39m
+[90m      src/pages/ImprovementPlan.tsx:564[39m
+[90m      src/pages/ImprovementPlan.tsx:571[39m
+[90m      src/pages/IndustryAlignment.tsx:76[39m
+[90m      src/components/InterviewSimulator.tsx:210[39m
+[90m      src/components/InterviewSimulator.tsx:232[39m
+[90m      src/components/InterviewSimulator.tsx:294[39m
+[90m      src/components/InterviewSimulator.tsx:321[39m
+[90m      src/components/InterviewSimulator.tsx:325[39m
+[90m      src/components/InterviewSimulator.tsx:399[39m
+[90m      src/components/InterviewSimulator.tsx:403[39m
+[90m      src/components/InterviewSimulator.tsx:408[39m
+[90m      src/components/InterviewSimulator.tsx:520[39m
+[90m      src/components/ErrorBoundary.tsx:17[39m
+[90m      src/components/ErrorBoundary.tsx:69[39m
+[90m      src/pages/MyProjects.tsx:123[39m
+[90m      src/pages/MyProjects.tsx:194[39m
+[90m      src/pages/MyProjects.tsx:280[39m
+[90m      src/pages/MyProjects.tsx:289[39m
+[90m      src/pages/MyProjects.tsx:310[39m
+[90m      src/pages/MyProjects.tsx:355[39m
+[90m      src/pages/MyProjects.tsx:363[39m
+[90m      src/pages/MyProjects.tsx:371[39m
+[90m      src/components/Layout.tsx:65[39m
+[90m      src/components/Layout.tsx:105[39m
+[90m      src/components/Layout.tsx:143[39m
+[90m      src/components/Layout.tsx:168[39m
+[90m      src/components/Layout.tsx:178[39m
+[90m      src/components/Layout.tsx:191[39m
+[90m      src/components/StudyHub.tsx:242[39m
+[90m      src/components/StudyHub.tsx:281[39m
+[90m      src/components/StudyHub.tsx:288[39m
+[90m      src/components/StudyHub.tsx:295[39m
+[90m      src/components/StudyHub.tsx:302[39m
+[90m      src/components/StudyHub.tsx:325[39m
+[90m      src/components/StudyHub.tsx:340[39m
+[90m      src/components/StudyHub.tsx:359[39m
+[90m      src/components/StudyHub.tsx:369[39m
+[90m      src/components/StudyHub.tsx:370[39m
+[90m      src/components/StudyHub.tsx:385[39m
+[90m      src/components/StudyHub.tsx:461[39m
+[90m      src/components/StudyHub.tsx:548[39m
+[90m      src/components/StudyHub.tsx:559[39m
+[90m      src/components/StudyHub.tsx:566[39m
+[90m      src/components/StudyHub.tsx:626[39m
+[90m      src/components/StudyHub.tsx:636[39m
+[90m      src/components/StudyHub.tsx:681[39m
+[90m      src/components/StudyHub.tsx:705[39m
+[90m      src/components/StudyHub.tsx:780[39m
+[90m      src/components/StudyHub.tsx:784[39m
+[90m      src/components/StudyHub.tsx:789[39m
+[90m      src/components/StudyHub.tsx:792[39m
+[90m      src/pages/Settings.tsx:113[39m
+[90m      src/pages/Settings.tsx:215[39m
+[90m      src/pages/Settings.tsx:281[39m
+[90m      src/pages/Login.tsx:347[39m
+[90m      src/pages/Landing.tsx:222[39m
+[90m      src/pages/Landing.tsx:552[39m
+[90m      src/pages/Landing.tsx:592[39m
+[90m      src/pages/InterviewReadiness.tsx:190[39m
+[90m      src/pages/InterviewReadiness.tsx:315[39m
+[90m      src/pages/InterviewReadiness.tsx:326[39m
+[90m      src/pages/InterviewReadiness.tsx:349[39m
+[90m      src/pages/InterviewReadiness.tsx:366[39m
+[90m      src/pages/InterviewReadiness.tsx:421[39m
+[90m      src/pages/InterviewReadiness.tsx:431[39m
+[90m      src/pages/Dashboard.tsx:86[39m
+[90m      src/pages/Dashboard.tsx:136[39m
+[90m      src/pages/Dashboard.tsx:195[39m
+[90m      src/pages/Signup.tsx:176[39m
+[90m      src/components/ProjectGeneratorModal.tsx:99[39m
+[90m      src/components/ProjectGeneratorModal.tsx:137[39m
+[90m      src/components/ProjectGeneratorModal.tsx:146[39m
+[90m      src/components/ProjectGeneratorModal.tsx:156[39m
+[90m      src/components/ProjectGeneratorModal.tsx:157[39m
+[90m      src/pages/SkillGap.tsx:67[39m
+[90m      src/pages/SkillGap.tsx:99[39m
+[90m      src/pages/SkillGap.tsx:136[39m
+[90m      src/pages/AdminDashboard.tsx:100[39m
+[90m      src/pages/AdminDashboard.tsx:158[39m
+[90m      src/pages/AdminDashboard.tsx:179[39m
+[90m      src/pages/AdminDashboard.tsx:249[39m
+[90m      src/pages/AdminDashboard.tsx:327[39m
+[90m      src/pages/AdminDashboard.tsx:442[39m
+[90m      src/pages/AdminDashboard.tsx:445[39m
+[90m      src/pages/ResumeComparison.tsx:33[39m
+[90m      src/pages/ProgressTracking.tsx:173[39m
+[90m      src/pages/ProgressTracking.tsx:292[39m
+[90m      src/pages/ProgressTracking.tsx:330[39m
+[90m      src/components/ProjectVerifier.tsx:103[39m
+[90m      src/components/ProjectVerifier.tsx:284[39m
+[90m      src/pages/ReadinessScore.tsx:134[39m
+[90m      src/pages/Docs.tsx:156[39m
+[90m      src/pages/Docs.tsx:211[39m
+[90m      src/pages/Docs.tsx:585[39m
+[90m      src/pages/Docs.tsx:643[39m
+[90m      src/pages/Docs.tsx:653[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-tiny-text                     [39m [90m├ù97[39m
+[90m      Font size 11px is too small ΓÇö body text should be at least 12px for readability, 16px is ideal[39m
+[90m      ΓåÆ Use at least 12px for body content, 16px is ideal. Small text is hard to read, especially on high-DPI mobile screens[39m
+[90m      src/pages/Terms.tsx:119[39m
+[90m      src/pages/Terms.tsx:176[39m
+[90m      src/pages/Terms.tsx:218[39m
+[90m      src/pages/Terms.tsx:220[39m
+[90m      src/components/ReactFlowSkillGraph.tsx:62[39m
+[90m      src/components/SkillGraphViz.tsx:193[39m
+[90m      src/components/SkillGraphViz.tsx:197[39m
+[90m      src/components/SkillGraphViz.tsx:312[39m
+[90m      src/pages/ResumeAnalyzer.tsx:195[39m
+[90m      src/pages/ResumeAnalyzer.tsx:416[39m
+[90m      src/pages/Privacy.tsx:36[39m
+[90m      src/pages/Privacy.tsx:42[39m
+[90m      src/pages/Privacy.tsx:261[39m
+[90m      src/pages/Privacy.tsx:318[39m
+[90m      src/pages/Privacy.tsx:360[39m
+[90m      src/pages/Privacy.tsx:362[39m
+[90m      src/pages/ImprovementPlan.tsx:182[39m
+[90m      src/pages/ImprovementPlan.tsx:204[39m
+[90m      src/pages/ImprovementPlan.tsx:211[39m
+[90m      src/pages/ImprovementPlan.tsx:219[39m
+[90m      src/pages/ImprovementPlan.tsx:229[39m
+[90m      src/pages/ImprovementPlan.tsx:239[39m
+[90m      src/pages/ImprovementPlan.tsx:243[39m
+[90m      src/pages/ImprovementPlan.tsx:315[39m
+[90m      src/pages/ImprovementPlan.tsx:382[39m
+[90m      src/pages/ImprovementPlan.tsx:398[39m
+[90m      src/pages/ImprovementPlan.tsx:417[39m
+[90m      src/pages/ImprovementPlan.tsx:421[39m
+[90m      src/pages/ImprovementPlan.tsx:425[39m
+[90m      src/pages/ImprovementPlan.tsx:429[39m
+[90m      src/pages/ImprovementPlan.tsx:433[39m
+[90m      src/pages/ImprovementPlan.tsx:493[39m
+[90m      src/pages/ImprovementPlan.tsx:501[39m
+[90m      src/pages/ImprovementPlan.tsx:508[39m
+[90m      src/pages/ImprovementPlan.tsx:520[39m
+[90m      src/pages/ImprovementPlan.tsx:525[39m
+[90m      src/pages/ImprovementPlan.tsx:539[39m
+[90m      src/pages/ImprovementPlan.tsx:542[39m
+[90m      src/pages/ImprovementPlan.tsx:560[39m
+[90m      src/pages/IndustryAlignment.tsx:118[39m
+[90m      src/pages/IndustryAlignment.tsx:167[39m
+[90m      src/pages/MyProjects.tsx:148[39m
+[90m      src/pages/MyProjects.tsx:153[39m
+[90m      src/pages/MyProjects.tsx:158[39m
+[90m      src/pages/MyProjects.tsx:232[39m
+[90m      src/pages/MyProjects.tsx:240[39m
+[90m      src/pages/MyProjects.tsx:248[39m
+[90m      src/pages/MyProjects.tsx:256[39m
+[90m      src/pages/MyProjects.tsx:319[39m
+[90m      src/components/Layout.tsx:83[39m
+[90m      src/components/Layout.tsx:161[39m
+[90m      src/components/StudyHub.tsx:261[39m
+[90m      src/components/StudyHub.tsx:269[39m
+[90m      src/pages/Landing.tsx:577[39m
+[90m      src/pages/Landing.tsx:581[39m
+[90m      src/pages/Dashboard.tsx:173[39m
+[90m      src/pages/Signup.tsx:196[39m
+[90m      src/pages/SkillGap.tsx:141[39m
+[90m      src/pages/SkillGap.tsx:144[39m
+[90m      src/pages/AdminDashboard.tsx:151[39m
+[90m      src/pages/AdminDashboard.tsx:155[39m
+[90m      src/pages/AdminDashboard.tsx:197[39m
+[90m      src/pages/AdminDashboard.tsx:201[39m
+[90m      src/pages/AdminDashboard.tsx:205[39m
+[90m      src/pages/AdminDashboard.tsx:222[39m
+[90m      src/pages/AdminDashboard.tsx:223[39m
+[90m      src/pages/AdminDashboard.tsx:230[39m
+[90m      src/pages/AdminDashboard.tsx:281[39m
+[90m      src/pages/AdminDashboard.tsx:285[39m
+[90m      src/pages/AdminDashboard.tsx:346[39m
+[90m      src/pages/AdminDashboard.tsx:349[39m
+[90m      src/pages/AdminDashboard.tsx:360[39m
+[90m      src/pages/AdminDashboard.tsx:363[39m
+[90m      src/pages/AdminDashboard.tsx:374[39m
+[90m      src/pages/AdminDashboard.tsx:377[39m
+[90m      src/pages/AdminDashboard.tsx:394[39m
+[90m      src/pages/AdminDashboard.tsx:397[39m
+[90m      src/pages/AdminDashboard.tsx:436[39m
+[90m      src/pages/AdminDashboard.tsx:500[39m
+[90m      src/components/ProjectVerifier.tsx:141[39m
+[90m      src/components/ProjectVerifier.tsx:293[39m
+[90m      src/pages/ReadinessScore.tsx:80[39m
+[90m      src/pages/ReadinessScore.tsx:108[39m
+[90m      src/pages/ReadinessScore.tsx:178[39m
+[90m      src/pages/ReadinessScore.tsx:187[39m
+[90m      src/pages/Docs.tsx:97[39m
+[90m      src/pages/Docs.tsx:102[39m
+[90m      src/pages/Docs.tsx:107[39m
+[90m      src/pages/Docs.tsx:155[39m
+[90m      src/pages/Docs.tsx:166[39m
+[90m      src/pages/Docs.tsx:210[39m
+[90m      src/pages/Docs.tsx:221[39m
+[90m      src/pages/Docs.tsx:355[39m
+[90m      src/pages/Docs.tsx:367[39m
+[90m      src/pages/Docs.tsx:506[39m
+[90m      src/pages/Docs.tsx:570[39m
+[90m      src/pages/Docs.tsx:677[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-inline-exhaustive-style       [39m [90m├ù71[39m
+[90m      8 inline style properties ΓÇö extract to a CSS class, CSS module, or styled component for maintainability and reuse[39m
+[90m      ΓåÆ Move styles to a CSS class, CSS module, Tailwind utilities, or a styled component ΓÇö inline objects with many properties hurt readability and create new references every render[39m
+[90m      src/components/StateDisplay.tsx:34[39m
+[90m      src/components/StateDisplay.tsx:63[39m
+[90m      src/pages/Terms.tsx:89[39m
+[90m      src/pages/Terms.tsx:103[39m
+[90m      src/pages/Terms.tsx:133[39m
+[90m      src/pages/Terms.tsx:190[39m
+[90m      src/components/ReactFlowSkillGraph.tsx:44[39m
+[90m      src/components/SkillGraphViz.tsx:306[39m
+[90m      src/components/SkillGraphViz.tsx:312[39m
+[90m      src/components/CharacterAssistant.tsx:90[39m
+[90m      src/components/CharacterAssistant.tsx:101[39m
+[90m      src/components/CharacterAssistant.tsx:111[39m
+[90m      src/pages/Privacy.tsx:120[39m
+[90m      src/pages/Privacy.tsx:153[39m
+[90m      src/pages/Privacy.tsx:186[39m
+[90m      src/pages/Privacy.tsx:231[39m
+[90m      src/pages/Privacy.tsx:245[39m
+[90m      src/pages/Privacy.tsx:275[39m
+[90m      src/pages/Privacy.tsx:332[39m
+[90m      src/pages/ImprovementPlan.tsx:172[39m
+[90m      src/pages/ImprovementPlan.tsx:187[39m
+[90m      src/pages/ImprovementPlan.tsx:195[39m
+[90m      src/pages/ImprovementPlan.tsx:274[39m
+[90m      src/pages/ImprovementPlan.tsx:290[39m
+[90m      src/pages/ImprovementPlan.tsx:326[39m
+[90m      src/pages/ImprovementPlan.tsx:365[39m
+[90m      src/pages/ImprovementPlan.tsx:459[39m
+[90m      src/pages/IndustryAlignment.tsx:105[39m
+[90m      src/pages/IndustryAlignment.tsx:150[39m
+[90m      src/pages/MyProjects.tsx:99[39m
+[90m      src/pages/MyProjects.tsx:140[39m
+[90m      src/pages/MyProjects.tsx:148[39m
+[90m      src/pages/MyProjects.tsx:153[39m
+[90m      src/pages/MyProjects.tsx:158[39m
+[90m      src/pages/MyProjects.tsx:231[39m
+[90m      src/pages/MyProjects.tsx:274[39m
+[90m      src/components/Layout.tsx:76[39m
+[90m      src/components/Layout.tsx:156[39m
+[90m      src/components/StudyHub.tsx:261[39m
+[90m      src/components/StudyHub.tsx:269[39m
+[90m      src/components/StudyHub.tsx:736[39m
+[90m      src/pages/Dashboard.tsx:93[39m
+[90m      src/components/ProjectGeneratorModal.tsx:66[39m
+[90m      src/components/ProjectGeneratorModal.tsx:72[39m
+[90m      src/components/ProjectGeneratorModal.tsx:85[39m
+[90m      src/components/ProjectGeneratorModal.tsx:135[39m
+[90m      src/pages/SkillGap.tsx:87[39m
+[90m      src/pages/AdminDashboard.tsx:107[39m
+[90m      src/pages/AdminDashboard.tsx:187[39m
+[90m      src/pages/AdminDashboard.tsx:259[39m
+[90m      src/pages/AdminDashboard.tsx:314[39m
+[90m      src/pages/AdminDashboard.tsx:343[39m
+[90m      src/pages/AdminDashboard.tsx:357[39m
+[90m      src/pages/AdminDashboard.tsx:371[39m
+[90m      src/pages/AdminDashboard.tsx:391[39m
+[90m      src/pages/AdminDashboard.tsx:431[39m
+[90m      src/pages/AdminDashboard.tsx:465[39m
+[90m      src/components/ProjectVerifier.tsx:122[39m
+[90m      src/components/ProjectVerifier.tsx:175[39m
+[90m      src/components/ProjectVerifier.tsx:180[39m
+[90m      src/pages/ReadinessScore.tsx:75[39m
+[90m      src/pages/Docs.tsx:158[39m
+[90m      src/pages/Docs.tsx:213[39m
+[90m      src/pages/Docs.tsx:476[39m
+[90m      src/pages/Docs.tsx:490[39m
+[90m      src/pages/Docs.tsx:520[39m
+[90m      src/pages/Docs.tsx:534[39m
+[90m      src/pages/Docs.tsx:587[39m
+[90m      src/pages/Docs.tsx:629[39m
+[90m      src/pages/Docs.tsx:643[39m
+[90m      src/pages/Docs.tsx:653[39m
+
+  [33mΓÜá[39m [33mdeslop/unused-file                            [39m [90m├ù61[39m
+[90m      Unused file ΓÇö not reachable from any entry point[39m
+[90m      ΓåÆ Delete the file if it is truly unreachable, or import it from an entry point.[39m
+[90m      dist/assets/NotFound-B_xcKjcO.js[39m
+[90m      dist/assets/ResumeComparison-DIwaSVdH.js[39m
+[90m      dist/assets/StateDisplay-DTDQA7I3.js[39m
+[90m      dist/assets/icons-62pwNxSR.js[39m
+[90m      dist/assets/ort.bundle.min-09TyUWOb.js[39m
+[90m      dist/assets/sanitize-B3Zrfflb.js[39m
+[90m      dist/assets/savedProjects-BfEWzLHg.js[39m
+[90m      dist/ort/ort-wasm-simd-threaded.asyncify.js[39m
+[90m      dist/ort/ort-wasm-simd-threaded.js[39m
+[90m      dist/ort/ort-wasm-simd-threaded.jsep.js[39m
+[90m      dist/ort/ort-wasm-simd-threaded.jspi.js[39m
+[90m      public/ort/ort-wasm-simd-threaded.asyncify.js[39m
+[90m      public/ort/ort-wasm-simd-threaded.js[39m
+[90m      public/ort/ort-wasm-simd-threaded.jsep.js[39m
+[90m      public/ort/ort-wasm-simd-threaded.jspi.js[39m
+[90m      src/App.tsx[39m
+[90m      src/api/client.ts[39m
+[90m      src/components/3d/Character.tsx[39m
+[90m      src/components/CharacterAssistant.tsx[39m
+[90m      src/components/CircularProgress.tsx[39m
+[90m      src/components/ErrorBoundary.tsx[39m
+[90m      src/components/InterviewSimulator.tsx[39m
+[90m      src/components/Layout.tsx[39m
+[90m      src/components/LogoMark.tsx[39m
+[90m      src/components/MiniLineChart.tsx[39m
+[90m      src/components/ProjectGeneratorModal.tsx[39m
+[90m      src/components/ProjectVerifier.tsx[39m
+[90m      src/components/ReactFlowSkillGraph.tsx[39m
+[90m      src/components/SkillGraphViz.tsx[39m
+[90m      src/components/StateDisplay.tsx[39m
+[90m      src/components/StudyHub.tsx[39m
+[90m      src/context/AuthContext.tsx[39m
+[90m      src/context/PrivacyContext.tsx[39m
+[90m      src/context/ResumeContext.tsx[39m
+[90m      src/context/ToastContext.tsx[39m
+[90m      src/lib/supabase.ts[39m
+[90m      src/pages/AdminDashboard.tsx[39m
+[90m      src/pages/Dashboard.tsx[39m
+[90m      src/pages/Docs.tsx[39m
+[90m      src/pages/ImprovementPlan.tsx[39m
+[90m      src/pages/IndustryAlignment.tsx[39m
+[90m      src/pages/InterviewReadiness.tsx[39m
+[90m      src/pages/Landing.tsx[39m
+[90m      src/pages/Login.tsx[39m
+[90m      src/pages/MyProjects.tsx[39m
+[90m      src/pages/NotFound.tsx[39m
+[90m      src/pages/Privacy.tsx[39m
+[90m      src/pages/ProgressTracking.tsx[39m
+[90m      src/pages/ReadinessScore.tsx[39m
+[90m      src/pages/ResumeAnalyzer.tsx[39m
+[90m      src/pages/ResumeComparison.tsx[39m
+[90m      src/pages/Settings.tsx[39m
+[90m      src/pages/Signup.tsx[39m
+[90m      src/pages/SkillGap.tsx[39m
+[90m      src/pages/Terms.tsx[39m
+[90m      src/utils/history.ts[39m
+[90m      src/utils/onDevicePredictor.ts[39m
+[90m      src/utils/sanitize.ts[39m
+[90m      src/utils/savedProjects.ts[39m
+[90m      src/utils/storage.ts[39m
+[90m      src/utils/streakTracker.ts[39m
+
+  [33mΓÜá[39m [33mreact-doctor/design-no-bold-heading           [39m [90m├ù41[39m
+[90m      fontWeight: 700 on <h3> crushes counter shapes at display sizes ΓÇö use 500 or 600[39m
+[90m      ΓåÆ Use `font-semibold` (600) or `font-medium` (500) on headings ΓÇö 700+ crushes letter counter shapes at display sizes[39m
+[90m      src/components/StateDisplay.tsx:41[39m
+[90m      src/components/StateDisplay.tsx:70[39m
+[90m      src/pages/Terms.tsx:177[39m
+[90m      src/pages/Terms.tsx:222[39m
+[90m      src/pages/Terms.tsx:238[39m
+[90m      src/pages/Privacy.tsx:33[39m
+[90m      src/pages/Privacy.tsx:39[39m
+[90m      src/pages/Privacy.tsx:319[39m
+[90m      src/pages/Privacy.tsx:364[39m
+[90m      src/pages/Privacy.tsx:380[39m
+[90m      src/pages/ImprovementPlan.tsx:513[39m
+[90m      src/pages/IndustryAlignment.tsx:185[39m
+[90m      src/pages/MyProjects.tsx:107[39m
+[90m      src/pages/MyProjects.tsx:188[39m
+[90m      src/pages/MyProjects.tsx:252[39m
+[90m      src/components/ProjectGeneratorModal.tsx:93[39m
+[90m      src/pages/AdminDashboard.tsx:408[39m
+[90m      src/components/ProjectVerifier.tsx:82[39m
+[90m      src/components/ProjectVerifier.tsx:226[39m
+[90m      src/components/ProjectVerifier.tsx:250[39m
+[90m      src/components/ProjectVerifier.tsx:260[39m
+[90m      src/pages/Docs.tsx:43[39m
+[90m      src/pages/Docs.tsx:68[39m
+[90m      src/pages/Docs.tsx:75[39m
+[90m      src/pages/Docs.tsx:87[39m
+[90m      src/pages/Docs.tsx:96[39m
+[90m      src/pages/Docs.tsx:101[39m
+[90m      src/pages/Docs.tsx:106[39m
+[90m      src/pages/Docs.tsx:125[39m
+[90m      src/pages/Docs.tsx:132[39m
+[90m      src/pages/Docs.tsx:188[39m
+[90m      src/pages/Docs.tsx:242[39m
+[90m      src/pages/Docs.tsx:263[39m
+[90m      src/pages/Docs.tsx:270[39m
+[90m      src/pages/Docs.tsx:296[39m
+[90m      src/pages/Docs.tsx:329[39m
+[90m      src/pages/Docs.tsx:429[39m
+[90m      src/pages/Docs.tsx:436[39m
+[90m      src/pages/Docs.tsx:447[39m
+[90m      src/pages/Docs.tsx:571[39m
+[90m      src/pages/Docs.tsx:678[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-array-index-key               [39m [90m├ù26[39m
+[90m      Array index in `key` doesn't uniquely identify the element ΓÇö re-renders may use stale state.[39m
+[90m      ΓåÆ Use a stable, data-derived `key` instead of the array index.[39m
+[90m      src/pages/ResumeAnalyzer.tsx:232[39m
+[90m      src/pages/ImprovementPlan.tsx:387[39m
+[90m      src/pages/IndustryAlignment.tsx:104[39m
+[90m      src/pages/IndustryAlignment.tsx:146[39m
+[90m      src/components/InterviewSimulator.tsx:378[39m
+[90m      src/components/InterviewSimulator.tsx:388[39m
+[90m      src/components/InterviewSimulator.tsx:482[39m
+[90m      src/components/InterviewSimulator.tsx:488[39m
+[90m      src/components/InterviewSimulator.tsx:496[39m
+[90m      src/components/InterviewSimulator.tsx:505[39m
+[90m      src/components/StudyHub.tsx:326[39m
+[90m      src/components/StudyHub.tsx:492[39m
+[90m      src/components/StudyHub.tsx:599[39m
+[90m      src/components/StudyHub.tsx:682[39m
+[90m      src/components/StudyHub.tsx:754[39m
+[90m      src/pages/Dashboard.tsx:102[39m
+[90m      src/pages/Dashboard.tsx:120[39m
+[90m      src/pages/Dashboard.tsx:141[39m
+[90m      src/pages/Signup.tsx:99[39m
+[90m      src/pages/Signup.tsx:112[39m
+[90m      src/pages/SkillGap.tsx:129[39m
+[90m      src/pages/ProgressTracking.tsx:368[39m
+[90m      src/components/ProjectVerifier.tsx:211[39m
+[90m      src/components/ProjectVerifier.tsx:252[39m
+[90m      src/components/ProjectVerifier.tsx:262[39m
+[90m      src/pages/ReadinessScore.tsx:197[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-array-index-as-key            [39m [90m├ù25[39m
+[90m      Array index "i" used as key ΓÇö causes bugs when list is reordered or filtered[39m
+[90m      ΓåÆ Use a stable unique identifier: `key={item.id}` or `key={item.slug}` ΓÇö index keys break on reorder/filter[39m
+[90m      src/pages/ResumeAnalyzer.tsx:232[39m
+[90m      src/pages/ImprovementPlan.tsx:387[39m
+[90m      src/pages/IndustryAlignment.tsx:104[39m
+[90m      src/components/InterviewSimulator.tsx:378[39m
+[90m      src/components/InterviewSimulator.tsx:388[39m
+[90m      src/components/InterviewSimulator.tsx:482[39m
+[90m      src/components/InterviewSimulator.tsx:488[39m
+[90m      src/components/InterviewSimulator.tsx:496[39m
+[90m      src/components/InterviewSimulator.tsx:505[39m
+[90m      src/components/StudyHub.tsx:326[39m
+[90m      src/components/StudyHub.tsx:599[39m
+[90m      src/components/StudyHub.tsx:682[39m
+[90m      src/components/StudyHub.tsx:754[39m
+[90m      src/pages/Landing.tsx:189[39m
+[90m      src/pages/Dashboard.tsx:102[39m
+[90m      src/pages/Dashboard.tsx:120[39m
+[90m      src/pages/Dashboard.tsx:141[39m
+[90m      src/pages/Signup.tsx:99[39m
+[90m      src/pages/Signup.tsx:112[39m
+[90m      src/pages/SkillGap.tsx:129[39m
+[90m      src/pages/ProgressTracking.tsx:368[39m
+[90m      src/components/ProjectVerifier.tsx:211[39m
+[90m      src/components/ProjectVerifier.tsx:252[39m
+[90m      src/components/ProjectVerifier.tsx:262[39m
+[90m      src/pages/ReadinessScore.tsx:197[39m
+
+  [33mΓÜá[39m [33mreact-doctor/control-has-associated-label     [39m [90m├ù22[39m
+[90m      A control must be associated with a text label ΓÇö add visible text, `aria-label`, or `aria-labelledby`.[39m
+[90m      ΓåÆ Every interactive control must have an accessible label.[39m
+[90m      src/pages/Terms.tsx:157[39m
+[90m      src/pages/ResumeAnalyzer.tsx:174[39m
+[90m      src/pages/Privacy.tsx:299[39m
+[90m      src/pages/ImprovementPlan.tsx:302[39m
+[90m      src/components/InterviewSimulator.tsx:307[39m
+[90m      src/pages/MyProjects.tsx:167[39m
+[90m      src/components/StudyHub.tsx:313[39m
+[90m      src/components/StudyHub.tsx:619[39m
+[90m      src/pages/Settings.tsx:163[39m
+[90m      src/pages/Settings.tsx:185[39m
+[90m      src/pages/Settings.tsx:196[39m
+[90m      src/pages/Login.tsx:316[39m
+[90m      src/pages/Login.tsx:329[39m
+[90m      src/pages/InterviewReadiness.tsx:358[39m
+[90m      src/pages/Signup.tsx:134[39m
+[90m      src/pages/Signup.tsx:143[39m
+[90m      src/pages/Signup.tsx:152[39m
+[90m      src/pages/Signup.tsx:161[39m
+[90m      src/pages/AdminDashboard.tsx:127[39m
+[90m      src/pages/AdminDashboard.tsx:414[39m
+[90m      src/components/ProjectVerifier.tsx:90[39m
+[90m      src/pages/Docs.tsx:545[39m
+
+  [33mΓÜá[39m [33mreact-doctor/design-no-em-dash-in-jsx-text    [39m [90m├ù18[39m
+[90m      Em dash (ΓÇö) in JSX text reads as model output ΓÇö replace with comma, colon, semicolon, or parentheses[39m
+[90m      ΓåÆ Replace em dashes in JSX prose with commas, colons, semicolons, or parentheses so UI copy reads less like generated text.[39m
+[90m      src/pages/ResumeAnalyzer.tsx:160[39m
+[90m      src/pages/ResumeAnalyzer.tsx:313[39m
+[90m      src/pages/ImprovementPlan.tsx:156[39m
+[90m      src/pages/ImprovementPlan.tsx:298[39m
+[90m      src/pages/ImprovementPlan.tsx:340[39m
+[90m      src/components/ErrorBoundary.tsx:57[39m
+[90m      src/pages/Settings.tsx:304[39m
+[90m      src/pages/Landing.tsx:249[39m
+[90m      src/pages/Landing.tsx:509[39m
+[90m      src/pages/Landing.tsx:613[39m
+[90m      src/pages/Landing.tsx:616[39m
+[90m      src/pages/Landing.tsx:653[39m
+[90m      src/pages/Landing.tsx:692[39m
+[90m      src/pages/Landing.tsx:709[39m
+[90m      src/pages/AdminDashboard.tsx:260[39m
+[90m      src/components/ProjectVerifier.tsx:83[39m
+[90m      src/components/ProjectVerifier.tsx:294[39m
+[90m      src/pages/Docs.tsx:83[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-static-element-interactions   [39m [90m├ù16[39m
+[90m      Static HTML elements with event handlers require a role ΓÇö add `role="ΓÇª"` or use a semantic HTML element instead.[39m
+[90m      ΓåÆ Static HTML elements with event handlers require a role, or use a semantic HTML element instead.[39m
+[90m      src/components/SkillGraphViz.tsx:173[39m
+[90m      src/pages/ResumeAnalyzer.tsx:167[39m
+[90m      src/pages/ImprovementPlan.tsx:361[39m
+[90m      src/pages/MyProjects.tsx:221[39m
+[90m      src/components/Layout.tsx:56[39m
+[90m      src/components/StudyHub.tsx:539[39m
+[90m      src/pages/Landing.tsx:694[39m
+[90m      src/components/ProjectGeneratorModal.tsx:66[39m
+[90m      src/pages/AdminDashboard.tsx:177[39m
+[90m      src/pages/AdminDashboard.tsx:335[39m
+[90m      src/pages/AdminDashboard.tsx:383[39m
+[90m      src/pages/AdminDashboard.tsx:476[39m
+[90m      src/pages/ProgressTracking.tsx:267[39m
+[90m      src/pages/Docs.tsx:63[39m
+[90m      src/pages/Docs.tsx:353[39m
+[90m      src/pages/Docs.tsx:365[39m
+
+  [33mΓÜá[39m [33mreact-doctor/click-events-have-key-events     [39m [90m├ù14[39m
+[90m      Visible non-interactive elements with click handlers must have a corresponding keyboard listener (`onKeyUp`, `onKeyDown`, or `onKeyPress`).[39m
+[90m      ΓåÆ Pair `onClick` with `onKeyUp` / `onKeyDown` / `onKeyPress` for keyboard users.[39m
+[90m      src/pages/ResumeAnalyzer.tsx:167[39m
+[90m      src/pages/ImprovementPlan.tsx:361[39m
+[90m      src/pages/MyProjects.tsx:221[39m
+[90m      src/components/Layout.tsx:56[39m
+[90m      src/components/StudyHub.tsx:539[39m
+[90m      src/pages/Landing.tsx:694[39m
+[90m      src/components/ProjectGeneratorModal.tsx:66[39m
+[90m      src/pages/AdminDashboard.tsx:335[39m
+[90m      src/pages/AdminDashboard.tsx:383[39m
+[90m      src/pages/AdminDashboard.tsx:476[39m
+[90m      src/pages/ProgressTracking.tsx:267[39m
+[90m      src/pages/Docs.tsx:63[39m
+[90m      src/pages/Docs.tsx:353[39m
+[90m      src/pages/Docs.tsx:365[39m
+
+  [33mΓÜá[39m [33mreact-doctor/design-no-three-period-ellipsis  [39m [90m├ù14[39m
+[90m      Three-period ellipsis ("...") in JSX text ΓÇö use the actual ellipsis character "ΓÇª" (or `&hellip;`)[39m
+[90m      ΓåÆ Use the typographic ellipsis "ΓÇª" (or `&hellip;`) instead of three periods ΓÇö pairs with action-with-followup labels ("RenameΓÇª", "LoadingΓÇª")[39m
+[90m      src/pages/ResumeAnalyzer.tsx:208[39m
+[90m      src/pages/ImprovementPlan.tsx:351[39m
+[90m      src/pages/ImprovementPlan.tsx:442[39m
+[90m      src/components/InterviewSimulator.tsx:244[39m
+[90m      src/components/InterviewSimulator.tsx:345[39m
+[90m      src/components/StudyHub.tsx:227[39m
+[90m      src/components/StudyHub.tsx:602[39m
+[90m      src/components/StudyHub.tsx:613[39m
+[90m      src/pages/Settings.tsx:234[39m
+[90m      src/pages/Landing.tsx:572[39m
+[90m      src/pages/Landing.tsx:709[39m
+[90m      src/pages/InterviewReadiness.tsx:327[39m
+[90m      src/components/ProjectVerifier.tsx:111[39m
+[90m      src/components/ProjectVerifier.tsx:138[39m
+
+  [33mΓÜá[39m [33mreact-doctor/prefer-useReducer                [39m [90m├ù13[39m
+[90m      Component "ResumeAnalyzer" has 6 useState calls ΓÇö consider useReducer for related state[39m
+[90m      ΓåÆ Group related state: `const [state, dispatch] = useReducer(reducer, { field1, field2, ... })`[39m
+[90m      src/pages/ResumeAnalyzer.tsx:41[39m
+[90m      src/pages/ImprovementPlan.tsx:21[39m
+[90m      src/components/InterviewSimulator.tsx:36[39m
+[90m      src/context/ResumeContext.tsx:41[39m
+[90m      src/pages/MyProjects.tsx:31[39m
+[90m      src/components/StudyHub.tsx:18[39m
+[90m      src/pages/Settings.tsx:14[39m
+[90m      src/pages/Login.tsx:232[39m
+[90m      src/pages/Landing.tsx:58[39m
+[90m      src/pages/InterviewReadiness.tsx:87[39m
+[90m      src/pages/Signup.tsx:22[39m
+[90m      src/components/ProjectGeneratorModal.tsx:16[39m
+[90m      src/pages/AdminDashboard.tsx:17[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-giant-component               [39m [90m├ù11[39m
+[90m      Component "ResumeAnalyzer" is 408 lines ΓÇö consider breaking it into smaller focused components[39m
+[90m      ΓåÆ Extract logical sections into focused components: `<UserHeader />`, `<UserActions />`, etc.[39m
+[90m      src/pages/ResumeAnalyzer.tsx:41[39m
+[90m      src/pages/Privacy.tsx:14[39m
+[90m      src/pages/ImprovementPlan.tsx:21[39m
+[90m      src/components/InterviewSimulator.tsx:36[39m
+[90m      src/pages/MyProjects.tsx:31[39m
+[90m      src/components/StudyHub.tsx:18[39m
+[90m      src/pages/Landing.tsx:58[39m
+[90m      src/pages/InterviewReadiness.tsx:87[39m
+[90m      src/pages/AdminDashboard.tsx:17[39m
+[90m      src/pages/ProgressTracking.tsx:66[39m
+[90m      src/pages/Docs.tsx:18[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-unknown-property              [39m [90m├ù9[39m
+[90m      Unknown property ΓÇö remove it.[39m
+[90m      ΓåÆ Use the React-cased prop name React expects (`className`, `htmlFor`, `tabIndex`, ΓÇª).[39m
+[90m      src/components/3d/Character.tsx:99[39m
+[90m      src/components/3d/Character.tsx:101[39m
+[90m      src/components/3d/Character.tsx:103[39m
+[90m      src/components/3d/Character.tsx:105[39m
+[90m      src/components/3d/Character.tsx:119[39m
+[90m      src/components/3d/Character.tsx:120[39m
+[90m      src/components/3d/Character.tsx:120[39m
+[90m      src/components/3d/Character.tsx:121[39m
+[90m      src/components/3d/Character.tsx:121[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-event-handler                 [39m [90m├ù7[39m
+[90m      Avoid using state and effects as an event handler. Instead, call the event handling code directly when the event occurs.[39m
+[90m      ΓåÆ Move the side effect into the event handler that triggers it, instead of guarding on its state inside a useEffect. See https://react.dev/learn/you-might-not-need-an-effect#sharing-logic-between-event-handlers[39m
+[90m      src/components/StudyHub.tsx:45[39m
+[90m      src/components/StudyHub.tsx:45[39m
+[90m      src/components/StudyHub.tsx:45[39m
+[90m      src/components/StudyHub.tsx:43[39m
+[90m      src/components/StudyHub.tsx:31[39m
+[90m      src/components/StudyHub.tsx:50[39m
+[90m      src/pages/AdminDashboard.tsx:53[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-cascading-set-state           [39m [90m├ù6[39m
+[90m      4 setState calls in a single useEffect ΓÇö consider using useReducer or deriving state[39m
+[90m      ΓåÆ Combine into useReducer: `const [state, dispatch] = useReducer(reducer, initialState)`[39m
+[90m      src/pages/ResumeAnalyzer.tsx:65[39m
+[90m      src/pages/ImprovementPlan.tsx:72[39m
+[90m      src/pages/ImprovementPlan.tsx:83[39m
+[90m      src/context/ResumeContext.tsx:56[39m
+[90m      src/components/StudyHub.tsx:78[39m
+[90m      src/components/ProjectGeneratorModal.tsx:28[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-long-transition-duration      [39m [90m├ù5[39m
+[90m      1600ms transition is too slow for UI feedback ΓÇö keep transitions under 1000ms. Use longer durations only for page-load hero animations[39m
+[90m      ΓåÆ Keep UI transitions under 1s ΓÇö 100-150ms for instant feedback, 200-300ms for state changes, 300-500ms for layout changes. Use longer durations only for page-load hero animations[39m
+[90m      src/components/SkillGraphViz.tsx:270[39m
+[90m      src/pages/ResumeAnalyzer.tsx:265[39m
+[90m      src/pages/Login.tsx:220[39m
+[90m      src/pages/Login.tsx:221[39m
+[90m      src/pages/ProgressTracking.tsx:238[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-transition-all                [39m [90m├ù5[39m
+[90m      transition: "all" animates every property including layout ΓÇö list only the properties you animate[39m
+[90m      ΓåÆ List specific properties: `transition: "opacity 200ms, transform 200ms"` ΓÇö or in Tailwind use `transition-colors`, `transition-opacity`, or `transition-transform`[39m
+[90m      src/components/CharacterAssistant.tsx:38[39m
+[90m      src/pages/ImprovementPlan.tsx:478[39m
+[90m      src/pages/IndustryAlignment.tsx:159[39m
+[90m      src/pages/MyProjects.tsx:130[39m
+[90m      src/pages/Docs.tsx:601[39m
+
+  [33mΓÜá[39m [33mreact-doctor/js-set-map-lookups               [39m [90m├ù5[39m
+[90m      array.includes() in a loop is O(n) per call ΓÇö convert to a Set for O(1) lookups[39m
+[90m      ΓåÆ Use a `Set` or `Map` for repeated membership tests / keyed lookups ΓÇö `Array.includes`/`find` is O(n) per call[39m
+[90m      src/pages/ResumeAnalyzer.tsx:36[39m
+[90m      src/pages/ImprovementPlan.tsx:104[39m
+[90m      src/pages/Settings.tsx:62[39m
+[90m      src/pages/Settings.tsx:79[39m
+[90m      src/pages/ProgressTracking.tsx:34[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-initialize-state              [39m [90m├ù5[39m
+[90m      Avoid initializing state in an effect. Instead, initialize "streak"'s `useState()` with "'daily_login'". For SSR hydration, prefer `useSyncExternalStore()`.[39m
+[90m      ΓåÆ Pass the initial value directly to useState() instead of setting it from a mount-only useEffect. For SSR hydration, prefer useSyncExternalStore().[39m
+[90m      src/pages/ImprovementPlan.tsx:68[39m
+[90m      src/pages/Settings.tsx:25[39m
+[90m      src/pages/InterviewReadiness.tsx:67[39m
+[90m      src/pages/Dashboard.tsx:19[39m
+[90m      src/pages/AdminDashboard.tsx:49[39m
+
+  [33mΓÜá[39m [33mreact-doctor/rerender-state-only-in-handlers  [39m [90m├ù4[39m
+[90m      useState "activeAction" is updated but never read in the component's return ΓÇö use useRef so updates don't trigger re-renders[39m
+[90m      ΓåÆ Replace useState with useRef when the value is only mutated and never read in render ΓÇö `ref.current = ...` updates without re-rendering the component[39m
+[90m      src/components/3d/Character.tsx:31[39m
+[90m      src/components/InterviewSimulator.tsx:45[39m
+[90m      src/components/StudyHub.tsx:48[39m
+[90m      src/pages/Landing.tsx:73[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-outline-none                  [39m [90m├ù4[39m
+[90m      outline: none removes keyboard focus visibility ΓÇö use :focus-visible styling instead, or provide a box-shadow focus ring[39m
+[90m      ΓåÆ Use `:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px }` to show focus only for keyboard users while hiding it for mouse clicks[39m
+[90m      src/pages/Terms.tsx:165[39m
+[90m      src/pages/Privacy.tsx:307[39m
+[90m      src/pages/AdminDashboard.tsx:177[39m
+[90m      src/pages/Docs.tsx:553[39m
+
+  [33mΓÜá[39m [33mreact-doctor/prefer-tag-over-role             [39m [90m├ù4[39m
+[90m      Prefer the semantic `<output>` element over `role="status"` on a generic tag.[39m
+[90m      ΓåÆ Replace `role` with the semantic HTML element when one exists.[39m
+[90m      src/context/ToastContext.tsx:46[39m
+[90m      src/components/CircularProgress.tsx:19[39m
+[90m      src/components/StudyHub.tsx:224[39m
+[90m      src/components/StudyHub.tsx:235[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-adjust-state-on-prop-change   [39m [90m├ù4[39m
+[90m      Avoid adjusting state when a prop changes. Instead, adjust the state directly during render, or refactor your state to avoid this need entirely.[39m
+[90m      ΓåÆ Adjust the state inline during render instead of via a useEffect, or refactor the state to avoid the need entirely. See https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes[39m
+[90m      src/components/StudyHub.tsx:51[39m
+[90m      src/components/StudyHub.tsx:80[39m
+[90m      src/components/StudyHub.tsx:81[39m
+[90m      src/components/ProjectGeneratorModal.tsx:32[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-large-animated-blur           [39m [90m├ù3[39m
+[90m      blur(12px) is expensive ΓÇö cost escalates with radius and layer size, can exceed GPU memory on mobile[39m
+[90m      ΓåÆ Keep blur radius under 10px, or apply blur to a smaller element. Large blurs multiply GPU memory usage with layer size[39m
+[90m      src/pages/Terms.tsx:93[39m
+[90m      src/pages/Privacy.tsx:235[39m
+[90m      src/pages/Docs.tsx:480[39m
+
+  [33mΓÜá[39m [33mreact-doctor/jsx-no-constructed-context-values[39m [90m├ù3[39m
+[90m      Context `value` prop is constructed inline ΓÇö wrap with `useMemo`/`useCallback` or hoist a constant to avoid re-renders.[39m
+[90m      ΓåÆ Memoize the context value (`useMemo`) or hoist it outside the render.[39m
+[90m      src/context/AuthContext.tsx:98[39m
+[90m      src/context/ToastContext.tsx:43[39m
+[90m      src/components/Layout.tsx:52[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-chain-state-updates           [39m [90m├ù3[39m
+[90m      Avoid chaining state changes. When possible, update all relevant state simultaneously.[39m
+[90m      ΓåÆ Update all related state simultaneously inside the event handler that originally fires, instead of reacting to one state update in a useEffect that writes another state. See https://react.dev/learn/you-might-not-need-an-effect#chains-of-computations[39m
+[90m      src/pages/ImprovementPlan.tsx:74[39m
+[90m      src/pages/ImprovementPlan.tsx:75[39m
+[90m      src/components/StudyHub.tsx:51[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-z-index-9999                  [39m [90m├ù3[39m
+[90m      z-index: 9999 is arbitrarily high ΓÇö use a deliberate z-index scale (1ΓÇô50). Extreme values signal a stacking context problem, not a fix[39m
+[90m      ΓåÆ Define a z-index scale in your design tokens (e.g. dropdown: 10, modal: 20, toast: 30). Create a new stacking context with `isolation: isolate` instead of escalating values[39m
+[90m      src/pages/ImprovementPlan.tsx:173[39m
+[90m      src/components/ProjectGeneratorModal.tsx:70[39m
+[90m      src/pages/AdminDashboard.tsx:177[39m
+
+  [33mΓÜá[39m [33mreact-doctor/exhaustive-deps                  [39m [90m├ù3[39m
+[90m      React Hook `useCallback` is missing dependency `handleEndInterview` ΓÇö list it in the dependency array, or call the hook unconditionally.[39m
+[90m      ΓåÆ List every value the hook callback captures in its dependency array.[39m
+[90m      src/components/InterviewSimulator.tsx:140[39m
+[90m      src/context/ResumeContext.tsx:205[39m
+[90m      src/components/ProjectGeneratorModal.tsx:38[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-multi-comp                    [39m [90m├ù2[39m
+[90m      Declare only one React component per file. Found extra component: ErrorState.[39m
+[90m      ΓåÆ Move secondary components into their own files.[39m
+[90m      src/components/StateDisplay.tsx:28[39m
+[90m      src/components/StateDisplay.tsx:61[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-layout-transition-inline      [39m [90m├ù2[39m
+[90m      Transitioning layout property "width" causes layout thrash every frame ΓÇö use transform and opacity instead[39m
+[90m      ΓåÆ Use `transform` and `opacity` for transitions ΓÇö they run on the compositor thread. For height animations, use `grid-template-rows: 0fr ΓåÆ 1fr`[39m
+[90m      src/pages/ImprovementPlan.tsx:227[39m
+[90m      src/components/ProjectVerifier.tsx:36[39m
+
+  [33mΓÜá[39m [33mreact-doctor/js-combine-iterations            [39m [90m├ù2[39m
+[90m      .filter().map() iterates the array twice ΓÇö combine into a single loop with .reduce() or for...of[39m
+[90m      ΓåÆ Combine `.map().filter()` (or similar chains) into a single pass with `.reduce()` or a `for...of` loop to avoid iterating the array twice[39m
+[90m      src/components/Layout.tsx:91[39m
+[90m      src/pages/ProgressTracking.tsx:107[39m
+
+  [33mΓÜá[39m [33mreact-doctor/design-no-vague-button-label     [39m [90m├ù2[39m
+[90m      Vague button label "Yes" ΓÇö name the action ("Save changes", "Send invite", "Delete account") so screen readers and hesitant users know what happens[39m
+[90m      ΓåÆ Name the action: "Save changes" instead of "Continue", "Send invite" instead of "Submit", "Delete account" instead of "OK". The label IS the button's accessible name[39m
+[90m      src/pages/Docs.tsx:643[39m
+[90m      src/pages/Docs.tsx:653[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-generic-handler-names[39m
+[90m      Non-descriptive handler name "handleClick" ΓÇö name should describe what it does, not when it runs[39m
+[90m      ΓåÆ Rename to describe the action: e.g. `handleSubmit` ΓåÆ `saveUserProfile`, `handleClick` ΓåÆ `toggleSidebar`[39m
+[90m      src/components/3d/Character.tsx:102[39m
+
+  [33mΓÜá[39m [33mreact-doctor/client-passive-event-listeners[39m
+[90m      "wheel" listener without { passive: true } ΓÇö blocks scrolling performance. Only add { passive: true } if the handler does NOT call event.preventDefault() (passive listeners silently ignore preventDefault())[39m
+[90m      ΓåÆ Add `{ passive: true }` as the third argument: `addEventListener('scroll', handler, { passive: true })`. Only do this if the handler does NOT call `event.preventDefault()` ΓÇö passive listeners silently ignore `preventDefault()`, which breaks features like pull-to-refresh suppression, custom gestures, and nested-scroll containment.[39m
+[90m      src/components/SkillGraphViz.tsx:100[39m
+
+  [33mΓÜá[39m [33mreact-doctor/js-flatmap-filter[39m
+[90m      .map().filter(Boolean) iterates twice ΓÇö use .flatMap() to transform and filter in a single pass[39m
+[90m      ΓåÆ Use `.flatMap(item => condition ? [value] : [])` ΓÇö transforms and filters in a single pass instead of creating an intermediate array[39m
+[90m      src/context/AuthContext.tsx:18[39m
+
+  [33mΓÜá[39m [33mreact-doctor/rendering-hydration-mismatch-time[39m
+[90m      Date.now() reachable from JSX renders differently on server vs client ΓÇö wrap in useEffect+useState (client-only) or add suppressHydrationWarning to the parent if intentional[39m
+[90m      ΓåÆ Wrap dynamic time/random values in useEffect+useState (client-only) or add suppressHydrationWarning to the parent if intentional[39m
+[90m      src/pages/ImprovementPlan.tsx:305[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-prop-callback-in-effect[39m
+[90m      useEffect calls prop callback "onVerified" with local state in deps ΓÇö this is the "lift state via callback" anti-pattern; lift state into a shared Provider so both sides read the same source[39m
+[90m      ΓåÆ Lift the shared state into a Provider so both sides read the same source ΓÇö no useEffect-driven sync needed[39m
+[90m      src/components/StudyHub.tsx:52[39m
+
+  [33mΓÜá[39m [33mreact-doctor/js-cache-storage[39m
+[90m      localStorage.getItem("pinned_notes") called multiple times ΓÇö cache the result in a variable[39m
+[90m      ΓåÆ Cache repeated `localStorage`/`sessionStorage` reads in a local variable ΓÇö each access serializes/deserializes[39m
+[90m      src/components/StudyHub.tsx:165[39m
+
+  [33mΓÜá[39m [33mreact-doctor/client-localstorage-no-version[39m
+[90m      localStorage.setItem("pinned_notes", JSON.stringify(...)) ΓÇö bake a version into the key (e.g. "pinned_notes:v1") so a future schema change can ignore old data instead of crashing on it[39m
+[90m      ΓåÆ Bake a version into the storage key (e.g. "myKey:v1"); a future schema change can ignore old data instead of crashing on it[39m
+[90m      src/components/StudyHub.tsx:172[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-side-tab-border[39m
+[90m      Thick one-sided border (left: 2px) ΓÇö the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it[39m
+[90m      ΓåÆ Use a subtler accent (box-shadow inset, background gradient, or border-bottom) instead of a thick one-sided border[39m
+[90m      src/components/StudyHub.tsx:426[39m
+
+  [33mΓÜá[39m [33mreact-doctor/js-index-maps[39m
+[90m      array.find() in a loop is O(n*m) ΓÇö build a Map for O(1) lookups[39m
+[90m      ΓåÆ Build an index `Map` once outside the loop instead of `array.find(...)` inside it[39m
+[90m      src/pages/Settings.tsx:63[39m
+
+  [33mΓÜá[39m [33mreact-doctor/async-await-in-loop[39m
+[90m      await inside a for-loop runs the calls sequentially ΓÇö for independent operations, collect them and use `await Promise.all(items.map(...))` to run them concurrently[39m
+[90m      ΓåÆ Collect the items and use `await Promise.all(items.map(...))` to run independent operations concurrently[39m
+[90m      src/api/client.ts:70[39m
+
+  [33mΓÜá[39m [33mreact-doctor/async-defer-await[39m
+[90m      await blocks the function before an early-return that doesn't use the awaited value ΓÇö move the await after the synchronous guard so the skip path stays fast[39m
+[90m      ΓåÆ Move the `await` after the synchronous early-return guard so the skip path stays fast[39m
+[90m      public/ort/ort-wasm-simd-threaded.jsep.js:2[39m
+
+  [33mΓÜá[39m [33mreact-doctor/no-fetch-in-effect[39m
+[90m      fetch() inside useEffect ΓÇö use a data fetching library (react-query, SWR) or server component[39m
+[90m      ΓåÆ Use `useQuery()` from @tanstack/react-query, `useSWR()`, or fetch in a Server Component instead[39m
+[90m      src/pages/SkillGap.tsx:18[39m
+
+  [33mΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÉ[39m  [33m65[39m [2m/ 100[22m [33mNeeds work[39m
+  [33mΓöé ΓÇó ΓÇó Γöé[39m  [33mΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûê[39m[2mΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæΓûæ[22m
+  [33mΓöé  ΓöÇ  Γöé[39m  React Doctor [2m(www.react.doctor)[22m
+  [33mΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ[39m
+
+  [31m638 issues[39m [2macross 61/54 files  in 5.5s[22m
+[90m  Full diagnostics written to C:\Users\admin\AppData\Local\Temp\react-doctor-5897be95-4c98-46e0-8623-887ff2e5a09d[39m
+
+  [1mΓåÆ Share your results:[22m [36mhttps://www.react.doctor/share?p=campussync-edge-frontend&s=65&e=6&w=632&f=61[39m
+
+

@@ -42,6 +42,14 @@ class AuthUser:
 def _decode_token(token: str) -> dict:
     """Decode and verify a Supabase JWT. Raises on failure."""
     if not JWT_SECRET:
+        # Enforce strict secret configuration in production hosts (Render or ENV=production)
+        is_prod = os.getenv("ENV", "development").lower() == "production" or os.getenv("RENDER") is not None
+        if is_prod:
+            logger.critical("FATAL SECURITY ERROR: SUPABASE_JWT_SECRET is not configured in production!")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Security Error: Authentication service misconfiguration."
+            )
         # Dev mode: no secret configured → trust the token payload without verification
         logger.warning("SUPABASE_JWT_SECRET not set — skipping JWT verification (dev mode)")
         return jwt.decode(token, options={"verify_signature": False})
@@ -102,3 +110,19 @@ async def optional_user(
         )
     except Exception:
         return None
+
+
+async def get_admin_user(
+    user: AuthUser = Depends(get_current_user),
+) -> AuthUser:
+    """
+    **Required Admin auth** dependency.
+    Raises 403 Forbidden if the user is not an admin.
+    """
+    from app.core.settings import settings
+    if user.email.lower() not in [e.lower() for e in settings.ADMIN_EMAILS]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Administrative access required.",
+        )
+    return user

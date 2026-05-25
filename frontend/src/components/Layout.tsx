@@ -4,7 +4,7 @@ import {
     CheckSquare, MessageSquare, TrendingUp, GitCompare,
     Building2, Blocks, Settings, Sun, Moon, Shield, Cpu, Menu, X as XIcon, LogOut
 } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import LogoMark from './LogoMark'
 import { useAuth } from '../context/AuthContext'
 import { PrivacyContext } from '../context/PrivacyContext'
@@ -48,8 +48,10 @@ export default function Layout() {
         localStorage.setItem('cse_theme', theme)
     }, [theme])
 
+    const privacyValue = useMemo(() => ({ privacy, setPrivacy }), [privacy])
+
     return (
-        <PrivacyContext.Provider value={{ privacy, setPrivacy }}>
+        <PrivacyContext.Provider value={privacyValue}>
             <div className="app-shell">
                 {/* ── Mobile overlay ── */}
                 {mobileMenuOpen && (
@@ -62,7 +64,7 @@ export default function Layout() {
                         <div className="sidebar__logo-icon"><LogoMark size={28} /></div>
                         <div className="sidebar__logo-name">CampusSync</div>
                         <div className="sidebar__logo-sub">Edge AI</div>
-                        <button
+                        <button type="button"
                             className="mobile-close-btn"
                             onClick={() => setMobileMenuOpen(false)}
                             aria-label="Close navigation menu"
@@ -80,7 +82,7 @@ export default function Layout() {
                             borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6,
                         }}>
                             <Shield size={11} color="var(--green)" />
-                            <span style={{ fontSize: 10, color: 'var(--green)', fontWeight: 600, lineHeight: 1.2 }}>
+                            <span style={{ fontSize: 12, color: 'var(--green)', fontWeight: 600, lineHeight: 1.2 }}>
                                 Privacy Mode<br />
                                 <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>Local only</span>
                             </span>
@@ -102,7 +104,7 @@ export default function Layout() {
                     </nav>
 
                     <div className="sidebar__footer">
-                        <button className="nav-item nav-item--logout" onClick={logout}>
+                        <button type="button" className="nav-item nav-item--logout" onClick={logout}>
                             <LogOut className="nav-item__icon" size={16} />
                             Logout
                         </button>
@@ -140,7 +142,7 @@ function Navbar({ privacy, setPrivacy, theme, setTheme, onMenuToggle }: { privac
     return (
         <header className="navbar">
             {/* Hamburger button for mobile */}
-            <button
+            <button type="button"
                 className="navbar__btn mobile-menu-btn"
                 onClick={onMenuToggle}
                 aria-label="Open navigation menu"
@@ -158,16 +160,16 @@ function Navbar({ privacy, setPrivacy, theme, setTheme, onMenuToggle }: { privac
                         padding: '4px 10px', borderRadius: 20,
                         background: 'rgba(34,197,94,0.10)',
                         border: '1px solid rgba(34,197,94,0.25)',
-                        fontSize: 11, color: 'var(--green)', fontWeight: 600,
+                        fontSize: 12, color: 'var(--green)', fontWeight: 600,
                     }}>
                         <Cpu size={10} /> On-Device
                     </div>
                 )}
 
                 {/* Privacy Mode toggle */}
-                <button
+                <button type="button"
                     className="navbar__btn"
-                    title={privacy ? 'Privacy Mode ON — click to disable' : 'Enable Privacy Mode (local-only)'}
+                    title={privacy ? 'Privacy Mode ON - click to disable' : 'Enable Privacy Mode (local-only)'}
                     onClick={() => setPrivacy(!privacy)}
                     style={{ color: privacy ? 'var(--green)' : undefined }}
                 >
@@ -175,7 +177,7 @@ function Navbar({ privacy, setPrivacy, theme, setTheme, onMenuToggle }: { privac
                 </button>
 
                 {/* Theme toggle */}
-                <button
+                <button type="button"
                     className="navbar__btn"
                     title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                     aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
@@ -188,7 +190,7 @@ function Navbar({ privacy, setPrivacy, theme, setTheme, onMenuToggle }: { privac
                     {initials}
                 </div>
 
-                <button
+                <button type="button"
                     className="navbar__btn navbar__logout"
                     title="Logout"
                     aria-label="Logout"

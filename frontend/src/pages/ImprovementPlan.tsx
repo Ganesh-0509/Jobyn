@@ -89,7 +89,7 @@ export default function ImprovementPlan() {
             try {
                 setAiForecast(JSON.parse(cached))
                 return
-            } catch { /* parse error — refetch */ }
+            } catch { /* parse error - refetch */ }
         }
         setForecastLoading(true)
         setForecastError(null)
@@ -145,7 +145,7 @@ export default function ImprovementPlan() {
                     <div style={{ fontSize: 60, marginBottom: 20 }}>📊</div>
                     <h1 className="page-title">No Roadmap Available</h1>
                     <p className="page-subtitle">Your personalized learning path will be generated once you upload and analyze your resume.</p>
-                    <button className="btn btn--primary" onClick={() => navigate('/resume-analyzer')} style={{ marginTop: 24 }}>
+                    <button type="button" className="btn btn--primary" onClick={() => navigate('/resume-analyzer')} style={{ marginTop: 24 }}>
                         Analyze Your Resume Now
                     </button>
                     <div style={{ marginTop: 40, padding: 30, background: 'rgba(59,130,246,0.03)', borderRadius: 20, border: '1px dashed var(--border)' }}>
@@ -153,7 +153,7 @@ export default function ImprovementPlan() {
                         <ul style={{ textAlign: 'left', display: 'inline-block', margin: '0 auto', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.8 }}>
                             <li>• Smart dependency-aware learning path (powered by skill graph)</li>
                             <li>• Daily streak + XP gamification system</li>
-                            <li>• Deadline mode — set your interview date, we adjust the plan</li>
+                            <li>• Deadline mode - set your interview date, we adjust the plan</li>
                             <li>• AI Market Forecast with growth insights</li>
                             <li>• Integrated Study Hub + Project Verification</li>
                         </ul>
@@ -179,7 +179,7 @@ export default function ImprovementPlan() {
                         display: 'flex', alignItems: 'center', gap: 8,
                     }}>
                         <Zap size={18} /> +{xpToast.xp} XP
-                        {multiplier > 1 && <span style={{ fontSize: 11, opacity: 0.9 }}>({multiplier}x streak!)</span>}
+                        {multiplier > 1 && <span style={{ fontSize: 12, opacity: 0.9 }}>({multiplier}x streak!)</span>}
                     </div>
                 )}
 
@@ -201,14 +201,14 @@ export default function ImprovementPlan() {
                             <Flame size={28} color={streak.currentStreak > 0 ? 'var(--orange)' : 'var(--text-muted)'} />
                         </div>
                         <div style={{ fontSize: 20, fontWeight: 800, marginTop: 4 }}>{streak.currentStreak}</div>
-                        <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Day Streak</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Day Streak</div>
                     </div>
 
                     {/* Level + XP bar */}
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                             <span style={{
-                                fontSize: 11, fontWeight: 700, padding: '2px 10px',
+                                fontSize: 12, fontWeight: 700, padding: '2px 10px',
                                 borderRadius: 20, background: 'rgba(59,130,246,0.1)', color: 'var(--blue)',
                             }}>
                                 LVL {streak.level}
@@ -216,7 +216,7 @@ export default function ImprovementPlan() {
                             <span style={{ fontSize: 13, fontWeight: 700 }}>{getLevelTitle(streak.level)}</span>
                             {multiplier > 1 && (
                                 <span style={{
-                                    fontSize: 10, fontWeight: 700, padding: '2px 8px',
+                                    fontSize: 12, fontWeight: 700, padding: '2px 8px',
                                     borderRadius: 10, background: 'rgba(245,158,11,0.12)', color: 'var(--orange)',
                                 }}>
                                     {multiplier}x MULTIPLIER
@@ -226,7 +226,7 @@ export default function ImprovementPlan() {
                         <div className="progress-track" style={{ height: 8, marginBottom: 4 }}>
                             <div className="progress-fill progress-fill--blue" style={{ width: `${xpInfo.progress}%`, transition: 'width 0.5s ease' }} />
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-muted)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-muted)' }}>
                             <span>{streak.totalXP} XP total</span>
                             <span>{xpInfo.next - streak.totalXP} XP to Level {streak.level + 1}</span>
                         </div>
@@ -236,11 +236,11 @@ export default function ImprovementPlan() {
                     <div style={{ display: 'flex', gap: 20, textAlign: 'center' }}>
                         <div>
                             <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--green)' }}>{totalMastered}</div>
-                            <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Skills</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Skills</div>
                         </div>
                         <div>
                             <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--blue)' }}>{streak.longestStreak}</div>
-                            <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Best Streak</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Best Streak</div>
                         </div>
                     </div>
                 </div>
@@ -269,7 +269,7 @@ export default function ImprovementPlan() {
                         </div>
 
                         {/* Deadline mode toggle */}
-                        <button
+                        <button type="button"
                             className={`card card-sm ${deadline ? 'card--active' : ''}`}
                             style={{
                                 display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
@@ -296,7 +296,7 @@ export default function ImprovementPlan() {
                         <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Deadline Mode</div>
                             <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                                Set your interview or job application date — we'll auto-adjust daily study hours to fit everything.
+                                Set your interview or job application date - we'll auto-adjust daily study hours to fit everything.
                             </div>
                         </div>
                         <input
@@ -310,9 +310,9 @@ export default function ImprovementPlan() {
                             }}
                         />
                         {deadline && (
-                            <button
+                            <button type="button"
                                 className="btn btn--outline btn--sm"
-                                style={{ color: 'var(--red)', borderColor: 'var(--red)', fontSize: 11 }}
+                                style={{ color: 'var(--red)', borderColor: 'var(--red)', fontSize: 12 }}
                                 onClick={() => { setDeadline(''); setDeadlineOpen(false) }}
                             >
                                 Clear
@@ -337,7 +337,7 @@ export default function ImprovementPlan() {
                             {smartPlan.recommended_daily_hours > smartPlan.daily_hours ? (
                                 <> You need <strong style={{ color: 'var(--red)' }}>{smartPlan.recommended_daily_hours}h/day</strong> to finish on time (currently set to {smartPlan.daily_hours}h).</>
                             ) : (
-                                <> At {smartPlan.daily_hours}h/day you'll finish in <strong style={{ color: 'var(--green)' }}>{smartPlan.total_days} days</strong> — comfortably on time!</>
+                                <> At {smartPlan.daily_hours}h/day you'll finish in <strong style={{ color: 'var(--green)' }}>{smartPlan.total_days} days</strong> - comfortably on time!</>
                             )}
                         </span>
                     </div>
@@ -379,7 +379,7 @@ export default function ImprovementPlan() {
                             <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid var(--border)' }}
                                 onClick={e => e.stopPropagation()}
                             >
-                                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase' }}>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase' }}>
                                     Verification Sources
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -395,7 +395,7 @@ export default function ImprovementPlan() {
                                                 <div style={{ color: 'var(--text-muted)', lineHeight: 1.4 }}>{src.insight}</div>
                                                 {src.url && (
                                                     <a href={src.url} target="_blank" rel="noopener noreferrer"
-                                                        style={{ color: 'var(--blue)', fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 4 }}
+                                                        style={{ color: 'var(--blue)', fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 4 }}
                                                     >
                                                         <ExternalLink size={10} /> View Source
                                                     </a>
@@ -414,23 +414,23 @@ export default function ImprovementPlan() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12, marginBottom: 24 }}>
                         <div className="card" style={{ padding: '14px', textAlign: 'center' }}>
                             <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--blue)' }}>{smartPlan.total_skills}</div>
-                            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Total Skills</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Skills</div>
                         </div>
                         <div className="card" style={{ padding: '14px', textAlign: 'center' }}>
                             <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--orange)' }}>{smartPlan.prerequisite_skills}</div>
-                            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Prerequisites</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Prerequisites</div>
                         </div>
                         <div className="card" style={{ padding: '14px', textAlign: 'center' }}>
                             <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--green)' }}>{smartPlan.target_skills}</div>
-                            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Target Skills</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Target Skills</div>
                         </div>
                         <div className="card" style={{ padding: '14px', textAlign: 'center' }}>
                             <div style={{ fontSize: 24, fontWeight: 800 }}>{smartPlan.total_days}</div>
-                            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Days to Complete</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Days to Complete</div>
                         </div>
                         <div className="card" style={{ padding: '14px', textAlign: 'center' }}>
                             <div style={{ fontSize: 24, fontWeight: 800 }}>{smartPlan.total_hours}h</div>
-                            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Total Study Time</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Study Time</div>
                         </div>
                     </div>
                 )}
@@ -505,7 +505,7 @@ export default function ImprovementPlan() {
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <span style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)' }}>
+                                                        <span style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)' }}>
                                                             <Clock size={12} /> {task.duration_minutes}m
                                                         </span>
                                                     </div>
@@ -517,12 +517,12 @@ export default function ImprovementPlan() {
                                                         {task.prerequisites.length > 0 && (
                                                             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
                                                                 <Shield size={11} color="var(--text-muted)" />
-                                                                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Requires:</span>
+                                                                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Requires:</span>
                                                                 {task.prerequisites.map(p => {
                                                                     const met = masteredSkills.includes(p.toLowerCase())
                                                                     return (
                                                                         <span key={p} style={{
-                                                                            fontSize: 10, padding: '1px 6px', borderRadius: 4,
+                                                                            fontSize: 12, padding: '1px 6px', borderRadius: 4,
                                                                             background: met ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.08)',
                                                                             color: met ? 'var(--green)' : 'var(--red)',
                                                                             fontWeight: 600,
@@ -536,10 +536,10 @@ export default function ImprovementPlan() {
                                                         {task.unlocks.length > 0 && (
                                                             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                                                                 <GitBranch size={11} color="var(--blue)" />
-                                                                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Unlocks:</span>
+                                                                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Unlocks:</span>
                                                                 {task.unlocks.map(u => (
                                                                     <span key={u} style={{
-                                                                        fontSize: 10, padding: '1px 6px', borderRadius: 4,
+                                                                        fontSize: 12, padding: '1px 6px', borderRadius: 4,
                                                                         background: 'rgba(59,130,246,0.08)', color: 'var(--blue)', fontWeight: 600,
                                                                     }}>
                                                                         {u}
@@ -557,18 +557,18 @@ export default function ImprovementPlan() {
                                                     ) : isMastered ? (
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--green)', fontSize: 13, fontWeight: 700 }}>
                                                             <Trophy size={16} /> Verified Mastery
-                                                            <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-muted)', fontWeight: 400 }}>+50 XP</span>
+                                                            <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-muted)', fontWeight: 400 }}>+50 XP</span>
                                                         </div>
                                                     ) : (
                                                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                                            <button
+                                                            <button type="button"
                                                                 className="btn btn--primary btn--sm"
                                                                 style={{ width: '100%', justifyContent: 'center' }}
                                                                 onClick={() => handleStudyOpen(task.skill)}
                                                             >
                                                                 <PlayCircle size={16} /> Start AI Study Hub
                                                             </button>
-                                                            <button
+                                                            <button type="button"
                                                                 className="btn btn--outline btn--sm"
                                                                 style={{ width: '100%', justifyContent: 'center' }}
                                                                 onClick={() => setActiveProject({ role, skills: [task.skill] })}

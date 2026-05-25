@@ -43,7 +43,7 @@ export function ErrorState({
                 {message}
             </p>
             {onRetry && (
-                <button className="btn btn--primary" onClick={onRetry} style={{ marginTop: 8 }}>
+                <button type="button" className="btn btn--primary" onClick={onRetry} style={{ marginTop: 8 }}>
                     Try Again
                 </button>
             )}
@@ -74,7 +74,7 @@ export function EmptyState({ icon = '📭', title, subtitle, action }: EmptyProp
                 </p>
             )}
             {action && (
-                <button className="btn btn--primary" onClick={action.onClick} style={{ marginTop: 8 }}>
+                <button type="button" className="btn btn--primary" onClick={action.onClick} style={{ marginTop: 8 }}>
                     {action.label}
                 </button>
             )}

@@ -39,7 +39,7 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
     const [currentQuestion, setCurrentQuestion] = useState<InterviewQuestion | null>(null)
     const [answer, setAnswer] = useState('')
     const [evaluation, setEvaluation] = useState<InterviewEvaluation | null>(null)
-    const [history, setHistory] = useState<HistoryItem[]>([])
+    const [sessionHistory, setSessionHistory] = useState<HistoryItem[]>([])
     const [scorecard, setScorecard] = useState<InterviewScorecard | null>(null)
     const [timer, setTimer] = useState(0)
     const [timerActive, setTimerActive] = useState(false)
@@ -87,7 +87,7 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
         setTimerActive(false)
 
         try {
-            const historyForApi = history.map(h => ({
+            const historyForApi = sessionHistory.map(h => ({
                 question: h.question,
                 answer: h.answer,
                 question_number: h.question_number,
@@ -114,36 +114,20 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
                 key_points_covered: evalResult.key_points_covered || [],
                 key_points_missed: evalResult.key_points_missed || [],
             }
-            setHistory(prev => [...prev, newItem])
+            setSessionHistory(prev => [...prev, newItem])
             setPhase('feedback')
         } catch (e) {
             setError('Failed to evaluate answer. Try again.')
             setPhase('answering')
             setTimerActive(true)
         }
-    }, [answer, currentQuestion, difficulty, history, skill])
-
-    const handleNextQuestion = useCallback(() => {
-        if (!evaluation?.follow_up_question) return
-        if (history.length >= MAX_QUESTIONS) {
-            handleEndInterview()
-            return
-        }
-        setCurrentQuestion(evaluation.follow_up_question)
-        setAnswer('')
-        setEvaluation(null)
-        setShowHint(false)
-        setPhase('answering')
-        setTimer(0)
-        setTimerActive(true)
-        setTimeout(() => textareaRef.current?.focus(), 100)
-    }, [evaluation, history.length])
+    }, [answer, currentQuestion, difficulty, sessionHistory, skill])
 
     const handleEndInterview = useCallback(async () => {
         setPhase('loading')
         setTimerActive(false)
         try {
-            const historyForApi = history.map(h => ({
+            const historyForApi = sessionHistory.map(h => ({
                 question: h.question,
                 answer: h.answer,
                 question_number: h.question_number,
@@ -155,8 +139,8 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
             onComplete?.(card)
         } catch (e) {
             // Build manual scorecard
-            const total = history.reduce((s, h) => s + h.score, 0)
-            const max = history.length * 10
+            const total = sessionHistory.reduce((s, h) => s + h.score, 0)
+            const max = sessionHistory.length * 10
             const pct = max > 0 ? Math.round((total / max) * 100) : 0
             setScorecard({
                 skill,
@@ -165,32 +149,48 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
                 max_score: max,
                 percentage: pct,
                 verdict: pct >= 70 ? 'HIRE' : 'LEAN_NO_HIRE',
-                summary: `You scored ${pct}% across ${history.length} questions.`,
+                summary: `You scored ${pct}% across ${sessionHistory.length} questions.`,
                 strengths: ['Completed the interview'],
                 weaknesses: ['Review missed areas'],
                 recommendations: [`Practice more ${skill}`],
                 skill_breakdown: {},
                 interview_ready: pct >= 70,
                 suggested_next_topics: [skill],
-                questions_answered: history.length,
+                questions_answered: sessionHistory.length,
             })
             setPhase('scorecard')
         }
-    }, [skill, difficulty, history, onComplete])
+    }, [skill, difficulty, sessionHistory, onComplete])
+
+    const handleNextQuestion = useCallback(() => {
+        if (!evaluation?.follow_up_question) return
+        if (sessionHistory.length >= MAX_QUESTIONS) {
+            handleEndInterview()
+            return
+        }
+        setCurrentQuestion(evaluation.follow_up_question)
+        setAnswer('')
+        setEvaluation(null)
+        setShowHint(false)
+        setPhase('answering')
+        setTimer(0)
+        setTimerActive(true)
+        setTimeout(() => textareaRef.current?.focus(), 100)
+    }, [evaluation, sessionHistory.length, handleEndInterview])
 
     const handleRestart = () => {
         setPhase('setup')
         setCurrentQuestion(null)
         setAnswer('')
         setEvaluation(null)
-        setHistory([])
+        setSessionHistory([])
         setScorecard(null)
         setTimer(0)
         setError('')
     }
 
-    const avgScore = history.length > 0
-        ? Math.round(history.reduce((s, h) => s + h.score, 0) / history.length * 10) / 10
+    const avgScore = sessionHistory.length > 0
+        ? Math.round(sessionHistory.reduce((s, h) => s + h.score, 0) / sessionHistory.length * 10) / 10
         : 0
 
     // ── SETUP PHASE ──
@@ -207,7 +207,7 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
                     <h4>Select Difficulty</h4>
                     <div className="diff-options">
                         {(Object.entries(DIFFICULTY_CONFIG) as [keyof typeof DIFFICULTY_CONFIG, typeof DIFFICULTY_CONFIG[keyof typeof DIFFICULTY_CONFIG]][]).map(([key, cfg]) => (
-                            <button
+                            <button type="button"
                                 key={key}
                                 className={`diff-card ${difficulty === key ? 'active' : ''}`}
                                 onClick={() => setDifficulty(key)}
@@ -229,7 +229,7 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
 
                 {error && <div className="interview-error"><AlertCircle size={16} /> {error}</div>}
 
-                <button className="btn btn--primary btn--lg" onClick={handleStart}>
+                <button type="button" className="btn btn--primary btn--lg" onClick={handleStart}>
                     <Target size={18} /> Begin Interview
                 </button>
             </div>
@@ -258,7 +258,7 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
                         <span className="cat-badge">{currentQuestion.category}</span>
                     </div>
                     <div className="status-center">
-                        {history.length > 0 && (
+                        {sessionHistory.length > 0 && (
                             <span className="avg-score">Avg: {avgScore}/10</span>
                         )}
                     </div>
@@ -273,11 +273,11 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
                     {Array.from({ length: MAX_QUESTIONS }, (_, i) => (
                         <div
                             key={i}
-                            className={`progress-dot ${i < history.length ? 'done' : i === history.length ? 'current' : ''}`}
-                            title={i < history.length ? `Q${i + 1}: ${history[i].score}/10` : ''}
+                            className={`progress-dot ${i < sessionHistory.length ? 'done' : i === sessionHistory.length ? 'current' : ''}`}
+                            title={i < sessionHistory.length ? `Q${i + 1}: ${sessionHistory[i].score}/10` : ''}
                         >
-                            {i < history.length && (
-                                <span className="dot-score">{history[i].score}</span>
+                            {i < sessionHistory.length && (
+                                <span className="dot-score">{sessionHistory[i].score}</span>
                             )}
                         </div>
                     ))}
@@ -291,7 +291,7 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
                     <div className="question-body">
                         <p className="question-text">{currentQuestion.question}</p>
                         {!showHint ? (
-                            <button className="hint-toggle" onClick={() => setShowHint(true)}>
+                            <button type="button" className="hint-toggle" onClick={() => setShowHint(true)}>
                                 <Lightbulb size={14} /> Need a hint?
                             </button>
                         ) : (
@@ -317,12 +317,12 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
                     <div className="answer-footer">
                         <span className="word-count">{answer.split(/\s+/).filter(Boolean).length} words</span>
                         <div className="answer-actions">
-                            {history.length >= 1 && (
-                                <button className="btn btn--ghost btn--sm" onClick={handleEndInterview}>
+                            {sessionHistory.length >= 1 && (
+                                <button type="button" className="btn btn--ghost btn--sm" onClick={handleEndInterview}>
                                     End Interview
                                 </button>
                             )}
-                            <button
+                            <button type="button"
                                 className="btn btn--primary"
                                 onClick={handleSubmitAnswer}
                                 disabled={!answer.trim()}
@@ -395,17 +395,17 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
 
                     {/* Actions */}
                     <div className="feedback-actions">
-                        {history.length < MAX_QUESTIONS ? (
-                            <button className="btn btn--primary" onClick={handleNextQuestion}>
+                        {sessionHistory.length < MAX_QUESTIONS ? (
+                            <button type="button" className="btn btn--primary" onClick={handleNextQuestion}>
                                 Next Question <ChevronRight size={16} />
                             </button>
                         ) : (
-                            <button className="btn btn--primary" onClick={handleEndInterview}>
+                            <button type="button" className="btn btn--primary" onClick={handleEndInterview}>
                                 <Trophy size={16} /> View Scorecard
                             </button>
                         )}
-                        {history.length >= 2 && history.length < MAX_QUESTIONS && (
-                            <button className="btn btn--ghost" onClick={handleEndInterview}>
+                        {sessionHistory.length >= 2 && sessionHistory.length < MAX_QUESTIONS && (
+                            <button type="button" className="btn btn--ghost" onClick={handleEndInterview}>
                                 End Early & Get Scorecard
                             </button>
                         )}
@@ -498,10 +498,10 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
                     )}
 
                     {/* Question history review */}
-                    {history.length > 0 && (
+                    {sessionHistory.length > 0 && (
                         <div className="history-review">
                             <h4>Interview Transcript</h4>
-                            {history.map((h, i) => (
+                            {sessionHistory.map((h, i) => (
                                 <div key={i} className="history-item">
                                     <div className="hi-header">
                                         <span className="hi-q">Q{h.question_number}</span>
@@ -517,7 +517,7 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
                     )}
 
                     <div className="scorecard-actions">
-                        <button className="btn btn--primary" onClick={handleRestart}>
+                        <button type="button" className="btn btn--primary" onClick={handleRestart}>
                             <RefreshCw size={16} /> Practice Again
                         </button>
                     </div>

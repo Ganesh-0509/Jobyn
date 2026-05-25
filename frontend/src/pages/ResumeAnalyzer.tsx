@@ -73,14 +73,16 @@ export default function ResumeAnalyzer() {
             const nextI = ++i
             timers.push(setTimeout(() => setStageIdx(nextI), cumulative))
         }
-        return () => timers.forEach(clearTimeout)
+        return () => {
+            timers.forEach(t => clearTimeout(t))
+        }
     }, [loading])
 
     const handleUpload = async () => {
         if (!file) return
         setLoading(true); setError('')
         try {
-            /* role='auto' — backend scores all roles and picks best fit */
+            /* role='auto' - backend scores all roles and picks best fit */
             const result = await uploadResume(file, 'auto', privacy, user?.email)
             setAnalysis(result)
 
@@ -158,7 +160,7 @@ export default function ResumeAnalyzer() {
                     Resume <span className="accent">Intelligence</span>
                 </h1>
                 <p className="analyzer-hero__sub">
-                    Drop your resume — our AI scans it against 7 career paths, auto-detects your best-fit role,
+                    Drop your resume - our AI scans it against 7 career paths, auto-detects your best-fit role,
                     and delivers a comprehensive readiness breakdown. No manual selection needed.
                 </p>
             </div>
@@ -182,7 +184,7 @@ export default function ResumeAnalyzer() {
                         <div className="upload-zone__icon"><Upload size={40} strokeWidth={1.5} /></div>
                         <div className="upload-zone__title">Drag & drop your resume</div>
                         <div className="upload-zone__sub">PDF or DOCX up to 5MB</div>
-                        <button className="btn btn--primary btn--sm" style={{ marginTop: 8 }} onClick={e => { e.stopPropagation(); inputRef.current?.click() }}>
+                        <button type="button" className="btn btn--primary btn--sm" style={{ marginTop: 8 }} onClick={e => { e.stopPropagation(); inputRef.current?.click() }}>
                             Browse Files
                         </button>
                     </>
@@ -192,14 +194,14 @@ export default function ResumeAnalyzer() {
                             <FileText size={24} color="var(--blue)" />
                             <div>
                                 <div style={{ fontSize: 14, fontWeight: 700 }}>{file.name}</div>
-                                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{(file.size / 1024).toFixed(0)} KB &bull; Ready to analyze</div>
+                                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{(file.size / 1024).toFixed(0)} KB &bull; Ready to analyze</div>
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                            <button className="btn btn--ghost btn--sm" onClick={e => { e.stopPropagation(); setFile(null); setError('') }}>
+                            <button type="button" className="btn btn--ghost btn--sm" onClick={e => { e.stopPropagation(); setFile(null); setError('') }}>
                                 Change File
                             </button>
-                            <button
+                            <button type="button"
                                 className="btn btn--primary"
                                 disabled={loading}
                                 onClick={e => { e.stopPropagation(); handleUpload() }}
@@ -294,7 +296,7 @@ export default function ResumeAnalyzer() {
                             ))}
                         </div>
 
-                        <button className="btn btn--primary" style={{ width: '100%', justifyContent: 'center', marginTop: 20 }} onClick={() => navigate('/readiness-score')}>
+                        <button type="button" className="btn btn--primary" style={{ width: '100%', justifyContent: 'center', marginTop: 20 }} onClick={() => navigate('/readiness-score')}>
                             <TrendingUp size={16} /> View Full Readiness Report
                         </button>
                     </div>
@@ -302,7 +304,7 @@ export default function ResumeAnalyzer() {
                     {/* ── Why This Role? ────────────────────────────────── */}
                     {roleMatches.length > 1 && (
                         <div className="card why-role-card">
-                            <button
+                            <button type="button"
                                 className="why-role-toggle"
                                 onClick={() => setWhyExpanded(v => !v)}
                             >
@@ -311,7 +313,7 @@ export default function ResumeAnalyzer() {
                                     <div>
                                         <div style={{ fontSize: 15, fontWeight: 700 }}>Why {analysis.role}?</div>
                                         <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                                            Scored against all 7 roles — here's how you matched
+                                            Scored against all 7 roles - here's how you matched
                                         </div>
                                     </div>
                                 </div>
@@ -326,7 +328,7 @@ export default function ResumeAnalyzer() {
                                             {runnerUp && (
                                                 <> The runner-up was <strong>{runnerUp.role}</strong> at {runnerUp.score}%.
                                                     {topRole.score - runnerUp.score <= 5
-                                                        ? ' These are very close — you could pursue either path!'
+                                                        ? ' These are very close - you could pursue either path!'
                                                         : ` That's a ${topRole.score - runnerUp.score}pt gap, showing a clear strength toward ${topRole.role}.`
                                                     }
                                                 </>
@@ -413,7 +415,7 @@ export default function ResumeAnalyzer() {
                             </div>
                         </div>
                         {analysis.db_warning && (
-                            <div style={{ marginTop: 12, fontSize: 11, color: 'var(--orange)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <div style={{ marginTop: 12, fontSize: 12, color: 'var(--orange)', display: 'flex', alignItems: 'center', gap: 6 }}>
                                 <AlertCircle size={12} /> {analysis.db_warning}
                             </div>
                         )}

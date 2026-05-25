@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Session, User as SupaUser } from '@supabase/supabase-js'
 
@@ -55,26 +55,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [])
 
     /* ── Actions ────────────────────────────────────────────────── */
-    const login = async (email: string, password: string) => {
+    const login = useCallback(async (email: string, password: string) => {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw new Error(error.message)
-    }
+    }, [])
 
-    const signup = async (name: string, email: string, password: string) => {
-        const { error } = await supabase.auth.signUp({
+    const signup = useCallback(async (name: string, email: string, password: string) => {
+        const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: { data: { name } },
         })
         if (error) throw new Error(error.message)
 
-        // Supabase may not auto-login after signup (e.g. email confirmation enabled).
-        // Explicitly sign in so the session is available immediately.
-        const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password })
-        if (loginErr) throw new Error(loginErr.message)
-    }
+        // If email confirmation is enabled in Supabase, data.session is null and data.user is created.
+        if (data.user && !data.session) {
+            throw new Error("VerificationEmailSent")
+        }
 
-    const loginWithGoogle = async () => {
+        // If email confirmation is disabled, auto-login using the credentials.
+        if (!data.session) {
+            const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password })
+            if (loginErr) throw new Error(loginErr.message)
+        }
+    }, [])
+
+    const loginWithGoogle = useCallback(async () => {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
@@ -82,14 +88,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             },
         })
         if (error) throw new Error(error.message)
-    }
+    }, [])
 
-    const logout = () => {
+    const logout = useCallback(() => {
         supabase.auth.signOut()
-    }
+    }, [])
+
+    const value = useMemo(() => ({
+        user,
+        session,
+        loading,
+        login,
+        signup,
+        loginWithGoogle,
+        logout
+    }), [user, session, loading, login, signup, loginWithGoogle, logout])
 
     return (
-        <Ctx.Provider value={{ user, session, loading, login, signup, loginWithGoogle, logout }}>
+        <Ctx.Provider value={value}>
             {children}
         </Ctx.Provider>
     )

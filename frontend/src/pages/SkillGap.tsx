@@ -64,7 +64,7 @@ export default function SkillGap() {
                     <div style={{ fontSize: 60, marginBottom: 20 }}>🧠</div>
                     <h1 className="page-title">Skill Gap Analysis Locked</h1>
                     <p className="page-subtitle">Upload your resume first to identify skill gaps.</p>
-                    <button className="btn btn--primary" onClick={() => navigate('/resume-analyzer')} style={{ marginTop: 24 }}>
+                    <button type="button" className="btn btn--primary" onClick={() => navigate('/resume-analyzer')} style={{ marginTop: 24 }}>
                         Analyze Your Resume Now
                     </button>
                 </div>
@@ -96,7 +96,7 @@ export default function SkillGap() {
                         <div className="card-title" style={{ marginBottom: 2 }}>🕸 Skill Dependency Graph</div>
                         <div className="card-subtitle">Your skills (green) vs gaps (red/orange)</div>
                     </div>
-                    <button
+                    <button type="button"
                         className="btn btn--ghost btn--sm"
                         onClick={() => setShowGraph(v => !v)}
                     >
@@ -133,15 +133,15 @@ export default function SkillGap() {
                                     <span className="gap-row__name">{g.skill}</span>
                                     <div className="gap-row__actions">
                                         <span className={`badge ${g.priority === 'Critical' ? 'badge--high' : g.priority === 'High' ? 'badge--medium' : 'badge--blue'}`}>{g.priority}</span>
-                                        <button className="btn btn--primary btn--sm" onClick={() => handleAction(g.skill)}>{g.action} →</button>
+                                        <button type="button" className="btn btn--primary btn--sm" onClick={() => handleAction(g.skill)}>{g.action} →</button>
                                     </div>
                                 </div>
                                 {prereqs.length > 0 && (
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 40, flexWrap: 'wrap' }}>
-                                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Prerequisites:</span>
+                                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Prerequisites:</span>
                                         {prereqs.map(p => (
                                             <span key={p} style={{
-                                                fontSize: 10, padding: '1px 6px', borderRadius: 4,
+                                                fontSize: 12, padding: '1px 6px', borderRadius: 4,
                                                 background: 'var(--bg-glass)',
                                                 border: '1px solid var(--border)',
                                                 color: 'var(--text-secondary)'

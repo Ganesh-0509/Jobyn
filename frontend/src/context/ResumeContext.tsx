@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react'
 import type { UploadResult, PredictResult } from '../api/client'
 import { saveScore } from '../utils/history'
 import { useAuth } from './AuthContext'
@@ -128,7 +128,7 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
         }
     }, [user])
 
-    const setAnalysis = (a: UploadResult) => {
+    const setAnalysis = useCallback((a: UploadResult) => {
         if (analysis) {
             setPreviousAnalysisState(analysis)
             localStorage.setItem(userPrefix + LS_KEY_PREV, JSON.stringify(analysis))
@@ -150,35 +150,35 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
             setBestFitState(best)
             localStorage.setItem(userPrefix + LS_KEY_BEST_FIT, JSON.stringify(best))
         }).catch(e => console.error("Best fit check failed:", e))
-    }
+    }, [analysis, userPrefix, user?.email])
 
-    const setPrediction = (p: PredictResult) => {
+    const setPrediction = useCallback((p: PredictResult) => {
         setPredictionState(p)
         localStorage.setItem(userPrefix + LS_KEY_PREDICTION, JSON.stringify(p))
-    }
+    }, [userPrefix])
 
-    const markSkillMastered = (skill: string) => {
+    const markSkillMastered = useCallback((skill: string) => {
         setMasteredSkills(prev => {
             const next = prev.includes(skill) ? prev : [...prev, skill]
             localStorage.setItem(userPrefix + LS_KEY_MASTERED, JSON.stringify(next))
             return next
         })
-    }
+    }, [userPrefix])
 
-    const toggleTask = (taskId: string) => {
+    const toggleTask = useCallback((taskId: string) => {
         setCompletedTasks(prev => {
             const next = prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]
             localStorage.setItem(userPrefix + LS_KEY_TASKS, JSON.stringify(next))
             return next
         })
-    }
+    }, [userPrefix])
 
-    const setDailyCommitment = (hours: number) => {
+    const setDailyCommitment = useCallback((hours: number) => {
         setDailyCommitmentState(hours)
         localStorage.setItem(userPrefix + LS_KEY_DAILY_COMMITMENT, JSON.stringify(hours))
-    }
+    }, [userPrefix])
 
-    const clear = () => {
+    const clear = useCallback(() => {
         setAnalysisState(null)
         setPredictionState(null)
         setBestFitState(null)
@@ -195,14 +195,18 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem(prefix + LS_KEY_MASTERED)
         localStorage.removeItem(prefix + LS_KEY_TASKS)
         localStorage.removeItem(prefix + LS_KEY_DAILY_COMMITMENT)
-    }
+    }, [user?.email])
 
     const value = useMemo(() => ({
         analysis, prediction, bestFit, previousAnalysis, masteredSkills, completedTasks, dailyCommitment,
         currentFile, setCurrentFile,
         setAnalysis, setPrediction, markSkillMastered, toggleTask, setDailyCommitment, clear,
         loading
-    }), [analysis, prediction, bestFit, previousAnalysis, masteredSkills, completedTasks, dailyCommitment, currentFile, loading])
+    }), [
+        analysis, prediction, bestFit, previousAnalysis, masteredSkills, completedTasks, dailyCommitment,
+        currentFile, loading,
+        setAnalysis, setPrediction, markSkillMastered, toggleTask, setDailyCommitment, clear
+    ])
 
     return (
         <Ctx.Provider value={value}>

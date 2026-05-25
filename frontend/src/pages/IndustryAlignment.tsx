@@ -26,7 +26,7 @@ const INDUSTRY_DETAILS: Record<string, {
         ]
     },
     'Startup Roles': {
-        summary: 'Startups value "Fullstack Agility"—the ability to learn and ship features fast using modern stacks (MERN, Golang, DevOps). Your score tracks your project depth and tech-stack variety.',
+        summary: 'Startups value "Fullstack Agility"-the ability to learn and ship features fast using modern stacks (MERN, Golang, DevOps). Your score tracks your project depth and tech-stack variety.',
         benchmark: 'High-Growth Benchmark: 75% | We analyze your project complexity and "Detected Skills" to match you with Series A/B startup requirements.',
         resources: [
             { name: 'Founders Guide', url: 'https://www.ycombinator.com/library', platform: 'Y Combinator' },
@@ -73,7 +73,7 @@ export default function IndustryAlignment() {
                     <div style={{ fontSize: 60, marginBottom: 20 }}>🏢</div>
                     <h1 className="page-title">Industry Alignment Locked</h1>
                     <p className="page-subtitle">Upload your resume to see personalized industry alignment scores.</p>
-                    <button className="btn btn--primary" onClick={() => navigate('/resume-analyzer')} style={{ marginTop: 24 }}>
+                    <button type="button" className="btn btn--primary" onClick={() => navigate('/resume-analyzer')} style={{ marginTop: 24 }}>
                         Analyze Your Resume Now
                     </button>
                 </div>
@@ -114,8 +114,8 @@ export default function IndustryAlignment() {
                                         </div>
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
-                                        <div className="industry-row__pct" style={{ color: `var(--${row.cls})`, fontSize: 24, fontWeight: 800 }}>{score !== null ? `${row.pct}%` : '—'}</div>
-                                        <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 700 }}>{score !== null ? 'ALIGNMENT MATCH' : 'MATCH SCORE'}</div>
+                                        <div className="industry-row__pct" style={{ color: `var(--${row.cls})`, fontSize: 24, fontWeight: 800 }}>{score !== null ? `${row.pct}%` : '-'}</div>
+                                        <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700 }}>{score !== null ? 'ALIGNMENT MATCH' : 'MATCH SCORE'}</div>
                                     </div>
                                 </div>
                                 <div className="progress-track" style={{ height: 12, marginTop: 16 }}>
@@ -164,7 +164,7 @@ export default function IndustryAlignment() {
                                                     <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{res.name}</span>
                                                     <ExternalLink size={14} style={{ opacity: 0.5, color: 'var(--text-secondary)' }} />
                                                 </div>
-                                                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>via {res.platform}</span>
+                                                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>via {res.platform}</span>
                                             </a>
                                         ))}
                                     </div>

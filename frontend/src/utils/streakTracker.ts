@@ -1,5 +1,5 @@
 /**
- * streakTracker.ts — Gamification: Daily streaks + XP system.
+ * streakTracker.ts - Gamification: Daily streaks + XP system.
  *
  * Stored per-user in localStorage. Tracks:
  *  - Daily login/activity streak
@@ -93,7 +93,7 @@ export function getStreakData(userEmail?: string): StreakData {
                     data.currentStreak = 0
                     data.dailyActionsToday = []
                 } else if (diffDays === 1) {
-                    // New day — reset daily actions
+                    // New day - reset daily actions
                     data.dailyActionsToday = []
                 }
             }

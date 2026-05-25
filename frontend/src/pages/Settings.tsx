@@ -22,7 +22,6 @@ export default function Settings() {
     const [privacyMode, setPrivacyMode] = useState(() => getItem<string>('privacy') === 'true')
 
     useEffect(() => {
-        setHealthLoading(true)
         getHealth().then(h => setHealth(h)).catch(() => {}).finally(() => setHealthLoading(false))
     }, [])
 
@@ -110,7 +109,7 @@ export default function Settings() {
                         <p className="st-header__sub">Profile, preferences, data, and system diagnostics</p>
                     </div>
                 </div>
-                <button className={`btn ${saved ? 'btn--success' : 'btn--primary'}`} onClick={handleSave}>
+                <button type="button" className={`btn ${saved ? 'btn--success' : 'btn--primary'}`} onClick={handleSave}>
                     {saved ? <><CheckCircle size={14} /> Saved</> : <><Save size={14} /> Apply</>}
                 </button>
             </div>
@@ -128,7 +127,7 @@ export default function Settings() {
                             </div>
                             <div className="st-profile__info">
                                 <div className="st-profile__name">{user?.name ?? 'User'}</div>
-                                <div className="st-profile__email">{user?.email ?? '—'}</div>
+                                <div className="st-profile__email">{user?.email ?? '-'}</div>
                             </div>
                         </div>
                         <div className="st-profile-stats">
@@ -149,7 +148,7 @@ export default function Settings() {
                             </div>
                             <div className="st-pstat">
                                 <Zap size={13} />
-                                <span>{analysis?.role?.split(' ')[0] ?? '—'}</span>
+                                <span>{analysis?.role?.split(' ')[0] ?? '-'}</span>
                                 <span>Role</span>
                             </div>
                         </div>
@@ -212,7 +211,7 @@ export default function Settings() {
                             </div>
                         )}
                         <div className="st-danger-actions">
-                            <button className="btn btn--danger btn--sm" onClick={clear} disabled={!analysis}>
+                            <button type="button" className="btn btn--danger btn--sm" onClick={clear} disabled={!analysis}>
                                 <Trash2 size={13} /> Clear All Data
                             </button>
                         </div>
@@ -238,17 +237,17 @@ export default function Settings() {
                             </div>
                             <div className="st-status-item">
                                 <span>Model</span>
-                                <span className="st-status-val">{health?.model_version ? `v${health.model_version}` : '—'}</span>
+                                <span className="st-status-val">{health?.model_version ? `v${health.model_version}` : '-'}</span>
                             </div>
                             <div className="st-status-item">
                                 <span>Accuracy</span>
                                 <span className="st-status-val" style={{ color: 'var(--cyan)' }}>
-                                    {health?.accuracy ? `${(health.accuracy * 100).toFixed(1)}%` : '—'}
+                                    {health?.accuracy ? `${(health.accuracy * 100).toFixed(1)}%` : '-'}
                                 </span>
                             </div>
                             <div className="st-status-item">
                                 <span>Vocabulary</span>
-                                <span className="st-status-val">{health?.vocabulary_size?.toLocaleString() ?? '—'} terms</span>
+                                <span className="st-status-val">{health?.vocabulary_size?.toLocaleString() ?? '-'} terms</span>
                             </div>
                         </div>
                     </div>
@@ -278,7 +277,7 @@ export default function Settings() {
                             )}
                         </div>
                         <div className="st-vault-actions">
-                            <button className="btn btn--ghost btn--sm" onClick={exportData}>
+                            <button type="button" className="btn btn--ghost btn--sm" onClick={exportData}>
                                 <Download size={13} /> Export All Data
                             </button>
                         </div>
@@ -301,7 +300,7 @@ export default function Settings() {
                     <div className="st-card">
                         <div className="st-section-head"><Info size={14} /> About</div>
                         <div className="st-about">
-                            <p><strong>CampusSync Edge AI</strong> — v2.0</p>
+                            <p><strong>CampusSync Edge AI</strong> - v2.0</p>
                             <p>Locally cached ONNX model for classification + Gemini 2.0 Flash for semantic reasoning. Built to help students bridge the gap between academic skills and industry expectations.</p>
                             <p className="st-muted">FastAPI · React · Supabase · ONNX Runtime</p>
                         </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 
 /**
- * SkillGraphViz — Interactive SVG Skill Dependency Graph
+ * SkillGraphViz - Interactive SVG Skill Dependency Graph
  *
  * Layout:
  *   - "You" centre node (glowing blue)
@@ -187,14 +187,14 @@ export default function SkillGraphViz({
                 position: 'absolute', top: 12, right: 12, zIndex: 10,
                 display: 'flex', gap: 8
             }}>
-                <button
+                <button type="button"
                     onClick={() => setView({ x: 0, y: 0, scale: 0.85 })}
                     className="btn btn--ghost btn--sm"
-                    style={{ fontSize: 10, padding: '4px 8px' }}
+                    style={{ fontSize: 12, padding: '4px 8px' }}
                 >
                     Reset View
                 </button>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', background: 'rgba(0,0,0,0.5)', padding: '4px 8px', borderRadius: 4 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', background: 'rgba(0,0,0,0.5)', padding: '4px 8px', borderRadius: 4 }}>
                     Scroll to zoom • Drag to pan
                 </div>
             </div>
@@ -309,7 +309,7 @@ export default function SkillGraphViz({
                     { color: '#f59e0b', label: 'High' },
                     { color: '#3b82f6', label: 'Medium' },
                 ].map(({ color, label }) => (
-                    <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: '#94a3b8', background: 'rgba(0,0,0,0.6)', padding: '2px 8px', borderRadius: 4 }}>
+                    <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#94a3b8', background: 'rgba(0,0,0,0.6)', padding: '2px 8px', borderRadius: 4 }}>
                         <div style={{ width: 8, height: 8, borderRadius: '50%', background: color }} />
                         {label}
                     </div>

@@ -59,7 +59,7 @@ function SkillNode({ data }: NodeProps) {
             {String(data.label)}
             {Boolean(data.onClick) && !isCenter && status !== 'mastered' && (
                 <div style={{
-                    marginTop: 8, fontSize: 10, color: 'var(--blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
+                    marginTop: 8, fontSize: 12, color: 'var(--blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
                 }}>
                     <Blocks size={12} /> Click to Generate
                 </div>

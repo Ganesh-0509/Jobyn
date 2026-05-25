@@ -1,4 +1,4 @@
-/** Minimal SVG line chart — no external dependencies */
+/** Minimal SVG line chart - no external dependencies */
 interface Point { label: string; value: number }
 
 interface Props {
