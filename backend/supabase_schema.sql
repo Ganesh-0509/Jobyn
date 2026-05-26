@@ -111,6 +111,9 @@ CREATE TABLE IF NOT EXISTS knowledge_chunks (
     created_at timestamp default now()
 );
 
+ALTER TABLE knowledge_chunks DISABLE ROW LEVEL SECURITY;
+GRANT ALL ON TABLE knowledge_chunks TO anon, authenticated, service_role;
+
 CREATE OR REPLACE FUNCTION match_knowledge (
     query_embedding vector(3072),
     match_count int default 5
@@ -169,3 +172,61 @@ CREATE TABLE IF NOT EXISTS contributions (
 CREATE INDEX IF NOT EXISTS idx_contributions_status ON contributions(status);
 CREATE INDEX IF NOT EXISTS idx_contributions_topic  ON contributions(topic);
 ALTER TABLE contributions DISABLE ROW LEVEL SECURITY;
+
+-- 9. Dynamic Curriculums (stores N-section syllabus structures for skills)
+CREATE TABLE IF NOT EXISTS dynamic_curriculums (
+    id              BIGSERIAL    PRIMARY KEY,
+    skill           TEXT         NOT NULL UNIQUE,
+    sections        JSONB        NOT NULL, -- Array of {idx, title, desc, duration}
+    created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_dyn_curriculums_skill ON dynamic_curriculums(skill);
+ALTER TABLE dynamic_curriculums DISABLE ROW LEVEL SECURITY;
+
+-- 10. User Study Progress (tracks which sections a user has completed)
+CREATE TABLE IF NOT EXISTS user_study_progress (
+    id                 BIGSERIAL    PRIMARY KEY,
+    user_email         TEXT         NOT NULL,
+    skill              TEXT         NOT NULL,
+    completed_sections JSONB        NOT NULL DEFAULT '[]', -- List of completed section indexes (e.g. [0, 1, 2])
+    mastered           BOOLEAN      DEFAULT FALSE,
+    created_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    UNIQUE(user_email, skill)
+);
+CREATE INDEX IF NOT EXISTS idx_user_progress_email ON user_study_progress(user_email);
+CREATE INDEX IF NOT EXISTS idx_user_progress_skill ON user_study_progress(skill);
+ALTER TABLE user_study_progress DISABLE ROW LEVEL SECURITY;
+
+-- 11. User Quiz Attempts (logs grades and pass/fail state for section quizzes)
+CREATE TABLE IF NOT EXISTS user_quiz_attempts (
+    id              BIGSERIAL    PRIMARY KEY,
+    user_email      TEXT         NOT NULL,
+    skill           TEXT         NOT NULL,
+    section_idx     INTEGER      NOT NULL,
+    score           INTEGER      NOT NULL, -- Percentage score (0 - 100)
+    passed          BOOLEAN      NOT NULL,
+    created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_quiz_attempts_email ON user_quiz_attempts(user_email);
+CREATE INDEX IF NOT EXISTS idx_quiz_attempts_skill_sec ON user_quiz_attempts(skill, section_idx);
+ALTER TABLE user_quiz_attempts DISABLE ROW LEVEL SECURITY;
+
+-- 12. Content Feedback (user feedback on study content quality for iterative improvement)
+CREATE TABLE IF NOT EXISTS content_feedback (
+    id              BIGSERIAL    PRIMARY KEY,
+    skill           TEXT         NOT NULL,
+    section_idx     INTEGER,
+    feedback_type   TEXT         NOT NULL CHECK (feedback_type IN ('rating', 'error_report', 'suggestion', 'quality_issue')),
+    rating          INTEGER      CHECK (rating >= 1 AND rating <= 5),
+    comment         TEXT,
+    content_type    TEXT         DEFAULT 'section' CHECK (content_type IN ('section', 'overview', 'quiz')),
+    user_email      TEXT,
+    resolved        BOOLEAN      DEFAULT FALSE,
+    created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_content_feedback_skill ON content_feedback(skill);
+CREATE INDEX IF NOT EXISTS idx_content_feedback_type ON content_feedback(feedback_type);
+CREATE INDEX IF NOT EXISTS idx_content_feedback_rating ON content_feedback(rating);
+ALTER TABLE content_feedback DISABLE ROW LEVEL SECURITY;
+

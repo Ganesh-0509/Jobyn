@@ -167,6 +167,22 @@ def _build_verification_prompt(
     )
     files_sample = "\n".join(f"  - {f}" for f in repo_data["file_tree"][:60])
 
+    # Check if this is a frontend-centric repository to give target checklist guidelines
+    is_frontend = any(lang.lower() in ["html", "css", "javascript", "typescript", "vue", "svelte"] for lang in repo_data["languages"].keys())
+    
+    frontend_checklist_instructions = ""
+    if is_frontend:
+        frontend_checklist_instructions = """
+═══ CRITICAL FRONT-END CHECKLIST RULES ═══
+Since this project involves Front-End technologies, you MUST evaluate the files and structure against the following checklist standards:
+1. **HTML & SEO**: Ensure there are standard meta tags (especially `<meta name="viewport" ...>` for responsiveness, charset definitions, descriptive title, and meta description).
+2. **Accessibility (a11y)**: Check if the file tree or README suggests semantic HTML5 tag utilization (`<header>`, `<nav>`, `<main>`, `<footer>`) instead of generic nested `<div>` blocks. Ensure image assets and README references include descriptive `alt` tags.
+3. **Styles & Performance**: Are style definitions modular (e.g. CSS files, styled-components, or standard Tailwind configurations) rather than extensive inline styles?
+4. **Best Practices**: Ensure clean asset organization (images/icons in dedicated directories like `public`, `assets`, or `images`).
+
+Please factor these specific checks into your scores for `spec_alignment`, `documentation`, and `completeness`. Explicitly note any missed checklist items under 'improvements'.
+"""
+
     return f"""
 You are a strict but fair Senior Code Reviewer verifying if a student actually completed a capstone project.
 
@@ -193,16 +209,17 @@ Commits Fetched: {repo_data['commit_count']}
 
 ── README (excerpt) ──
 {repo_data['readme'][:1500] or '  No README found'}
+{frontend_checklist_instructions}
 
 ═══ YOUR TASK ═══
-Analyze this repository against the original project specification and required skills.
+Analyze this repository against the original project specification, required skills, and any applicable checklist guidelines.
 Score the project on these 5 criteria (0-100 each):
 
 1. **skill_coverage** — Does the code use the required skills/technologies? Check file extensions, imports, frameworks visible in the tree and languages.
-2. **spec_alignment** — How closely does the repo match the project specification? (features, structure, scope)
+2. **spec_alignment** — How closely does the repo match the project specification and frontend design guidelines (if applicable)?
 3. **code_authenticity** — Does the commit history show gradual, organic development? (Multiple commits over days? Or a single code dump?) Red flags: 1 commit, all files added at once, no meaningful commit messages.
-4. **documentation** — Does the repo have a README, comments, proper structure?
-5. **completeness** — Is this a working project or just boilerplate/scaffolding?
+4. **documentation** — Does the repo have a README, comments, proper structure, and good metadata?
+5. **completeness** — Is this a working project or just boilerplate/scaffolding? (For front-end, look for viewport config, standard structural elements, and a11y focus).
 
 Return ONLY valid JSON:
 {{
@@ -224,6 +241,7 @@ Verdicts:
 - INSUFFICIENT (25-49): Minimal effort, mostly boilerplate
 - SUSPICIOUS (< 25 or red flags): Possible plagiarism, single commit dump, or unrelated repo
 """
+
 
 
 class ProjectVerifierService:

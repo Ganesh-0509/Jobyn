@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react'
 import { X, BookOpen, CheckCircle2, ChevronRight, ChevronLeft, BrainCircuit, Lightbulb, Clock, MessageSquare, Send, Sparkles, Pin, Sun, Moon, Target, Zap, RotateCcw, AlertCircle, Code2, ExternalLink, Loader2 } from 'lucide-react'
-import { getStudyNotes, getStudyQuiz, getStudySection, studyChat, type StudyNotesResult, type QuizResult, type DetailedContent } from '../api/client'
+import { getStudyNotes, getStudyQuiz, getStudySection, studyChat, saveStudyProgress, getStudyProgress, submitQuizGrade, type StudyNotesResult, type QuizResult, type DetailedContent } from '../api/client'
 const ReactMarkdown = lazy(() => import('react-markdown'))
 import remarkGfm from 'remark-gfm'
 import { useResume } from '../context/ResumeContext'
@@ -28,7 +28,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
     const [activeSectionIdx, setActiveSectionIdx] = useState(0)
     const [sections, setSections] = useState<Record<number, DetailedContent>>({})
     const [sectionLoading, setSectionLoading] = useState<number | null>(null)
-    const totalSections = notes?.total_sections || 5
+    const totalSections = notes?.sub_roadmap?.length || notes?.total_sections || 5
 
     // Quiz state
     const [currentQ, setCurrentQ] = useState(0)
@@ -37,21 +37,33 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
     const [score, setScore] = useState(0)
     const [showExplanation, setShowExplanation] = useState(false)
     const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
+    const [activeQuizSectionIdx, setActiveQuizSectionIdx] = useState<number | null>(null)
+    const [quizLoading, setQuizLoading] = useState(false)
 
-    // Section completion tracking
+    // Section completion tracking (persisted via DB)
+    const [completedSections, setCompletedSections] = useState<number[]>([])
     const [visitedSections, setVisitedSections] = useState<Set<number>>(new Set([0]))
     const allSectionsRead = visitedSections.size >= totalSections
-    const PASS_THRESHOLD = 0.8 // 80% to pass (4/5)
-    const quizPassed = quizFinished && quiz ? score >= Math.ceil(quiz.questions.length * PASS_THRESHOLD) : false
+    const PASS_THRESHOLD = 0.66 // 66% (2/3 correct) to pass section quiz
 
-    // Auto-trigger mastery when both conditions become true
+    // Fetch user progress on load
     const [masteryAwarded, setMasteryAwarded] = useState(false)
     useEffect(() => {
-        if (quizPassed && allSectionsRead && !masteryAwarded) {
-            setMasteryAwarded(true)
-            onVerified(skill)
-        }
-    }, [quizPassed, allSectionsRead, masteryAwarded, onVerified, skill])
+        if (!user) return
+        getStudyProgress(skill)
+            .then(res => {
+                if (res && res.length > 0) {
+                    const completed = res[0].completed_sections || []
+                    setCompletedSections(completed)
+                    // If backend marked it mastered, verify
+                    if (res[0].mastered && !masteryAwarded) {
+                        setMasteryAwarded(true)
+                        onVerified(skill)
+                    }
+                }
+            })
+            .catch(console.error)
+    }, [skill, user, masteryAwarded, onVerified])
 
     // Interactive notes state
     const [expandedTryIt, setExpandedTryIt] = useState<Record<number, boolean>>({})
@@ -97,7 +109,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
             if (n?.detailed_content?.length) {
                 const sMap: Record<number, DetailedContent> = {}
                 n.detailed_content.forEach((s, i) => {
-                    if (i !== 4) sMap[i] = s
+                    sMap[i] = s
                 })
                 setSections(sMap)
             }
@@ -192,6 +204,43 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
         }
     }
 
+    const startSectionQuiz = async (idx: number) => {
+        setTab('quiz')
+        setActiveQuizSectionIdx(idx)
+        setQuiz(null)
+        setQuizLoading(true)
+        setQuizFinished(false)
+        setCurrentQ(0)
+        setAnswers([])
+        setSelectedAnswer(null)
+        setShowExplanation(false)
+        
+        try {
+            const q = await getStudyQuiz(skill, idx)
+            setQuiz(q)
+        } catch (err) {
+            console.error(err)
+            setLoadError('Failed to generate quiz for this section.')
+        } finally {
+            setQuizLoading(false)
+        }
+    }
+
+    const markSectionCompleted = async (idx: number) => {
+        try {
+            const res = await saveStudyProgress(skill, idx)
+            if (res.status === 'success') {
+                setCompletedSections(res.completed_sections)
+                if (res.mastered && !masteryAwarded) {
+                    setMasteryAwarded(true)
+                    onVerified(skill)
+                }
+            }
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
     const handleAnswer = (idx: number) => {
         if (showExplanation) return // prevent double-click during reveal
         setSelectedAnswer(idx)
@@ -208,13 +257,25 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
         if (quiz && currentQ < quiz.questions.length - 1) {
             setCurrentQ(v => v + 1)
         } else if (quiz) {
-            const correct = answers.filter((a, i) => a === quiz.questions[i]?.correct_index).length
-            // Also count the current question if correct
             const finalAnswers = [...answers]
             const totalCorrect = finalAnswers.filter((a, i) => a === quiz.questions[i]?.correct_index).length
             setScore(totalCorrect)
             setQuizFinished(true)
-            // Mastery is auto-triggered by the useEffect when both conditions are met
+            
+            if (activeQuizSectionIdx !== null) {
+                const passed = totalCorrect >= Math.ceil(quiz.questions.length * PASS_THRESHOLD)
+                submitQuizGrade(skill, activeQuizSectionIdx, Math.round((totalCorrect / quiz.questions.length) * 100), passed)
+                    .then(res => {
+                        if (res.status === 'success') {
+                            setCompletedSections(res.completed_sections)
+                            if (res.mastered && !masteryAwarded) {
+                                setMasteryAwarded(true)
+                                onVerified(skill)
+                            }
+                        }
+                    })
+                    .catch(console.error)
+            }
         }
     }
 
@@ -258,19 +319,11 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                         <p>Mastery Progress</p>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <div style={{ width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, background: allSectionsRead ? 'var(--green)' : 'rgba(255,255,255,0.08)', color: allSectionsRead ? '#fff' : 'var(--text-muted)', flexShrink: 0 }}>
-                                    {allSectionsRead ? '✓' : `${visitedSections.size}`}
+                                <div style={{ width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, background: completedSections.length >= totalSections ? 'var(--green)' : 'rgba(255,255,255,0.08)', color: completedSections.length >= totalSections ? '#fff' : 'var(--text-muted)', flexShrink: 0 }}>
+                                    {completedSections.length >= totalSections ? '✓' : `${completedSections.length}`}
                                 </div>
-                                <span style={{ fontSize: 12, color: allSectionsRead ? 'var(--green)' : 'var(--text-secondary)' }}>
-                                    Read all {totalSections} sections {allSectionsRead ? '' : `(${visitedSections.size}/${totalSections})`}
-                                </span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <div style={{ width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, background: quizPassed ? 'var(--green)' : 'rgba(255,255,255,0.08)', color: quizPassed ? '#fff' : 'var(--text-muted)', flexShrink: 0 }}>
-                                    {quizPassed ? '✓' : '○'}
-                                </div>
-                                <span style={{ fontSize: 12, color: quizPassed ? 'var(--green)' : 'var(--text-secondary)' }}>
-                                    Pass quiz (≥80%)
+                                <span style={{ fontSize: 12, color: completedSections.length >= totalSections ? 'var(--green)' : 'var(--text-secondary)' }}>
+                                    Passed {completedSections.length} of {totalSections} quizzes {completedSections.length >= totalSections ? '(Mastered!)' : ''}
                                 </span>
                             </div>
                         </div>
@@ -294,7 +347,13 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                         </button>
                         <button type="button"
                             className={`ws-nav-item ${tab === 'quiz' ? 'active' : ''}`}
-                            onClick={() => setTab('quiz')}
+                            onClick={() => {
+                                // Default to a general quiz or current section quiz
+                                setActiveQuizSectionIdx(null)
+                                setQuiz(null)
+                                setTab('quiz')
+                                getStudyQuiz(skill).then(setQuiz).catch(console.error)
+                            }}
                         >
                             <CheckCircle2 size={18} />
                             <span>Knowledge Check</span>
@@ -321,18 +380,21 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                     {notes?.sub_roadmap && (
                         <div className="workspace-nav-group">
                             <h6>Mastery Curriculum</h6>
-                            {notes.sub_roadmap.map((step, idx) => (
-                                <button type="button"
-                                    key={idx}
-                                    className={`curriculum-item ${idx === activeSectionIdx && tab === 'notes' ? 'curriculum-item--active' : ''} ${sections[idx] ? 'curriculum-item--loaded' : ''} ${visitedSections.has(idx) ? 'curriculum-item--visited' : ''}`}
-                                    onClick={() => { setTab('notes'); goToSection(idx) }}
-                                >
-                                    <div className={`item-dot ${visitedSections.has(idx) ? 'visited' : sections[idx] ? 'loaded' : ''}`}>
-                                        {visitedSections.has(idx) && <CheckCircle2 size={10} />}
-                                    </div>
-                                    <span>{step.title}</span>
-                                </button>
-                            ))}
+                            {notes.sub_roadmap.map((step, idx) => {
+                                const isCompleted = completedSections.includes(idx)
+                                return (
+                                    <button type="button"
+                                        key={idx}
+                                        className={`curriculum-item ${idx === activeSectionIdx && tab === 'notes' ? 'curriculum-item--active' : ''} ${sections[idx] ? 'curriculum-item--loaded' : ''} ${isCompleted ? 'curriculum-item--visited' : ''}`}
+                                        onClick={() => { setTab('notes'); goToSection(idx) }}
+                                    >
+                                        <div className={`item-dot ${isCompleted ? 'visited' : sections[idx] ? 'loaded' : ''}`} style={isCompleted ? { background: 'var(--green)' } : undefined}>
+                                            {isCompleted ? <CheckCircle2 size={10} style={{ color: '#fff' }} /> : (sections[idx] ? '●' : '○')}
+                                        </div>
+                                        <span>{step.title}</span>
+                                    </button>
+                                )
+                            })}
                         </div>
                     )}
 
@@ -532,6 +594,22 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                                         </div>
                                                     </div>
                                                 )}
+
+                                                {/* Section Quiz Banner */}
+                                                <div className="section-quiz-banner" style={{ marginTop: 24, padding: 16, background: 'rgba(59, 130, 246, 0.08)', borderRadius: 12, border: '1px dashed rgba(59, 130, 246, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                                                    <div>
+                                                        <h4 style={{ margin: 0, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}><CheckCircle2 size={16} style={{ color: 'var(--blue)' }} /> Test your understanding of this section</h4>
+                                                        <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>Complete a short 3-question MCQ quiz to verify your progress.</p>
+                                                    </div>
+                                                    <div style={{ display: 'flex', gap: 10 }}>
+                                                        <button type="button" className={`btn btn--sm ${completedSections.includes(activeSectionIdx) ? 'btn--ghost' : 'btn--primary'}`} style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => markSectionCompleted(activeSectionIdx)}>
+                                                            {completedSections.includes(activeSectionIdx) ? '✓ Completed' : 'Mark as Read'}
+                                                        </button>
+                                                        <button type="button" className="btn btn--primary btn--sm" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => startSectionQuiz(activeSectionIdx)}>
+                                                            {completedSections.includes(activeSectionIdx) ? 'Retake Section Quiz' : 'Take Section Quiz'}
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -628,7 +706,14 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                             </div>
                         )}
 
-                        {tab === 'quiz' && !quiz && (
+                        {tab === 'quiz' && quizLoading && (
+                            <div className="workspace-pane fade-in" style={{ textAlign: 'center', padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
+                                <Loader2 size={48} className="spin-animation" style={{ color: 'var(--blue)', marginBottom: 16 }} />
+                                <h3>Generating Section Quiz...</h3>
+                                <p style={{ color: 'var(--text-secondary)' }}>AI is curating specific questions for {notes?.sub_roadmap?.[activeQuizSectionIdx ?? 0]?.title || skill}...</p>
+                            </div>
+                        )}
+                        {tab === 'quiz' && !quiz && !quizLoading && (
                             <div className="workspace-pane fade-in" style={{ textAlign: 'center', padding: '48px 24px' }}>
                                 <CheckCircle2 size={48} style={{ opacity: 0.3, marginBottom: 16 }} />
                                 <h3>Quiz unavailable</h3>
@@ -712,36 +797,33 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                     <div className="quiz-results">
                                         {(() => {
                                             const needed = Math.ceil(quiz.questions.length * PASS_THRESHOLD)
-                                            const mastered = quizPassed && allSectionsRead
+                                            const isSectionQuiz = activeQuizSectionIdx !== null
+                                            const secPassed = score >= needed
+                                            const secTitle = isSectionQuiz ? (notes?.sub_roadmap?.[activeQuizSectionIdx!]?.title || `Section ${activeQuizSectionIdx! + 1}`) : ''
+
                                             return (
                                                 <>
-                                                    <div className={`quiz-score-ring ${mastered ? 'perfect' : quizPassed ? 'pass' : score >= quiz.questions.length * 0.5 ? 'pass' : 'fail'}`}>
+                                                    <div className={`quiz-score-ring ${secPassed ? 'perfect' : score >= quiz.questions.length * 0.5 ? 'pass' : 'fail'}`}>
                                                         <div className="quiz-score-num">{score}/{quiz.questions.length}</div>
-                                                        <div className="quiz-score-label">{mastered ? 'Mastered!' : quizPassed ? 'Passed!' : 'Keep Learning'}</div>
+                                                        <div className="quiz-score-label">{secPassed ? 'Passed!' : 'Keep Learning'}</div>
                                                     </div>
 
                                                     <h2 style={{ textAlign: 'center', marginBottom: 8 }}>
-                                                        {mastered ? 'Mastery Verified!' : quizPassed ? 'Quiz Passed!' : 'Review & Retry'}
+                                                        {isSectionQuiz 
+                                                            ? (secPassed ? 'Section Quiz Passed!' : 'Retry Section Quiz') 
+                                                            : (secPassed ? 'Quiz Passed!' : 'Review & Retry')
+                                                        }
                                                     </h2>
                                                     <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: 12, fontSize: 14 }}>
-                                                        {mastered
-                                                            ? `Outstanding! You've demonstrated mastery of ${skill}. Your skill is now verified.`
-                                                            : quizPassed && !allSectionsRead
-                                                                ? `Great score! But you still need to read all ${totalSections} sections to unlock mastery. (${visitedSections.size}/${totalSections} read)`
-                                                                : `You got ${score} out of ${quiz.questions.length} correct (need ${needed} to pass). Review the explanations below, then give it another shot.`
+                                                        {isSectionQuiz
+                                                            ? (secPassed 
+                                                                ? `Excellent work! You've successfully completed the quiz for "${secTitle}".`
+                                                                : `You got ${score} out of ${quiz.questions.length} correct (need ${needed} to pass). Let's review the answers below and try again.`)
+                                                            : (secPassed
+                                                                ? `Great job! You passed the general quiz for ${skill}.`
+                                                                : `You got ${score} out of ${quiz.questions.length} correct (need ${needed} to pass). Let's review and try again.`)
                                                         }
                                                     </p>
-
-                                                    {quizPassed && !allSectionsRead && (
-                                                        <div style={{
-                                                            display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
-                                                            borderRadius: 10, background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)',
-                                                            marginBottom: 16, fontSize: 13, color: '#fbbf24'
-                                                        }}>
-                                                            <AlertCircle size={16} />
-                                                            <span>Complete all study sections first, then your skill will be marked as mastered.</span>
-                                                        </div>
-                                                    )}
                                                 </>
                                             )
                                         })()}
@@ -773,17 +855,42 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                         </div>
 
                                         {(() => {
-                                            const mastered = quizPassed && allSectionsRead
+                                            const isSectionQuiz = activeQuizSectionIdx !== null
+                                            const secPassed = score >= Math.ceil(quiz.questions.length * PASS_THRESHOLD)
+                                            const hasNextSection = isSectionQuiz && activeQuizSectionIdx! < totalSections - 1
+
                                             return (
                                                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 24 }}>
-                                                    {mastered ? (
-                                                        <button type="button" className="btn btn--primary" onClick={onClose}>
-                                                            <CheckCircle2 size={18} /> Finish & Earn Credits
-                                                        </button>
-                                                    ) : quizPassed && !allSectionsRead ? (
-                                                        <button type="button" className="btn btn--primary" onClick={() => { setTab('notes'); goToSection(Array.from({ length: totalSections }, (_, i) => i).find(i => !visitedSections.has(i)) ?? 0) }}>
-                                                            <BookOpen size={16} /> Go to Unread Section
-                                                        </button>
+                                                    {isSectionQuiz ? (
+                                                        secPassed ? (
+                                                            hasNextSection ? (
+                                                                <button type="button" className="btn btn--primary" onClick={() => {
+                                                                    setTab('notes')
+                                                                    goToSection(activeQuizSectionIdx! + 1)
+                                                                }}>
+                                                                    Next Section <ChevronRight size={16} />
+                                                                </button>
+                                                            ) : (
+                                                                <button type="button" className="btn btn--primary" onClick={() => setTab('notes')}>
+                                                                    Finish Course <CheckCircle2 size={16} />
+                                                                </button>
+                                                            )
+                                                        ) : (
+                                                            <>
+                                                                <button type="button" className="btn btn--ghost" onClick={() => setTab('notes')}>
+                                                                    Review Section Notes
+                                                                </button>
+                                                                <button type="button" className="btn btn--primary" onClick={() => {
+                                                                    setQuizFinished(false)
+                                                                    setCurrentQ(0)
+                                                                    setAnswers([])
+                                                                    setSelectedAnswer(null)
+                                                                    setShowExplanation(false)
+                                                                }}>
+                                                                    <RotateCcw size={16} /> Retry Quiz
+                                                                </button>
+                                                            </>
+                                                        )
                                                     ) : (
                                                         <>
                                                             <button type="button" className="btn btn--ghost" onClick={() => setTab('notes')}>

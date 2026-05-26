@@ -10,7 +10,7 @@ from app.services.curriculum_graph import (
 )
 from app.core.rate_limiter import ai_limit, heavy_limit
 from app.services.knowledge_service import knowledge_service
-from app.core.auth import get_admin_user
+from app.core.auth import get_admin_user, get_current_user, AuthUser
 
 router = APIRouter(prefix="/ai", tags=["AI Insights"])
 
@@ -198,23 +198,124 @@ async def get_study_notes(request: Request, skill: str, existing_skills: Optiona
         raise HTTPException(status_code=400, detail="Skill name is required.")
     return await ai_service.get_study_materials(skill, existing_skills or "")
 
+class SubmitProgressRequest(BaseModel):
+    skill: str
+    section_idx: int
+
+class SubmitQuizGradeRequest(BaseModel):
+    skill: str
+    section_idx: int
+    score: int
+    passed: bool
+
 @router.get("/study/section")
 @ai_limit
 async def get_study_section(request: Request, skill: str, section_idx: int, existing_skills: Optional[str] = None):
     """Generates a single study section on-demand for progressive loading."""
     if not skill:
         raise HTTPException(status_code=400, detail="Skill name is required.")
-    if section_idx < 0 or section_idx > 4:
-        raise HTTPException(status_code=400, detail="section_idx must be 0-4.")
+    if section_idx < 0 or section_idx > 20:
+        raise HTTPException(status_code=400, detail="section_idx out of range.")
     return await ai_service.get_study_section(skill, section_idx, existing_skills or "")
 
 @router.get("/study/quiz")
 @ai_limit
-async def get_study_quiz(request: Request, skill: str):
-    """Generates a verification quiz for a specific skill."""
+async def get_study_quiz(request: Request, skill: str, section_idx: Optional[int] = None):
+    """Generates a general verification quiz or a targeted section quiz."""
     if not skill:
         raise HTTPException(status_code=400, detail="Skill name is required.")
+    if section_idx is not None:
+        return await ai_service.generate_section_quiz(skill, section_idx)
     return await ai_service.generate_quiz(skill)
+
+@router.post("/study/progress")
+async def save_study_progress(req: SubmitProgressRequest, user: AuthUser = Depends(get_current_user)):
+    """Save user progress for completing a study section."""
+    from app.core.supabase_client import get_supabase
+    sb = get_supabase()
+    
+    # 1. Fetch current progress
+    resp = sb.table("user_study_progress").select("completed_sections", "mastered").eq("user_email", user.email).eq("skill", req.skill.lower()).execute()
+    
+    completed = []
+    if resp.data:
+        completed = resp.data[0].get("completed_sections") or []
+        
+    if req.section_idx not in completed:
+        completed.append(req.section_idx)
+        
+    # Check if they completed all syllabus sections
+    sections = await ai_service.get_or_create_syllabus(req.skill)
+    total_secs = len(sections)
+    mastered = len(completed) >= total_secs
+    
+    # Update in DB
+    sb.table("user_study_progress").upsert({
+        "user_email": user.email,
+        "skill": req.skill.lower(),
+        "completed_sections": completed,
+        "mastered": mastered,
+        "updated_at": "now()"
+    }, on_conflict="user_email,skill").execute()
+    
+    return {"status": "success", "completed_sections": completed, "mastered": mastered}
+
+@router.get("/study/progress")
+async def get_study_progress(skill: Optional[str] = None, user: AuthUser = Depends(get_current_user)):
+    """Get active progress for a specific skill or all skills for the logged-in student."""
+    from app.core.supabase_client import get_supabase
+    sb = get_supabase()
+    
+    query = sb.table("user_study_progress").select("*").eq("user_email", user.email)
+    if skill:
+        query = query.eq("skill", skill.lower())
+    resp = query.execute()
+    return resp.data
+
+@router.post("/study/quiz/submit")
+async def submit_quiz_grade(req: SubmitQuizGradeRequest, user: AuthUser = Depends(get_current_user)):
+    """Logs quiz score, attempts, and automatically triggers progress mark if student passed."""
+    from app.core.supabase_client import get_supabase
+    sb = get_supabase()
+    
+    # 1. Insert quiz attempt
+    sb.table("user_quiz_attempts").insert({
+        "user_email": user.email,
+        "skill": req.skill.lower(),
+        "section_idx": req.section_idx,
+        "score": req.score,
+        "passed": req.passed
+    }).execute()
+    
+    # 2. If they passed, automatically register the progress completion for this section!
+    completed = []
+    mastered = False
+    if req.passed:
+        resp = sb.table("user_study_progress").select("completed_sections", "mastered").eq("user_email", user.email).eq("skill", req.skill.lower()).execute()
+        if resp.data:
+            completed = resp.data[0].get("completed_sections") or []
+        
+        if req.section_idx not in completed:
+            completed.append(req.section_idx)
+            
+        sections = await ai_service.get_or_create_syllabus(req.skill)
+        total_secs = len(sections)
+        mastered = len(completed) >= total_secs
+        
+        sb.table("user_study_progress").upsert({
+            "user_email": user.email,
+            "skill": req.skill.lower(),
+            "completed_sections": completed,
+            "mastered": mastered,
+            "updated_at": "now()"
+        }, on_conflict="user_email,skill").execute()
+        
+    return {
+        "status": "success", 
+        "passed": req.passed, 
+        "completed_sections": completed,
+        "mastered": mastered
+    }
 
 @router.post("/study/chat")
 @ai_limit
@@ -226,6 +327,7 @@ async def study_chat(request: Request, req: ChatRequest):
     context = f"Student already knows: {', '.join(req.mastered_skills or [])}"
     content = await ai_service.get_chat_response(req.skill, req.query, req.history, context)
     return {"response": content}
+
 
 
 # ── AI Interview Simulator ────────────────────────────────────────────────────
@@ -393,6 +495,230 @@ async def get_admin_stats(admin=Depends(get_admin_user)):
         "total_courses_cached": total_skills,
         "active_students": active_students,
     }
+
+
+# ── Curated Resource Ingestion & Compiler (Pathway A & B) ──────────────────
+
+class IngestCourseRequest(BaseModel):
+    skill: str
+    url: str
+    use_rag: bool = False
+
+@router.post("/admin/ingest-course")
+@heavy_limit
+async def ingest_course(req: IngestCourseRequest, admin=Depends(get_admin_user)):
+    """
+    Ingests an authority resource URL.
+    - Pathway A (use_rag=True): Scrapes, chunks, embeds (using gemini-embedding-001), and logs to PGVector.
+    - Pathway B (use_rag=False): Scrapes and progressively compiles a dynamic, multi-section course
+      caching it in the knowledge_cache table for 0ms load times.
+    """
+    from app.services.scraper_service import scraper_service
+    from app.services.rag_service import embed_text
+    from app.utils.llm_utils import parse_json_from_llm
+    from app.core.supabase_client import get_supabase
+    
+    skill_norm = req.skill.lower().strip()
+    
+    # 1. Scrape content
+    try:
+        scraped_text = await scraper_service.fetch_clean_markdown(req.url)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+        
+    if not scraped_text or len(scraped_text) < 100:
+        raise HTTPException(status_code=400, detail="Scraped resource content is too short or invalid.")
+        
+    sb = get_supabase()
+    
+    # ──────────────────────────────────────────────────────────────────────────
+    # PATHWAY A: Grounded RAG Ingestion (Insert overlapping vector chunks)
+    # ──────────────────────────────────────────────────────────────────────────
+    if req.use_rag:
+        try:
+            chunk_size = 1200
+            overlap = 200
+            chunks = []
+            
+            # Simple chunking with overlap
+            for i in range(0, len(scraped_text), chunk_size - overlap):
+                chunk = scraped_text[i:i + chunk_size].strip()
+                if len(chunk) > 50:
+                    chunks.append(chunk)
+                    
+            inserted_count = 0
+            for chunk in chunks:
+                embedding = embed_text(chunk)
+                if embedding:
+                    # Insert in database
+                    sb.table("knowledge_chunks").insert({
+                        "topic": skill_norm,
+                        "content": f"[Source: {req.url}]\n\n{chunk}",
+                        "embedding": embedding,
+                        "source_version": "user_curated"
+                    }).execute()
+                    inserted_count += 1
+                    
+            return {
+                "status": "success",
+                "pathway": "Pathway A: Grounded RAG",
+                "message": f"Successfully scraped resource, split into {len(chunks)} chunks, and ingested {inserted_count} vector embeddings.",
+                "total_chunks": len(chunks),
+                "inserted_chunks": inserted_count
+            }
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"RAG ingestion failed: {e}")
+            
+    # ──────────────────────────────────────────────────────────────────────────
+    # PATHWAY B: Direct Static Course Compiler (Create 0ms cached learning hub)
+    # ──────────────────────────────────────────────────────────────────────────
+    else:
+        try:
+            # 1. Compile/Get the dynamic syllabus
+            sections = await ai_service.get_or_create_syllabus(skill_norm)
+            sub_roadmap = [{"title": s["title"], "duration": s["duration"]} for s in sections]
+            total_sections = len(sections)
+            
+            # 2. Compile each individual section statically using scraped documentation
+            from app.services.gemini_service import gemini_service
+            from app.core.settings import settings
+            
+            if not ai_service.gemini_key or not gemini_service.client:
+                raise Exception("Gemini API client is not configured. Pathway B requires a valid GEMINI_API_KEY.")
+                
+            compiled_sections = []
+            
+            # Limit the size of scraped reference text passed to the model (fits inside typical token context windows)
+            reference_context = scraped_text[:15000]
+            
+            for section in sections:
+                idx = section["idx"]
+                title = section["title"]
+                desc = section["desc"]
+                is_last = (idx == total_sections - 1)
+                
+                # Build custom compilation prompt
+                if is_last:
+                    prompt = f"""
+                    You are a Senior Technical Curriculum Compiler.
+                    We have scraped official technical documentation for the skill "{req.skill}":
+                    ---
+                    {reference_context}
+                    ---
+                    
+                    Task: Compile the final Practice Problems & LeetCode module for "{title}" (described as: {desc}).
+                    
+                    Return strict JSON only matching:
+                    {{
+                      "subheading": "{title}",
+                      "explanation": "Summarize key problem-solving patterns or heuristics for {req.skill} based on the reference docs (2 paragraphs max).",
+                      "example": "```python\\n# A full copy-pasteable, annotated code solution representing a core interview problem\\n```",
+                      "key_takeaway": "Key algorithmic pattern to remember...",
+                      "try_it": "Mini-challenge...",
+                      "complexity": "Varies by problem",
+                      "leetcode_problems": [
+                        {{
+                          "title": "Real LeetCode Problem Name",
+                          "number": 1,
+                          "difficulty": "Easy",
+                          "url": "https://leetcode.com/problems/real-slug/",
+                          "pattern": "Pattern name...",
+                          "hint": "Useful hint...",
+                          "description": "Short problem summary...",
+                          "example_input": "...",
+                          "example_output": "..."
+                        }}
+                      ]
+                    }}
+                    
+                    Include exactly 5 real LeetCode problems (2 Easy, 2 Medium, 1 Hard) relevant to {req.skill}.
+                    """
+                else:
+                    prompt = f"""
+                    You are a Senior Technical Curriculum Compiler.
+                    We have scraped official technical documentation for the skill "{req.skill}":
+                    ---
+                    {reference_context}
+                    ---
+                    
+                    Task: Compile Module {idx}: "{title}" (described as: {desc}).
+                    Generate high-quality explanations and copy-pasteable code examples derived directly from the reference material above. Do not hallucinate syntax.
+                    
+                    Return strict JSON only matching:
+                    {{
+                      "subheading": "{title}",
+                      "explanation": "Clear, detailed explanation using real-world analogies (under 200 words). Make it thorough.",
+                      "example": "```python\\n# Clean, runnable, and copy-pasteable implementation using standards from the reference docs\\n```",
+                      "key_takeaway": "Memorable one-line takeaway.",
+                      "try_it": "Hands-on coding challenge challenge targeting this module's code.",
+                      "complexity": "Time: O(1), Space: O(1) (if applicable)"
+                    }}
+                    """
+                
+                # Call LLM
+                response = gemini_service.client.models.generate_content(
+                    model=settings.GEMINI_MODEL,
+                    contents=prompt,
+                )
+                data = parse_json_from_llm(response.text)
+                if not data or not data.get("subheading"):
+                    raise Exception(f"Failed to compile section {idx}: LLM returned invalid or malformed structure.")
+                
+                # Cache section in database
+                cache_key = f"{skill_norm}_section_{idx}"
+                knowledge_service.cache_knowledge(cache_key, data, "section")
+                compiled_sections.append(title)
+                
+            # 3. Compile the main study intro overview notes
+            intro_prompt = f"""
+            You are a Senior technical curriculum director.
+            Based on the scraped documentation:
+            ---
+            {reference_context[:6000]}
+            ---
+            
+            Compile a high-level course overview for the skill "{req.skill}".
+            
+            Return strict JSON only matching:
+            {{
+              "skill": "{req.skill}",
+              "quick_summary": "2-3 sentence overview of the skill and its industrial significance.",
+              "estimated_study_time": "60 minutes",
+              "detailed_content": [
+                {{
+                  "subheading": "{sections[0]['title']}",
+                  "explanation": "Comprehensive introductory concepts and real-world analogy."
+                }}
+              ],
+              "pro_tip": "Expert industry optimization pro-tip."
+            }}
+            """
+            
+            intro_resp = gemini_service.client.models.generate_content(
+                model=settings.GEMINI_MODEL,
+                contents=intro_prompt,
+            )
+            intro_data = parse_json_from_llm(intro_resp.text)
+            
+            if intro_data and intro_data.get("quick_summary"):
+                # Append required metadata
+                intro_data["sources"] = [{"title": f"{req.skill} Documentation", "source_type": "Curated Reference", "version": req.url}]
+                intro_data["sub_roadmap"] = sub_roadmap
+                intro_data["total_sections"] = total_sections
+                
+                # Cache intro in DB
+                knowledge_service.cache_knowledge(skill_norm, intro_data, "study")
+                
+            return {
+                "status": "success",
+                "pathway": "Pathway B: Direct Static Compiler",
+                "message": f"Successfully scraped resource and compiled a custom {total_sections}-section course for '{req.skill}' backed by authority context.",
+                "syllabus": sub_roadmap,
+                "compiled_sections": compiled_sections
+            }
+            
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Static course compilation failed: {e}")
 
 
 # ── Curriculum Graph Routes ──────────────────────────────────────────────────

@@ -385,8 +385,38 @@ export async function getStudySection(skill: string, sectionIdx: number, mastere
     return apiFetch<DetailedContent>(`/ai/study/section?skill=${encodeURIComponent(skill)}&section_idx=${sectionIdx}&existing_skills=${encodeURIComponent(skills)}`, { noAuth: true, retries: 1 })
 }
 
-export async function getStudyQuiz(skill: string): Promise<QuizResult> {
-    return apiFetch<QuizResult>(`/ai/study/quiz?skill=${encodeURIComponent(skill)}`, { noAuth: true, retries: 1 })
+export async function getStudyQuiz(skill: string, sectionIdx?: number): Promise<QuizResult> {
+    const queryParam = sectionIdx !== undefined ? `&section_idx=${sectionIdx}` : ''
+    return apiFetch<QuizResult>(`/ai/study/quiz?skill=${encodeURIComponent(skill)}${queryParam}`, { noAuth: true, retries: 1 })
+}
+
+export interface StudyProgress {
+    id: number
+    user_email: string
+    skill: string
+    completed_sections: number[]
+    mastered: boolean
+    created_at: string
+    updated_at: string
+}
+
+export async function saveStudyProgress(skill: string, sectionIdx: number): Promise<{ status: string; completed_sections: number[]; mastered: boolean }> {
+    return apiFetch<{ status: string; completed_sections: number[]; mastered: boolean }>('/ai/study/progress', {
+        method: 'POST',
+        body: { skill, section_idx: sectionIdx }
+    })
+}
+
+export async function getStudyProgress(skill?: string): Promise<StudyProgress[]> {
+    const query = skill ? `?skill=${encodeURIComponent(skill)}` : ''
+    return apiFetch<StudyProgress[]>(`/ai/study/progress${query}`)
+}
+
+export async function submitQuizGrade(skill: string, sectionIdx: number, score: number, passed: boolean): Promise<{ status: string; passed: boolean; completed_sections: number[]; mastered: boolean }> {
+    return apiFetch<{ status: string; passed: boolean; completed_sections: number[]; mastered: boolean }>('/ai/study/quiz/submit', {
+        method: 'POST',
+        body: { skill, section_idx: sectionIdx, score, passed }
+    })
 }
 
 export async function studyChat(skill: string, query: string, history: Array<{ role: string; content: string }> = [], masteredSkills: string[] = []): Promise<string> {
@@ -582,6 +612,22 @@ export async function submitInterviewAnswer(
         body: { skill, question, answer, question_number: questionNumber, difficulty, history },
         noAuth: true,
         retries: 1,
+    })
+}
+
+// ── Content Feedback ────────────────────────────────────────
+export async function submitContentFeedback(data: {
+    skill: string
+    section_idx?: number
+    feedback_type: 'rating' | 'error_report' | 'suggestion' | 'quality_issue'
+    rating?: number
+    comment?: string
+    content_type?: 'section' | 'overview' | 'quiz'
+}): Promise<{ status: string }> {
+    return apiFetch<{ status: string }>('/content-feedback', {
+        method: 'POST',
+        body: data,
+        noAuth: true,
     })
 }
 

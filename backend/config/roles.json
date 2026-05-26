@@ -10,7 +10,10 @@
             "system design",
             "cybersecurity",
             "cloud computing",
-            "ci/cd"
+            "ci/cd",
+            "java",
+            "c++",
+            "oops"
         ],
         "optional": [
             "docker",
@@ -21,7 +24,11 @@
             "llm",
             "prompt engineering",
             "microservices",
-            "next.js"
+            "next.js",
+            "c#",
+            "golang",
+            "testing",
+            "agile"
         ]
     },
     "Frontend Developer": {
@@ -31,7 +38,9 @@
             "html",
             "css",
             "typescript",
-            "git"
+            "git",
+            "webpack",
+            "tailwind"
         ],
         "optional": [
             "next.js",
@@ -39,9 +48,12 @@
             "testing",
             "figma",
             "vue",
-            "tailwind",
+            "generative ai",
+            "angular",
+            "svelte",
+            "bootstrap",
             "graphql",
-            "generative ai"
+            "agile"
         ]
     },
     "Backend Developer": {
@@ -53,17 +65,29 @@
             "postgresql",
             "system design",
             "cybersecurity",
-            "microservices"
+            "microservices",
+            "node.js",
+            "express",
+            "rest"
         ],
         "optional": [
             "docker",
             "aws",
-            "node.js",
             "redis",
             "grpc",
             "mongodb",
             "dsa",
-            "llm"
+            "llm",
+            "spring boot",
+            "django",
+            "fastapi",
+            "nestjs",
+            "golang",
+            "firebase",
+            "supabase",
+            "elasticsearch",
+            "cassandra",
+            "nginx"
         ]
     },
     "Full Stack Developer": {
@@ -76,7 +100,10 @@
             "git",
             "html",
             "css",
-            "postgresql"
+            "postgresql",
+            "node.js",
+            "express",
+            "rest"
         ],
         "optional": [
             "typescript",
@@ -86,7 +113,13 @@
             "mongodb",
             "ci/cd",
             "system design",
-            "generative ai"
+            "generative ai",
+            "tailwind",
+            "redis",
+            "supabase",
+            "testing",
+            "oops",
+            "agile"
         ]
     },
     "Data Scientist": {
@@ -97,7 +130,8 @@
             "pandas",
             "numpy",
             "statistics",
-            "scikit-learn"
+            "scikit-learn",
+            "data analysis"
         ],
         "optional": [
             "deep learning",
@@ -108,7 +142,10 @@
             "tableau",
             "mlops",
             "generative ai",
-            "llm"
+            "llm",
+            "data engineering",
+            "nlp",
+            "computer vision"
         ]
     },
     "ML Engineer": {
@@ -122,7 +159,10 @@
             "pandas",
             "scikit-learn",
             "mlops",
-            "statistics"
+            "statistics",
+            "nlp",
+            "computer vision",
+            "transformers"
         ],
         "optional": [
             "docker",
@@ -133,7 +173,8 @@
             "fastapi",
             "rag",
             "vector databases",
-            "llm"
+            "llm",
+            "langchain"
         ]
     },
     "DevOps Engineer": {
@@ -147,17 +188,19 @@
             "terraform",
             "ansible",
             "azure",
-            "cybersecurity"
+            "cybersecurity",
+            "nginx",
+            "prometheus"
         ],
         "optional": [
             "aws",
             "gcp",
             "jenkins",
-            "prometheus",
             "python",
             "gitops",
             "finops",
-            "aiops"
+            "aiops",
+            "golang"
         ]
     }
 }

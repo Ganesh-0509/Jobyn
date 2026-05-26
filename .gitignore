@@ -17,3 +17,21 @@ backend/uploads/
 .idea/
 frontend/public/ort/*.wasm
 .pytest_cache/
+
+# Seed content (generated JSON — not tracked in git)
+content/seed/
+
+# Temp batch files from generation scripts
+_overview_batch_*.json
+_quiz_batch_*.json
+_qb_*.json
+_gen_*.py
+_b2_*.json
+_quiz_data_*.json
+_quiz_skill_*.json
+_tmp_*
+_tmp_skills/
+gen_batch*.py
+
+# Artifacts / evaluation output
+artifacts/
