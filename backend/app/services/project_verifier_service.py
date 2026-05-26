@@ -65,6 +65,19 @@ class GitHubFetcher:
 
     async def fetch_repo(self, owner: str, repo: str) -> Dict[str, Any]:
         """Fetch all the data we need for verification in parallel."""
+        cache_key = f"github:repo:{owner.lower()}:{repo.lower()}"
+        
+        # 1. Try L1 Cache first
+        try:
+            from app.core.cache import cache
+            cached = cache.get(cache_key)
+            if cached is not None:
+                log.info("L1 Cache HIT for GitHub repo data: %s/%s", owner, repo)
+                return cached
+        except Exception as e:
+            log.warning("GitHub L1 cache read error: %s", e)
+
+        # 2. Fetch fresh data
         async with httpx.AsyncClient(
             headers=self.headers, timeout=15, follow_redirects=True
         ) as client:
@@ -130,7 +143,7 @@ class GitHubFetcher:
         if not isinstance(readme_resp, Exception) and readme_resp.status_code == 200:
             readme = readme_resp.text[:3000]
 
-        return {
+        res = {
             "name": repo_data.get("name"),
             "description": repo_data.get("description", ""),
             "created_at": repo_data.get("created_at"),
@@ -147,6 +160,16 @@ class GitHubFetcher:
             "readme": readme,
             "html_url": repo_data.get("html_url"),
         }
+
+        # 3. Store in cache (5 minutes TTL)
+        try:
+            from app.core.cache import cache
+            cache.set(cache_key, res, ttl=300)
+            log.info("Cached GitHub repo data for %s/%s", owner, repo)
+        except Exception as ce:
+            log.warning("Failed to cache GitHub repo: %s", ce)
+
+        return res
 
 
 # ── Verification logic ──────────────────────────────────────────────────────

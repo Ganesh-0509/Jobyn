@@ -8,6 +8,7 @@ import logging
 import httpx
 from bs4 import BeautifulSoup
 from typing import Optional
+from app.core.cache import cache
 
 log = logging.getLogger("scraper_service")
 
@@ -19,6 +20,7 @@ class ScraperService:
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
                 "Chrome/120.0.0.0 Safari/537.36"
+                " (CampusSyncEdge Scraper; +https://campussync.ai)"
             ),
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.5",
@@ -29,6 +31,18 @@ class ScraperService:
         Fetches the target URL, strips out advertisements, headers, navigation blocks,
         and sidebars, then compiles the remaining text into a structured, clean format.
         """
+        cache_key = f"scraped:{url}"
+        
+        # 1. Try L1 Cache first
+        try:
+            cached_data = cache.get(cache_key)
+            if cached_data is not None:
+                log.info("L1 Cache HIT for scraped URL: %s", url)
+                return cached_data
+        except Exception as e:
+            log.warning("Scraper L1 cache read error: %s", e)
+
+        # 2. Scrape over the network
         try:
             log.info("Scraping authority resource link: %s", url)
             async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:
@@ -81,6 +95,13 @@ class ScraperService:
                 
                 if len(markdown_text) < 150:
                     log.warning("Scraped content from %s is extremely short (%d chars). Fallback to full body.", url, len(markdown_text))
+                
+                # Cache successful scrape in Redis/Memory for 24 hours
+                try:
+                    cache.set(cache_key, markdown_text, ttl=86400)
+                    log.info("Cached crawled content for %s to L1 Cache", url)
+                except Exception as ce:
+                    log.warning("Failed to cache scraped text for %s: %s", url, ce)
                 
                 return markdown_text
 
