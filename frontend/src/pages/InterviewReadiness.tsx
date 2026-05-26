@@ -216,7 +216,7 @@ export default function InterviewReadiness() {
                             { icon: Brain, title: 'AI Evaluation', desc: 'Concept coverage scoring with feedback' },
                             { icon: TrendingUp, title: 'Progress Tracking', desc: 'Track scores, win rate & concept mastery' },
                         ].map(f => (
-                            <Card key={f.title}>
+                            <Card key={f.title} className="premium-hover-card">
                                 <CardContent className="flex flex-col items-center pt-6 text-center">
                                     <f.icon className="mb-2 size-5 text-muted-foreground" />
                                     <p className="text-sm font-semibold">{f.title}</p>
@@ -236,7 +236,7 @@ export default function InterviewReadiness() {
 
             {/* Hero */}
             <motion.div {...fadeUp}>
-                <Card className="bg-gradient-to-r from-primary/5 to-violet/5 border-primary/10">
+                <Card className="premium-hover-card bg-gradient-to-r from-primary/5 to-violet/5 border-primary/10">
                     <CardContent className="flex flex-col items-center gap-6 pt-6 sm:flex-row">
                         <div className="flex-1">
                             <Badge variant="outline" className="mb-2 border-primary/30 text-primary">{role}</Badge>
@@ -270,7 +270,7 @@ export default function InterviewReadiness() {
                     { icon: <Flame className="size-4 text-crimson" />, num: `${stats.winRate}%`, label: 'Win Rate' },
                     { icon: <Brain className="size-4 text-violet" />, num: stats.conceptsCovered.size, label: 'Concepts' },
                 ].map(s => (
-                    <Card key={s.label}>
+                    <Card key={s.label} className="premium-hover-card">
                         <CardContent className="flex flex-col items-center gap-1 pt-4">
                             {s.icon}
                             <span className="font-heading text-lg font-bold">{s.num}</span>
@@ -283,7 +283,7 @@ export default function InterviewReadiness() {
             {/* Concept Confidence Map */}
             {(stats.conceptsCovered.size > 0 || stats.conceptsMissed.size > 0) && (
                 <motion.div {...fadeUp}>
-                    <Card>
+                    <Card className="premium-hover-card">
                         <CardContent className="pt-6">
                             <div className="mb-3 flex items-center gap-2">
                                 <BarChart2 className="size-4 text-muted-foreground" />
@@ -308,7 +308,7 @@ export default function InterviewReadiness() {
             {/* Practice Targets */}
             {(targets.core.length > 0 || targets.optional.length > 0) && (
                 <motion.div {...fadeUp}>
-                    <Card className="border-amber/15 bg-amber/3">
+                    <Card className="premium-hover-card border-amber/15 bg-amber/3">
                         <CardContent className="pt-6">
                             <div className="mb-3 flex items-center gap-2">
                                 <Lightbulb className="size-4 text-amber" />
@@ -329,7 +329,7 @@ export default function InterviewReadiness() {
 
             {/* Q&A Arena */}
             <motion.div {...fadeUp}>
-                <Card>
+                <Card className="premium-hover-card">
                     <CardHeader className="flex-row items-center gap-3 space-y-0">
                         <MessageSquare className="size-4 text-primary" />
                         <CardTitle className="text-sm font-semibold">Live Interview Practice</CardTitle>
@@ -363,7 +363,7 @@ export default function InterviewReadiness() {
                         {/* QUESTIONING */}
                         {phase === 'questioning' && question && (
                             <motion.div {...fadeUp} className="space-y-4">
-                                <Card className="bg-surface-elevated border-border/50">
+                                <Card className="premium-hover-card bg-surface-elevated border-border/50">
                                     <CardContent className="pt-5">
                                         <div className="mb-3 flex items-center gap-2">
                                             <Badge variant={
@@ -427,7 +427,7 @@ export default function InterviewReadiness() {
                                 </div>
 
                                 <div className="grid gap-4 sm:grid-cols-2">
-                                    <Card>
+                                    <Card className="premium-hover-card">
                                         <CardContent className="pt-4">
                                             <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-mint">
                                                 <CheckCircle className="size-3" /> Covered
@@ -439,7 +439,7 @@ export default function InterviewReadiness() {
                                             </div>
                                         </CardContent>
                                     </Card>
-                                    <Card>
+                                    <Card className="premium-hover-card">
                                         <CardContent className="pt-4">
                                             <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-crimson">
                                                 <AlertCircle className="size-3" /> Missing
@@ -453,7 +453,7 @@ export default function InterviewReadiness() {
                                     </Card>
                                 </div>
 
-                                <Card className="bg-surface-elevated border-border/50">
+                                <Card className="premium-hover-card bg-surface-elevated border-border/50">
                                     <CardContent className="pt-5">
                                         <p className="mb-1 text-xs font-bold uppercase tracking-wider text-primary">AI Feedback</p>
                                         <p className="text-sm leading-relaxed">{result.feedback}</p>
@@ -461,7 +461,7 @@ export default function InterviewReadiness() {
                                 </Card>
 
                                 {result.tip && (
-                                    <Card className="border-amber/15 bg-amber/3">
+                                    <Card className="premium-hover-card border-amber/15 bg-amber/3">
                                         <CardContent className="flex gap-3 pt-5">
                                             <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber" />
                                             <p className="text-sm">{result.tip}</p>
@@ -481,7 +481,7 @@ export default function InterviewReadiness() {
             {/* Session History */}
             {log.length > 0 && (
                 <motion.div {...fadeUp}>
-                    <Card>
+                    <Card className="premium-hover-card">
                         <button
                             type="button"
                             className="flex w-full items-center gap-3 px-6 py-4 text-left"

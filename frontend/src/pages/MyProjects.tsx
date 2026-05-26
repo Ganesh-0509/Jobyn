@@ -97,7 +97,7 @@ export default function MyProjects() {
       </div>
 
       {/* How it works */}
-      <Card className="border-primary/10 bg-primary/5">
+      <Card className="premium-hover-card border-primary/10 bg-primary/5">
         <CardContent className="flex flex-wrap items-center gap-3 p-4 text-xs text-muted-foreground">
           <span className="font-semibold text-foreground">How verification works:</span>
           {['Save a project', 'Build & push to GitHub', 'Submit repo URL for AI verification'].map((step, i) => (
@@ -118,7 +118,7 @@ export default function MyProjects() {
 
       {/* Empty state */}
       {projects.length === 0 && (
-        <Card>
+        <Card className="premium-hover-card">
           <CardContent className="flex flex-col items-center gap-4 py-12">
             <FolderOpen className="size-12 text-muted-foreground" strokeWidth={1.5} />
             <div className="text-center">
@@ -144,7 +144,7 @@ export default function MyProjects() {
 
             return (
               <motion.div key={p.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-                <Card className="overflow-hidden">
+                <Card className="premium-hover-card overflow-hidden">
                   {/* Card header */}
                   <div className="cursor-pointer p-4" onClick={() => setExpanded(isOpen ? null : p.id)}>
                     <div className="flex items-start justify-between gap-3">
@@ -249,7 +249,7 @@ export default function MyProjects() {
 
       {/* Filtered empty */}
       {projects.length > 0 && filtered.length === 0 && (
-        <Card>
+        <Card className="premium-hover-card">
           <CardContent className="flex flex-col items-center gap-2 py-10">
             <Filter className="size-8 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">No projects match the current filter.</p>

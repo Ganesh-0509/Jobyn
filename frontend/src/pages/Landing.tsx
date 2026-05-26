@@ -1,912 +1,923 @@
 import { Link } from 'react-router-dom'
-import { useEffect, useState, useRef, useCallback } from 'react'
-import { motion, useInView, AnimatePresence } from 'framer-motion'
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import {
-  BarChart2, FileText, Zap, MessageSquare, GitCompare, Shield,
-  Upload, ChevronRight, ArrowRight, CheckCircle2, AlertTriangle,
-  Play, Github, ExternalLink, Sparkles
+  ArrowRight, CheckCircle2, ChevronRight, Play, Github, ExternalLink, Sparkles, Upload, FileText, CheckSquare, Award, ArrowUpRight, ShieldCheck, Database, Layers, Network
 } from 'lucide-react'
 import LogoMark from '../components/LogoMark'
 import { Badge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
-import { Separator } from '@/components/ui/separator'
+import { useResume } from '../context/ResumeContext'
+import { useAuth } from '../context/AuthContext'
 
-/* ─── Data ─────────────────────────────────────────────────── */
+/* ─── Mock Scenario Data ────────────────────────────────────── */
 
-const STATS = [
-  { val: '82.1%', lbl: 'ML model accuracy', icon: BarChart2 },
-  { val: '7', lbl: 'Engineering roles scored', icon: FileText },
-  { val: '30+', lbl: 'Interview questions', icon: MessageSquare },
-  { val: '16k+', lbl: 'Skill connections mapped', icon: Zap },
-]
-
-const SIMULATOR_QUESTIONS = [
+const STEPS = [
   {
-    role: 'Backend SDE',
-    question: 'Explain the difference between optimistic and pessimistic locking in database transaction management.',
-    simulatedAnswer: 'Optimistic locking assumes transactions can complete without conflict - it checks before committing. Pessimistic locking blocks the resource upfront, preventing concurrent updates from happening at all.',
-    score: '84%',
-    conceptsCovered: ['ACID', 'Concurrency', 'Dist. Consensus'],
+    step: '01',
+    title: 'Resume & Skill Diagnostics',
+    highlight: 'Identify profile structural flaws',
+    body: 'We dissect your engineering profile, locating structural omissions and key terms deficits before a recruiter ever reviews it.',
+    fallbackMetric: '100% local profile parser'
   },
   {
-    role: 'Frontend SDE',
-    question: 'What is the Virtual DOM reconciliation algorithm in React, and how does the key prop optimize array rendering performance?',
-    simulatedAnswer: 'The Virtual DOM compares the virtual tree with the actual tree using diffing. The key prop helps React uniquely identify elements across renders, avoiding unnecessary DOM re-creation.',
-    score: '91%',
-    conceptsCovered: ['Fiber', 'Diffing', 'Key Reconciliation'],
+    step: '02',
+    title: 'Requirement Gap Analysis',
+    highlight: 'Expose structural capability deficits',
+    body: 'Continuous analysis monitors placement job sheets, matching missing framework concepts against active opportunities.',
+    fallbackMetric: '12 standard paths supported'
   },
   {
-    role: 'Data Engineer',
-    question: 'Describe how Apache Spark handles lazy evaluation and action execution in a distributed cluster network.',
-    simulatedAnswer: 'Spark builds a Directed Acyclic Graph (DAG) when transformations are declared. It does not run them immediately. Only when an action like count() or collect() is called, does it optimize the graph and trigger execution.',
-    score: '64%',
-    conceptsCovered: ['DAG Engine', 'Lazy Eval', 'Transformations'],
+    step: '03',
+    title: 'Vocal Arena Sandbox',
+    highlight: 'Construct verbal precision & response clarity',
+    body: 'A physical voice simulator questions you on complex systems design, grading vocabulary density and conceptual accuracy.',
+    fallbackMetric: 'Instant conceptual feedback'
+  },
+  {
+    step: '04',
+    title: 'Originality Signatures',
+    highlight: 'Validate actual project footprints',
+    body: 'Establish verified authorship by auditing commit footprints and codebase complexity directly onto your student profile.',
+    fallbackMetric: 'GitHub attribution audit'
   }
 ]
 
-const STEPS = [
-  { num: '01', title: 'Upload Resume', desc: 'Submit your resume in seconds. No signup required to get started.' },
-  { num: '02', title: 'AI Analysis', desc: 'Advanced models extract your complete profile and identify gaps instantly.' },
-  { num: '03', title: 'Get Your Roadmap', desc: 'Receive a personalized learning path built specifically for your goals.' },
+const SPEECH_SCENARIOS = [
+  {
+    role: 'Backend SDE',
+    question: 'How do you prevent database race conditions during concurrent account balance updates?',
+    response: 'We enforce optimistic concurrency control using a version field, immediately aborting transactions attempting updates on stale rows and falling back to a queuing model for high-contention accounts.',
+    precision: '96% Score',
+    skills: ['Optimistic Concurrency', 'FIFO Queues', 'Transaction Isolation']
+  },
+  {
+    role: 'Frontend Systems',
+    question: 'Describe how structural reconciliation cycles update nested layouts efficiently.',
+    response: 'The virtual diffing engine assigns stable key parameters to layout elements, bypassing full-tree DOM recalculation by only applying modifications to nodes whose content has mutated.',
+    precision: '98% Score',
+    skills: ['Reconciliation Keying', 'DOM Diffing', 'Fiber Architecture']
+  },
+  {
+    role: 'Systems & Infrastructure',
+    question: 'Explain the mechanism vertical pod autoscalers utilize to adjust CPU and memory footprints.',
+    response: 'Metric collector agents track real-time container resource utilization, feeding back to control loops that dynamically scale container configurations without causing pod crashes.',
+    precision: '94% Score',
+    skills: ['Metric Collection', 'Dynamic Scaling', 'Out-Of-Memory Prevention']
+  }
 ]
 
-const TESTIMONIALS = [
-  { initials: 'SK', author: 'Siddharth Kapoor', role: 'Infrastructure Engineer, Bangalore', quote: 'It flagged that my distributed databases scaling was a critical gap. I fixed it, cleared the SDE-1 placement round, and the interviewer asked almost exactly the question CampusSync predicted.' },
-  { initials: 'AN', author: 'Aparna Nair', role: 'Frontend Engineer, Hyderabad', quote: "The voice interview simulator is genuinely useful. Speaking answers out loud is completely different from typing them. It caught that I couldn't explain transaction concurrency under pressure." },
-  { initials: 'RG', author: 'Rohan Gupta', role: 'ML Engineer, Pune', quote: 'The GitHub verifier is something I didn\'t know I needed. I used it to verify my capstone project before submitting job applications - the VERIFIED badge actually came up in my interview.' },
+const COMPANY_PIPELINES = [
+  { company: 'Stripe', role: 'Backend Engineer', applicantCount: 42, status: 'Auditing Profiles', color: 'bg-emerald-500' },
+  { company: 'Vercel', role: 'Frontend Architect', applicantCount: 18, status: 'Speech Arena Prep', color: 'bg-amber-500' },
+  { company: 'Airbnb', role: 'Systems SDE', applicantCount: 29, status: 'Originality Check', color: 'bg-primary' }
 ]
 
-const SKILL_BARS = [
-  { label: 'Systems Design', pct: 82, color: 'bg-success' },
-  { label: 'Algorithms / DSA', pct: 74, color: 'bg-primary' },
-  { label: 'Frontend Eng', pct: 91, color: 'bg-success' },
-  { label: 'Cloud / Pipelines', pct: 45, color: 'bg-amber' },
+/* ─── High-Impact Placement Skill Matrix ────────────────────── */
+
+const SKILL_DOMAINS = [
+  {
+    id: 'frontend',
+    title: 'Frontend Architecture',
+    desc: 'Verify web performance engineering and dynamic UI reconciliation capability.',
+    icon: Layers,
+    demand: '94%',
+    advantage: '+18% placement rate',
+    skills: ['Virtual DOM Diffing', 'Fiber Engine reconciliation', 'Hydration heuristics', 'Analytical bundle audits']
+  },
+  {
+    id: 'backend',
+    title: 'High-Performance Backend',
+    desc: 'Validate database isolation levels, lock mechanics, and parallel processing.',
+    icon: Network,
+    demand: '98%',
+    advantage: '+24% placement rate',
+    skills: ['Optimistic Concurrency (OCC)', 'FIFO Message Queues', 'Distributed 2PC transactions', 'JSON Web Signatures']
+  },
+  {
+    id: 'infra',
+    title: 'Infrastructure & SRE',
+    desc: 'Ensure automated pod scaling, metrics auditing, and reliable gateways.',
+    icon: ShieldCheck,
+    demand: '91%',
+    advantage: '+15% placement rate',
+    skills: ['Horizontal Pod Autoscalers', 'Terraform IaC blueprints', 'Container ingress logic', 'Redis rate-limiting']
+  },
+  {
+    id: 'data',
+    title: 'Data Systems Engineering',
+    desc: 'Check indexing layout, schema structure, and analytical flow alignment.',
+    icon: Database,
+    demand: '89%',
+    advantage: '+12% placement rate',
+    skills: ['B-Tree Indexing optimizations', 'Change Data Capture (CDC)', 'Normalization normal forms', 'Kafka event processing']
+  }
 ]
 
-/* ─── Helpers ──────────────────────────────────────────────── */
+/* ─── Scroll-Driven Process Timeline ───────────────────────── */
 
-function Section({ children, className = '', id }: { children: React.ReactNode; className?: string; id?: string }) {
-  const ref = useRef<HTMLElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-60px' })
+function ScrollPipeline() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ['start end', 'end start']
+  })
+
+  const pathLength = useTransform(scrollYProgress, [0.15, 0.85], [0, 1])
+
   return (
-    <section id={id} ref={ref} className={className}>
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={isInView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      >
-        {children}
-      </motion.div>
-    </section>
+    <div ref={containerRef} className="relative max-w-4xl mx-auto px-6 py-24">
+      {/* Central Terracotta Path Connector */}
+      <div className="absolute left-[33px] md:left-1/2 top-0 bottom-0 w-[2px] bg-stone-200 hidden sm:block">
+        <motion.div
+          className="absolute top-0 left-0 right-0 bottom-0 origin-top bg-gradient-to-b from-primary via-accent to-transparent"
+          style={{ scaleY: pathLength }}
+        />
+      </div>
+
+      <div className="space-y-36">
+        {STEPS.map((item, idx) => {
+          const isEven = idx % 2 === 0
+          return (
+            <motion.div
+              key={item.step}
+              initial={{ opacity: 0, y: 32 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className={`flex flex-col sm:flex-row items-start gap-8 sm:gap-20 relative ${
+                isEven ? '' : 'sm:flex-row-reverse'
+              }`}
+            >
+              {/* Central Dynamic Dot */}
+              <div className="absolute left-[33px] sm:left-1/2 top-1 -translate-x-[50%] z-10 hidden sm:flex items-center justify-center size-9 rounded-full bg-white border border-stone-200 shadow-sm">
+                <span className="font-heading text-xs font-bold text-primary">{item.step}</span>
+              </div>
+
+              {/* Information Panel */}
+              <div className="flex-1 space-y-4">
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-widest text-primary/80">{item.highlight}</span>
+                  <h3 className="font-heading text-2xl font-semibold text-foreground tracking-tight">{item.title}</h3>
+                </div>
+                <p className="text-sm leading-relaxed text-muted-foreground max-w-md font-medium">
+                  {item.body}
+                </p>
+                <div className="inline-flex items-center gap-1.5 text-[10px] font-mono text-accent font-semibold tracking-widest uppercase bg-accent/5 px-2.5 py-1 rounded border border-accent/10">
+                  {item.fallbackMetric}
+                </div>
+              </div>
+
+              {/* Offset Balance */}
+              <div className="flex-1 hidden sm:block" />
+            </motion.div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
-function AnimatedCounter({ target, suffix = '' }: { target: string; suffix?: string }) {
-  const [count, setCount] = useState('0')
-  const ref = useRef<HTMLSpanElement>(null)
-  const isInView = useInView(ref, { once: true })
-
-  useEffect(() => {
-    if (!isInView) return
-    const numMatch = target.match(/([\d.]+)/)
-    if (!numMatch) { setCount(target); return }
-    const num = parseFloat(numMatch[1])
-    const prefix = target.slice(0, target.indexOf(numMatch[1]))
-    const rest = target.slice(target.indexOf(numMatch[1]) + numMatch[1].length)
-    const isFloat = target.includes('.')
-    let frame = 0
-    const totalFrames = 40
-    const interval = setInterval(() => {
-      frame++
-      const progress = frame / totalFrames
-      const eased = 1 - Math.pow(1 - progress, 3)
-      const current = num * eased
-      setCount(`${prefix}${isFloat ? current.toFixed(1) : Math.round(current)}${rest}${suffix}`)
-      if (frame >= totalFrames) clearInterval(interval)
-    }, 30)
-    return () => clearInterval(interval)
-  }, [isInView, target, suffix])
-
-  return <span ref={ref}>{count}</span>
-}
-
-/* ─── Component ────────────────────────────────────────────── */
+/* ─── Main Landing Page ─────────────────────────────────────── */
 
 export default function Landing() {
-  const [activeSimIndex, setActiveSimIndex] = useState(0)
-  const [isSimulating, setIsSimulating] = useState(false)
-  const [simText, setSimText] = useState('')
-  const [showBars, setShowBars] = useState(false)
-  const [dragActive, setDragActive] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
-  const [isUploading, setIsUploading] = useState(false)
-  const [uploadFinished, setUploadFinished] = useState(false)
-  const [mobileNav, setMobileNav] = useState(false)
+  const { analysis } = useResume()
+  const { user } = useAuth()
 
-  const heroRef = useRef<HTMLDivElement>(null)
-  const barsInView = useInView(heroRef, { once: true, margin: '-100px' })
+  const [speechIdx, setSpeechIdx] = useState(0)
+  const [activeDomainIdx, setActiveDomainIdx] = useState(0)
+  const [outputText, setOutputText] = useState('')
+  const [isSimulating, setIsSimulating] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [analyzingFile, setAnalyzingFile] = useState(false)
+  const [analysisPercent, setAnalysisPercent] = useState(0)
+  const [analysisCompleted, setAnalysisCompleted] = useState(false)
+
+  const simIntervalRef = useRef<any>(null)
 
   useEffect(() => {
-    if (barsInView) {
-      const t = setTimeout(() => setShowBars(true), 400)
-      return () => clearTimeout(t)
+    return () => {
+      if (simIntervalRef.current) {
+        clearInterval(simIntervalRef.current)
+      }
     }
-  }, [barsInView])
+  }, [])
 
-  const startSimulatingText = useCallback(() => {
+  // ─── Extract Live Platform State Data ─────────────────────
+  const liveScore = useMemo(() => analysis?.final_score ?? 84, [analysis])
+  const liveRole = useMemo(() => analysis?.role ?? 'Software Engineer', [analysis])
+  const liveSkillsCount = useMemo(() => analysis?.detected_skills?.length ?? 12, [analysis])
+  const liveCoverage = useMemo(() => analysis?.core_coverage_percent ?? 78, [analysis])
+  const liveMissingCount = useMemo(() => {
+    if (!analysis) return 5
+    return (analysis.missing_core_skills?.length ?? 0) + (analysis.missing_optional_skills?.length ?? 0)
+  }, [analysis])
+
+  const startVoiceSimulator = useCallback(() => {
+    if (simIntervalRef.current) {
+      clearInterval(simIntervalRef.current)
+    }
     setIsSimulating(true)
-    setSimText('')
-    const fullAnswer = SIMULATOR_QUESTIONS[activeSimIndex].simulatedAnswer
-    let i = 0
-    const iv = setInterval(() => {
-      if (i < fullAnswer.length) {
-        setSimText(prev => prev + fullAnswer.charAt(i))
-        i++
+    setOutputText('')
+    
+    const fullSpeech = SPEECH_SCENARIOS[speechIdx].response || ''
+    let currentText = ''
+    let charI = 0
+    
+    simIntervalRef.current = setInterval(() => {
+      if (charI < fullSpeech.length) {
+        currentText += fullSpeech.charAt(charI)
+        setOutputText(currentText)
+        charI++
       } else {
-        clearInterval(iv)
+        if (simIntervalRef.current) {
+          clearInterval(simIntervalRef.current)
+          simIntervalRef.current = null
+        }
         setIsSimulating(false)
       }
-    }, 25)
-  }, [activeSimIndex])
+    }, 15)
+  }, [speechIdx])
 
-  const handleDrag = useCallback((e: React.DragEvent) => {
+  const onDragHandler = useCallback((e: React.DragEvent) => {
     e.preventDefault()
-    e.stopPropagation()
-    if (e.type === 'dragenter' || e.type === 'dragover') setDragActive(true)
-    else if (e.type === 'dragleave') setDragActive(false)
+    if (e.type === 'dragenter' || e.type === 'dragover') setIsDragging(true)
+    else if (e.type === 'dragleave') setIsDragging(false)
   }, [])
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const onDropHandler = useCallback((e: React.DragEvent) => {
     e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-    if (e.dataTransfer.files?.[0]) simulateUpload()
+    setIsDragging(false)
+    if (e.dataTransfer.files?.[0]) startProfileAudits()
   }, [])
 
-  const simulateUpload = useCallback(() => {
-    if (isUploading || uploadFinished) return
-    setIsUploading(true)
-    setUploadProgress(0)
+  const startProfileAudits = useCallback(() => {
+    if (analyzingFile || analysisCompleted) return
+    setAnalyzingFile(true)
+    setAnalysisPercent(0)
     const iv = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
+      setAnalysisPercent(p => {
+        if (p >= 100) {
           clearInterval(iv)
-          setTimeout(() => { setIsUploading(false); setUploadFinished(true) }, 600)
+          setTimeout(() => { setAnalyzingFile(false); setAnalysisCompleted(true) }, 400)
           return 100
         }
-        return prev + 10
+        return p + 10
       })
-    }, 150)
-  }, [isUploading, uploadFinished])
+    }, 100)
+  }, [analyzingFile, analysisCompleted])
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
-      {/* ── Sticky Nav ─────────────────────────────────────── */}
-      <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-lg">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.15 } }}
+      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+      className="min-h-screen bg-background text-foreground selection:bg-primary/10 overflow-x-hidden"
+    >
+      {/* ── Minimalist Premium Header ───────────────────────── */}
+      <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Link to="/" className="flex items-center gap-2.5">
-            <LogoMark size={26} />
+            <LogoMark size={28} />
             <div>
-              <span className="font-heading text-sm font-bold tracking-tight">CampusSync</span>
-              <span className="ml-1 text-[10px] font-semibold uppercase tracking-widest text-primary">Edge AI</span>
+              <span className="font-heading text-sm font-bold tracking-tight text-foreground">CampusSync</span>
+              <span className="ml-1 text-[9px] font-semibold uppercase tracking-widest text-primary">Edge OS</span>
             </div>
           </Link>
 
-          {/* Desktop */}
-          <div className="hidden items-center gap-8 md:flex">
-            <a href="#how" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">How it works</a>
-            <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</a>
-            <a href="#simulator" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Interview Prep</a>
-            <Button size="sm" className="shadow-sm font-semibold gap-1.5" render={<Link to="/signup" />}>Scan Resume Free <ArrowRight className="size-3.5" /></Button>
+          <div className="hidden items-center gap-10 md:flex">
+            <a href="#pipeline" className="relative text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors py-1 group">
+              OS Pipeline
+              <span className="absolute bottom-0 left-0 w-0 h-[1.5px] bg-primary transition-all duration-300 group-hover:w-full" />
+            </a>
+            <a href="#recruiters" className="relative text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors py-1 group">
+              Recruiter Sync
+              <span className="absolute bottom-0 left-0 w-0 h-[1.5px] bg-primary transition-all duration-300 group-hover:w-full" />
+            </a>
+            <a href="#skills" className="relative text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors py-1 group">
+              Skill Matrix
+              <span className="absolute bottom-0 left-0 w-0 h-[1.5px] bg-primary transition-all duration-300 group-hover:w-full" />
+            </a>
+            <a href="#speech" className="relative text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors py-1 group">
+              Speech Arena
+              <span className="absolute bottom-0 left-0 w-0 h-[1.5px] bg-primary transition-all duration-300 group-hover:w-full" />
+            </a>
+            <a href="#attribution" className="relative text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors py-1 group">
+              Attribution Audit
+              <span className="absolute bottom-0 left-0 w-0 h-[1.5px] bg-primary transition-all duration-300 group-hover:w-full" />
+            </a>
+            <Link to="/signup" className={buttonVariants({ size: "sm" }) + " shadow-sm text-xs font-semibold px-6 py-2.5 rounded-full flex items-center gap-1.5"}>
+              Access Platform <ArrowRight className="size-3.5" />
+            </Link>
           </div>
 
-          {/* Mobile toggle */}
-          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileNav(v => !v)} aria-label="Toggle menu">
-            {mobileNav ? '✕' : '☰'}
+          <Button variant="ghost" size="icon" className="md:hidden text-foreground" onClick={() => setMobileMenuOpen(v => !v)}>
+            {mobileMenuOpen ? '✕' : '☰'}
           </Button>
         </div>
 
-        {/* Mobile menu */}
         <AnimatePresence>
-          {mobileNav && (
+          {mobileMenuOpen && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden border-t border-border bg-background md:hidden"
             >
-              <div className="flex flex-col gap-1 p-4 shadow-lg">
-                <a href="#how" className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted" onClick={() => setMobileNav(false)}>How it works</a>
-                <a href="#features" className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted" onClick={() => setMobileNav(false)}>Features</a>
-                <a href="#simulator" className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted" onClick={() => setMobileNav(false)}>Interview Prep</a>
-                <Link to="/signup" className={buttonVariants({ size: "sm" }) + " mt-2 w-full text-center font-semibold flex justify-center gap-1.5"} onClick={() => setMobileNav(false)}>Scan Resume Free <ArrowRight className="size-3.5" /></Link>
+              <div className="flex flex-col gap-1.5 p-4">
+                <a href="#pipeline" className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-stone-100" onClick={() => setMobileMenuOpen(false)}>OS Pipeline</a>
+                <a href="#recruiters" className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-stone-100" onClick={() => setMobileMenuOpen(false)}>Recruiter Sync</a>
+                <a href="#skills" className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-stone-100" onClick={() => setMobileMenuOpen(false)}>Skill Matrix</a>
+                <a href="#speech" className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-stone-100" onClick={() => setMobileMenuOpen(false)}>Speech Arena</a>
+                <a href="#attribution" className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-stone-100" onClick={() => setMobileMenuOpen(false)}>Attribution Audit</a>
+                <Link to="/signup" className={buttonVariants({ size: "sm" }) + " mt-2 w-full text-center font-semibold flex justify-center gap-1.5"} onClick={() => setMobileMenuOpen(false)}>Access Platform <ArrowRight className="size-3.5" /></Link>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </nav>
 
-      {/* ── Hero ───────────────────────────────────────────── */}
-      <section ref={heroRef} className="relative overflow-hidden pt-12 pb-24 md:pt-20 md:pb-32">
-        {/* Background mesh grid and orbs */}
-        <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-          <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:24px_24px] opacity-60" />
-          <div className="absolute -top-32 -left-32 h-[600px] w-[600px] rounded-full bg-primary/8 blur-[120px]" />
-          <div className="absolute top-1/3 right-0 h-[500px] w-[500px] rounded-full bg-violet/8 blur-[120px]" />
+      {/* ── Section 1: Hero Gateway ────────────────── */}
+      <section className="relative pt-28 pb-32 md:pt-40 md:pb-48 flex flex-col items-center justify-center bg-background">
+        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
+          <div className="absolute top-[-30%] left-[-10%] h-[650px] w-[650px] rounded-full bg-primary/4 blur-[130px]" />
+          <div className="absolute top-[40%] right-[-15%] h-[550px] w-[550px] rounded-full bg-accent/4 blur-[110px]" />
         </div>
 
-        <div className="relative mx-auto grid max-w-6xl items-center gap-16 px-6 md:grid-cols-2">
-          {/* Left Column */}
-          <div className="space-y-6">
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5 }}>
-              <Badge variant="outline" className="gap-1.5 border-primary/25 bg-primary/5 text-primary text-[11px] font-semibold py-1 px-3 rounded-full">
-                <Sparkles className="size-3 text-primary animate-pulse" /> 82.1% Accurate ML Scoring Model
-              </Badge>
-            </motion.div>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="font-heading text-4xl font-bold leading-[1.12] tracking-tight sm:text-5xl lg:text-[3.5rem] text-slate-900"
-            >
-              Know <span className="gradient-text">exactly</span> where you stand before placement season.
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
-              className="max-w-lg text-[16px] leading-relaxed text-muted-foreground font-medium"
-            >
-              Upload your engineering resume. CampusSync analyzes your skills against 7 engineering career tracks, exposes missing critical capabilities, and builds a custom roadmap — zero guesswork.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
-              className="flex flex-wrap gap-4 pt-2"
-            >
-              <Link to="/signup" className={buttonVariants({ size: "lg" }) + " shadow-md font-semibold gap-2"}><ArrowRight className="size-4" /> Check my readiness</Link>
-              <a href="#how" className={buttonVariants({ variant: "outline", size: "lg" }) + " font-semibold bg-white/60 backdrop-blur-xs"}>See how it works</a>
-            </motion.div>
-          </div>
-
-          {/* Right Column — Readiness Report Card */}
+        <div className="relative z-10 max-w-5xl mx-auto px-6 text-center space-y-10">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="relative"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
           >
-            {/* Floating badge */}
-            <div className="absolute -top-3.5 -right-2.5 z-10 animate-bounce-slow">
-              <div className="flex items-center gap-1.5 rounded-full border border-success/30 bg-success/15 px-3.5 py-1 text-[11px] font-bold text-success shadow-md backdrop-blur-md">
-                <CheckCircle2 className="size-3.5 text-success" /> Live ML Auditor Active
-              </div>
-            </div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4.5 py-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">
+              <Award className="size-3.5 text-primary" /> Connected Student Placement OS
+            </span>
+          </motion.div>
 
-            <Card className="border-border/60 shadow-xl bg-white/95 backdrop-blur-md p-6 md:p-8 space-y-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="text-sm font-bold text-slate-800">Ready Track Analyzer</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">Backend SDE Track · Mapped in 0.4s</div>
-                </div>
-                <div className="text-right">
-                  <div className="font-heading text-4xl font-extrabold text-primary leading-none">78</div>
-                  <div className="text-[10px] font-bold text-muted-foreground tracking-wider uppercase mt-1">/ 100 Readiness</div>
-                </div>
-              </div>
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+            className="font-heading text-5xl font-light leading-[1.05] tracking-tight sm:text-7xl text-foreground max-w-4xl mx-auto"
+          >
+            Everything placement-related, <span className="font-semibold italic text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">working in sync.</span>
+          </motion.h1>
 
-              <div className="space-y-4">
-                {SKILL_BARS.map((bar, i) => (
-                  <div key={bar.label} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs font-semibold">
-                      <span className="text-slate-600">{bar.label}</span>
-                      <span className="font-mono text-slate-700">{bar.pct}%</span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-slate-100 border border-slate-200/50">
-                      <motion.div
-                        className={`h-full rounded-full ${bar.color === 'bg-success' ? 'bg-success' : bar.color === 'bg-primary' ? 'bg-primary' : 'bg-amber'}`}
-                        initial={{ width: 0 }}
-                        animate={{ width: showBars ? `${bar.pct}%` : 0 }}
-                        transition={{ delay: i * 0.15, duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+            className="max-w-2xl mx-auto text-base md:text-lg leading-relaxed text-muted-foreground font-medium"
+          >
+            Know exactly what to improve next. CampusSync bridges the gap between your active codebase footprint and your next placement panel.
+          </motion.p>
 
-              <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
-                <Badge variant="outline" className="gap-1 border-error/30 bg-error/5 text-error text-[10px] font-bold px-2 py-0.5 rounded-md">
-                  <AlertTriangle className="size-3" /> Apache Spark missing
-                </Badge>
-                <Badge variant="outline" className="gap-1 border-amber/30 bg-amber/5 text-amber text-[10px] font-bold px-2 py-0.5 rounded-md">
-                  Next.js Routing gap
-                </Badge>
-                <Badge variant="outline" className="gap-1 border-success/30 bg-success/5 text-success text-[10px] font-bold px-2 py-0.5 rounded-md">
-                  <CheckCircle2 className="size-3" /> Algorithms 91%
-                </Badge>
-              </div>
-            </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="flex flex-wrap justify-center gap-5 pt-4"
+          >
+            <Link to="/signup" className={buttonVariants({ size: "lg" }) + " shadow-md font-semibold gap-2 rounded-full px-9 py-6 text-sm"}>Start Placement Audit</Link>
+            <a href="#pipeline" className={buttonVariants({ variant: "outline", size: "lg" }) + " font-semibold rounded-full border-stone-200 bg-white hover:bg-stone-50 px-9 py-6 text-sm"}>Explore Flow</a>
           </motion.div>
         </div>
       </section>
 
-      {/* ── Stats Strip ────────────────────────────────────── */}
-      <Section className="border-y border-border/60 bg-white/50 backdrop-blur-md relative z-10 shadow-xs">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-6 py-12 md:grid-cols-4">
-          {STATS.map((stat) => (
-            <div key={stat.lbl} className="text-center space-y-1">
-              <div className="font-heading text-3xl font-extrabold text-slate-800 md:text-4xl">
-                <AnimatedCounter target={stat.val} />
-              </div>
-              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{stat.lbl}</div>
-            </div>
-          ))}
+      {/* Editorial Section Divider */}
+      <div className="w-full flex items-center justify-center py-2 bg-transparent">
+        <div className="w-full max-w-6xl px-6 flex items-center gap-4">
+          <div className="h-[1px] flex-1 bg-primary/10" />
+          <LogoMark size={14} />
+          <div className="h-[1px] flex-1 bg-primary/10" />
         </div>
-      </Section>
+      </div>
 
-      {/* ── How It Works ───────────────────────────────────── */}
-      <Section id="how" className="px-6 py-24 md:py-32 bg-slate-50/40 relative">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-primary">Simple Workflow</div>
-          <h2 className="text-center font-heading text-3xl font-bold tracking-tight md:text-4xl text-slate-900">
-            From resume to placement roadmap <span className="gradient-text">in minutes.</span>
+      {/* ── Section 2: Sandstone Process Funnel ────────────────── */}
+      <section id="pipeline" className="relative py-28 border-t border-border bg-[#F4EFEA]/30">
+        <div className="max-w-4xl mx-auto px-6 text-center space-y-5 mb-24">
+          <span className="text-[11px] font-bold uppercase tracking-widest text-primary/80">OS Pipeline</span>
+          <h2 className="font-heading text-4xl font-semibold text-foreground tracking-tight sm:text-5xl">
+            A single connected experience.
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-center text-[15px] text-muted-foreground font-medium">
-            Zero sign-up fee to scan. Get a direct, transparent look at your core skill coverage instantly.
+          <p className="text-base text-muted-foreground max-w-lg mx-auto font-medium leading-relaxed">
+            We avoid disjointed tasks. Your diagnostics, missing requirements, and active repository audits interact as one pipeline.
           </p>
-
-          <div className="mt-16 grid gap-8 md:grid-cols-3">
-            {STEPS.map((step, i) => (
-              <motion.div
-                key={step.num}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
-              >
-                <Card className="relative h-full border-border/60 bg-white transition-all hover:shadow-md hover:border-slate-300 p-6">
-                  <CardContent className="space-y-4 p-0">
-                    <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 font-heading text-lg font-bold text-primary">
-                      {step.num}
-                    </div>
-                    <h3 className="font-heading text-lg font-bold text-slate-800">{step.title}</h3>
-                    <p className="text-sm leading-relaxed text-muted-foreground font-medium">{step.desc}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
         </div>
-      </Section>
 
-      {/* ── Features Bento Grid ───────────────────────────────── */}
-      <Section id="features" className="border-y border-border bg-white px-6 py-24 md:py-32">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-primary">CampusSync Loop</div>
-          <h2 className="text-center font-heading text-3xl font-bold tracking-tight md:text-4xl text-slate-900">
-            A cohesive, connected growth loop.
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-center text-[15px] text-muted-foreground font-medium">
-            Preparation isn't separate stages. It's a continuous, AI-synchronized roadmap built entirely for your career engineering goals.
-          </p>
+        <ScrollPipeline />
+      </section>
 
-          {/* Bento Grid */}
-          <div className="mt-16 grid gap-6 md:grid-cols-3">
-            {/* Box 1: Resume Analysis (md:col-span-2) */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.05, duration: 0.5 }}
-              className="md:col-span-2"
-            >
-              <Card className="group h-full overflow-hidden border-border/60 bg-slate-50/20 transition-all hover:border-primary/30 hover:shadow-lg">
-                <CardContent className="flex flex-col md:flex-row h-full p-0">
-                  <div className="p-6 md:p-8 flex flex-col justify-between flex-1">
-                    <div>
-                      <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20">
-                        <FileText className="size-5 text-primary" />
-                      </div>
-                      <h3 className="font-heading text-lg font-bold text-slate-800">Resume Analysis</h3>
-                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground font-medium">
-                        Deep ATS scanning, formatting structure check, and automated skill extraction in under five seconds.
-                      </p>
-                    </div>
-                    <div className="mt-6 flex flex-wrap gap-2">
-                      <Badge variant="secondary" className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold">ATS Compatibility</Badge>
-                      <Badge variant="secondary" className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold">Format Validation</Badge>
-                      <Badge variant="secondary" className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold">Keyword Matching</Badge>
-                    </div>
-                  </div>
-                  {/* Right side graphic */}
-                  <div className="bg-slate-50/50 border-t md:border-t-0 md:border-l border-border/60 flex items-center justify-center p-6 md:w-64 shrink-0">
-                    <div className="w-full space-y-3 rounded-lg border border-border/60 bg-white p-4 shadow-sm">
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                        <span className="text-[9px] font-bold text-muted-foreground tracking-wider uppercase">resume_parsed.pdf</span>
-                        <Badge className="bg-success text-white hover:bg-success/90 text-[9px] font-bold px-1.5 py-0">94 Score</Badge>
-                      </div>
-                      <div className="space-y-1.5">
-                        <div className="h-1.5 w-3/4 rounded bg-slate-100" />
-                        <div className="h-1.5 w-1/2 rounded bg-slate-100" />
-                        <div className="h-1.5 w-5/6 rounded bg-slate-100" />
-                      </div>
-                      <Separator className="my-1.5 bg-slate-100" />
-                      <div className="flex flex-wrap gap-1">
-                        <span className="text-[9px] font-bold bg-primary/5 text-primary px-1.5 py-0.5 rounded">React</span>
-                        <span className="text-[9px] font-bold bg-primary/5 text-primary px-1.5 py-0.5 rounded">Python</span>
-                        <span className="text-[9px] font-bold bg-primary/5 text-primary px-1.5 py-0.5 rounded">SQL</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Box 2: Readiness Score (col-span-1) */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1, duration: 0.5 }}
-            >
-              <Card className="group h-full overflow-hidden border-border/60 bg-slate-50/20 transition-all hover:border-primary/30 hover:shadow-lg">
-                <CardContent className="p-6 md:p-8 flex flex-col justify-between h-full">
-                  <div>
-                    <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20">
-                      <BarChart2 className="size-5 text-primary" />
-                    </div>
-                    <h3 className="font-heading text-lg font-bold text-slate-800">Readiness Score</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground font-medium">
-                      Automated calculations mapped against real engineering role benchmarks.
-                    </p>
-                  </div>
-                  <div className="mt-6 flex justify-center py-2">
-                    <div className="relative flex items-center justify-center size-24 rounded-full border-4 border-primary/10">
-                      <div className="absolute font-heading text-2xl font-extrabold text-primary">78%</div>
-                      <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin-slow" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Box 3: Skill Gap Detection (col-span-1) */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.15, duration: 0.5 }}
-            >
-              <Card className="group h-full overflow-hidden border-border/60 bg-slate-50/20 transition-all hover:border-primary/30 hover:shadow-lg">
-                <CardContent className="p-6 md:p-8 flex flex-col justify-between h-full">
-                  <div>
-                    <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20">
-                      <Zap className="size-5 text-primary" />
-                    </div>
-                    <h3 className="font-heading text-lg font-bold text-slate-800">Skill Gap Detection</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground font-medium">
-                      Exposes missing software capabilities directly compared to active role listings.
-                    </p>
-                  </div>
-                  <div className="mt-6 space-y-2">
-                    <div className="flex items-center justify-between text-xs rounded-md border border-success/20 bg-success/5 px-2.5 py-1.5">
-                      <span className="font-bold text-success">Docker & AWS</span>
-                      <span className="text-[10px] font-bold text-success/80">Covered</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs rounded-md border border-amber/20 bg-amber/5 px-2.5 py-1.5">
-                      <span className="font-bold text-amber">FastAPI / Redis</span>
-                      <span className="text-[10px] font-bold text-amber/80">Missing Gap</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Box 4: Interview Simulator (md:col-span-2) */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="md:col-span-2"
-            >
-              <Card className="group h-full overflow-hidden border-border/60 bg-slate-50/20 transition-all hover:border-primary/30 hover:shadow-lg">
-                <CardContent className="flex flex-col md:flex-row h-full p-0">
-                  <div className="p-6 md:p-8 flex flex-col justify-between flex-1">
-                    <div>
-                      <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20">
-                        <MessageSquare className="size-5 text-primary" />
-                      </div>
-                      <h3 className="font-heading text-lg font-bold text-slate-800">Interview Simulator</h3>
-                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground font-medium">
-                        On-device speech analyzer allows you to practice answering technical challenges under real-time constraints.
-                      </p>
-                    </div>
-                    <div className="mt-6 flex flex-wrap gap-2">
-                      <Badge variant="secondary" className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold">Web Speech API</Badge>
-                      <Badge variant="secondary" className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold">Instant Grading</Badge>
-                    </div>
-                  </div>
-                  {/* Right side mock speech bubble */}
-                  <div className="bg-slate-50/50 border-t md:border-t-0 md:border-l border-border/60 flex items-center justify-center p-6 md:w-64 shrink-0">
-                    <div className="w-full space-y-2">
-                      <div className="rounded-lg bg-primary text-white p-3 text-[11px] font-medium shadow-sm">
-                        Optimistic locking manages concurrency by...
-                      </div>
-                      <div className="rounded-lg bg-white border border-border/60 p-3 text-[10px] font-bold text-muted-foreground shadow-sm">
-                        🎙️ Grade: 84% Concept Coverage
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Box 5: Resume Comparison (col-span-1) */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.25, duration: 0.5 }}
-            >
-              <Card className="group h-full overflow-hidden border-border/60 bg-slate-50/20 transition-all hover:border-primary/30 hover:shadow-lg">
-                <CardContent className="p-6 md:p-8 flex flex-col justify-between h-full">
-                  <div>
-                    <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20">
-                      <GitCompare className="size-5 text-primary" />
-                    </div>
-                    <h3 className="font-heading text-lg font-bold text-slate-800">Resume Comparison</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground font-medium">
-                      Track scoring changes and skill trends across structural drafts.
-                    </p>
-                  </div>
-                  <div className="mt-6 flex items-center justify-between border border-slate-200/80 rounded-lg p-3 bg-white shadow-xs">
-                    <div className="text-center flex-1">
-                      <div className="text-[10px] font-bold text-muted-foreground uppercase">v1 draft</div>
-                      <div className="text-base font-extrabold text-amber font-heading mt-0.5">64</div>
-                    </div>
-                    <ChevronRight className="size-4 text-muted-foreground" />
-                    <div className="text-center flex-1">
-                      <div className="text-[10px] font-bold text-muted-foreground uppercase">v2 final</div>
-                      <div className="text-base font-extrabold text-success font-heading mt-0.5">82</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Box 6: GitHub Verifier (md:col-span-3) */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3, duration: 0.5 }}
-              className="md:col-span-3"
-            >
-              <Card className="group h-full overflow-hidden border-border/60 bg-slate-50/20 transition-all hover:border-primary/30 hover:shadow-lg">
-                <CardContent className="flex flex-col md:flex-row h-full p-0">
-                  <div className="p-6 md:p-8 flex flex-col justify-between flex-1">
-                    <div>
-                      <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20">
-                        <Shield className="size-5 text-primary" />
-                      </div>
-                      <h3 className="font-heading text-lg font-bold text-slate-800">GitHub Project Authenticity Verifier</h3>
-                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground font-medium">
-                        Automatically audits and ranks linked public repositories to verify authorship, validate project complexity, and guarantee project authenticity directly to recruiter portals.
-                      </p>
-                    </div>
-                    <div className="mt-6 flex flex-wrap gap-2">
-                      <Badge variant="secondary" className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold">Plagiarism Analysis</Badge>
-                      <Badge variant="secondary" className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold">Commit Auditing</Badge>
-                    </div>
-                  </div>
-                  {/* Right side mock audits list */}
-                  <div className="bg-slate-50/50 border-t md:border-t-0 md:border-l border-border/60 flex items-center justify-center p-6 md:w-80 shrink-0">
-                    <div className="w-full space-y-2 text-left font-mono text-[10px] text-slate-700 bg-white p-3.5 rounded-lg border border-slate-200 shadow-xs">
-                      <div className="flex justify-between border-b pb-1.5 border-slate-100">
-                        <span className="font-bold text-primary">Repo Scan</span>
-                        <span className="text-success font-extrabold">VERIFIED</span>
-                      </div>
-                      <div className="flex justify-between text-[9px] pt-1">
-                        <span>Original Complexity:</span>
-                        <span className="font-semibold text-success">Grade A-</span>
-                      </div>
-                      <div className="flex justify-between text-[9px]">
-                        <span>Copied Check:</span>
-                        <span className="font-semibold text-success">Passed</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
+      {/* Editorial Section Divider */}
+      <div className="w-full flex items-center justify-center py-2 bg-transparent">
+        <div className="w-full max-w-6xl px-6 flex items-center gap-4">
+          <div className="h-[1px] flex-1 bg-primary/10" />
+          <LogoMark size={14} />
+          <div className="h-[1px] flex-1 bg-primary/10" />
         </div>
-      </Section>
+      </div>
 
-      {/* ── Interview Simulator ────────────────────────────── */}
-      <Section id="simulator" className="px-6 py-24 md:py-32 bg-slate-50/30">
-        <div className="mx-auto grid max-w-6xl items-center gap-16 md:grid-cols-2">
-          {/* Left Text */}
+      {/* ── Section 3: Recruiter Connection Hub ──────── */}
+      <section id="recruiters" className="relative py-28 border-t border-border bg-white">
+        <div className="max-w-6xl mx-auto px-6 grid gap-16 md:grid-cols-2 items-center">
+          {/* Text Description */}
           <div className="space-y-6">
-            <div className="text-xs font-bold uppercase tracking-widest text-primary">Speech Training</div>
-            <h2 className="font-heading text-3xl font-bold tracking-tight md:text-4xl text-slate-900">
-              Practice until <span className="gradient-text">technical answers feel natural.</span>
+            <span className="text-[11px] font-bold uppercase tracking-widest text-primary/80">Recruiter Sync</span>
+            <h2 className="font-heading text-4xl font-semibold text-foreground tracking-tight sm:text-5xl">
+              Direct pipeline to active placements.
             </h2>
-            <p className="text-[15px] leading-relaxed text-muted-foreground font-medium">
-              Immediate feedback on concept accuracy. The simulator calculates vocabulary alignment instantly and grades answers based on industry expectations.
+            <p className="text-base leading-relaxed text-muted-foreground font-medium">
+              Eliminate arbitrary agency screeners. CampusSync continuously syncs your verified profile milestones directly to partnering company applicant databases.
             </p>
 
-            <div className="space-y-5 pt-2">
+            <div className="space-y-5 pt-3">
               {[
-                { title: 'Track-specific question banks', desc: 'Covering Frontend, Backend, Machine Learning, Systems, and Data Engineering paths.' },
-                { title: 'Interactive speech input', desc: 'Evaluate your oral delivery under interview pressure using the Web Speech API.' },
-                { title: 'Granular concept feedback', desc: 'AI pinpoints exact terms covered correctly and details critical definitions omitted.' },
+                { title: 'Live recruiter dashboard sync', desc: 'Partnering recruitment teams query student profile diagnostics in real-time.' },
+                { title: 'Pathways match index', desc: 'Instantly highlights matching roles based on your verified skill metrics.' }
               ].map((item, i) => (
                 <div key={i} className="flex gap-4">
-                  <div className="mt-0.5 flex size-6.5 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary">
-                    <ChevronRight className="size-4" />
+                  <div className="mt-0.5 flex size-5.5 shrink-0 items-center justify-center rounded bg-primary/10 font-bold text-primary text-xs">
+                    ✓
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-800">{item.title}</div>
-                    <div className="mt-1 text-xs text-muted-foreground font-medium leading-relaxed">{item.desc}</div>
+                    <div className="text-sm font-bold text-foreground">{item.title}</div>
+                    <div className="mt-1 text-[12px] text-muted-foreground leading-relaxed font-medium">{item.desc}</div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Right — Interactive Terminal Mockup */}
-          <Card className="border-border/60 overflow-hidden shadow-xl bg-white">
-            {/* Title Bar */}
-            <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50/70 px-4 py-3">
-              <div className="flex gap-1.5">
-                <div className="size-2.5 rounded-full bg-error/70" />
-                <div className="size-2.5 rounded-full bg-amber/70" />
-                <div className="size-2.5 rounded-full bg-success/70" />
+          {/* Active Placement Pipeline Visuals */}
+          <div className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="bg-stone-50 rounded-2xl p-7 border border-stone-200 shadow-sm relative overflow-hidden"
+            >
+              <div className="flex items-center justify-between border-b border-stone-200/60 pb-5 mb-5">
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-stone-400">Live Workspace Footprint</span>
+                  <h4 className="text-xs font-bold text-foreground mt-0.5">{user?.name ? `${user.name}'s Profile` : 'Active Auditor Profile'}</h4>
+                </div>
+                <Badge variant="outline" className="text-[9px] font-bold bg-white text-primary border-primary/20 px-2.5 py-0.5 rounded-full">CONNECTED</Badge>
               </div>
-              <span className="ml-2 font-mono text-[11px] text-muted-foreground font-semibold">
-                arena_console · {SIMULATOR_QUESTIONS[activeSimIndex].role}
-              </span>
+
+              {/* Dynamic Live Placement Grid */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-white p-4 rounded-xl border border-stone-200/60 shadow-sm">
+                  <div className="text-[10px] font-bold text-stone-400 uppercase">Readiness Score</div>
+                  <div className="font-heading text-2xl font-bold text-primary mt-1">{liveScore}%</div>
+                  <div className="text-[9px] font-semibold text-muted-foreground mt-0.5">Target: {liveRole}</div>
+                </div>
+                <div className="bg-white p-4 rounded-xl border border-stone-200/60 shadow-sm">
+                  <div className="text-[10px] font-bold text-stone-400 uppercase">Core Skills Map</div>
+                  <div className="font-heading text-2xl font-bold text-accent mt-1">{liveSkillsCount} Detected</div>
+                  <div className="text-[9px] font-semibold text-muted-foreground mt-0.5">{liveCoverage}% Core Coverage</div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {COMPANY_PIPELINES.map(pipe => (
+                  <div key={pipe.company} className="flex items-center justify-between bg-white px-4 py-3.5 rounded-xl border border-stone-200/60 shadow-sm">
+                    <div>
+                      <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        {pipe.company} <span className="text-[10px] text-stone-400 font-medium">• {pipe.role}</span>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground font-medium mt-0.5">{pipe.applicantCount} candidates matched</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={`size-1.5 rounded-full ${pipe.color}`} />
+                      <span className="text-[10px] font-bold text-foreground">{pipe.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Editorial Section Divider */}
+      <div className="w-full flex items-center justify-center py-2 bg-transparent">
+        <div className="w-full max-w-6xl px-6 flex items-center gap-4">
+          <div className="h-[1px] flex-1 bg-primary/10" />
+          <LogoMark size={14} />
+          <div className="h-[1px] flex-1 bg-primary/10" />
+        </div>
+      </div>
+
+      {/* ── Section 4: Dynamic Skill Alignment Matrix (Brand New Interactive Core) ── */}
+      <section id="skills" className="relative py-28 border-t border-border bg-[#F4EFEA]/30">
+        <div className="max-w-6xl mx-auto px-6 space-y-16">
+          <div className="max-w-3xl mx-auto text-center space-y-5">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-primary/80">Skill Matrix</span>
+            <h2 className="font-heading text-4xl font-semibold text-foreground tracking-tight sm:text-5xl">
+              Engineered for absolute placement fit.
+            </h2>
+            <p className="text-base text-muted-foreground font-medium leading-relaxed">
+              Ditch superficial bullet points. Interactive diagnostics verify real engineering capabilities that match actual firm constraints.
+            </p>
+          </div>
+
+          <div className="grid gap-12 md:grid-cols-5 items-stretch">
+            {/* Interactive Domain List (Left Side - occupies 2/5ths) */}
+            <div className="md:col-span-2 space-y-3">
+              {SKILL_DOMAINS.map((domain, index) => {
+                const Icon = domain.icon
+                const isActive = activeDomainIdx === index
+                return (
+                  <button
+                    key={domain.id}
+                    type="button"
+                    className={`w-full text-left p-5 rounded-2xl border transition-all duration-200 flex gap-4 items-start ${
+                      isActive
+                        ? 'bg-white border-primary/20 shadow-md translate-x-2'
+                        : 'bg-transparent border-transparent hover:bg-stone-100/60'
+                    }`}
+                    onClick={() => setActiveDomainIdx(index)}
+                  >
+                    <div className={`p-2.5 rounded-xl shrink-0 transition-colors ${isActive ? 'bg-primary/10 text-primary' : 'bg-stone-200/50 text-stone-500'}`}>
+                      <Icon className="size-5" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="text-base font-bold text-foreground flex items-center gap-2">
+                        {domain.title}
+                        {isActive && (
+                          <motion.span
+                            layoutId="active-indicator"
+                            className="size-1.5 rounded-full bg-primary"
+                          />
+                        )}
+                      </div>
+                      <p className="text-[12px] text-muted-foreground font-medium leading-relaxed">{domain.desc}</p>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
 
-            <CardContent className="space-y-5 p-5">
-              {/* Tabs */}
-              <div className="flex gap-1 rounded-lg bg-slate-100/80 p-1">
-                {SIMULATOR_QUESTIONS.map((q, idx) => (
-                  <button
-                    key={q.role}
-                    type="button"
-                    className={`flex-1 rounded-md py-1.5 text-center text-[11px] font-bold tracking-tight transition-all duration-150 ${
-                      activeSimIndex === idx
-                        ? 'bg-white text-primary shadow-sm border border-slate-200/50'
-                        : 'text-muted-foreground hover:text-slate-800'
-                    }`}
-                    onClick={() => { setActiveSimIndex(idx); setSimText(''); setIsSimulating(false) }}
+            {/* Interactive Skill Indicator Panel (Right Side - occupies 3/5ths) */}
+            <div className="md:col-span-3 flex">
+              <div className="w-full bg-white rounded-2xl p-8 border border-stone-200 shadow-md relative flex flex-col justify-between overflow-hidden">
+                {/* Background decorative path loops */}
+                <div className="absolute top-0 right-0 p-8 opacity-[0.03] text-primary pointer-events-none">
+                  <LogoMark size={140} />
+                </div>
+
+                <div className="space-y-8 relative z-10">
+                  <div className="flex items-center justify-between border-b border-stone-200/60 pb-5">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Verifying Pathway Gaps</span>
+                      <h3 className="font-heading text-2xl font-bold text-foreground mt-0.5">{SKILL_DOMAINS[activeDomainIdx].title}</h3>
+                    </div>
+                    <Badge className="bg-primary/10 text-primary hover:bg-primary/10 border-transparent text-[10px] font-bold px-3 py-1 rounded-full">
+                      {SKILL_DOMAINS[activeDomainIdx].demand} Placements Match
+                    </Badge>
+                  </div>
+
+                  {/* Dynamic Floating Sub-Skills with spring entrance animation */}
+                  <div className="space-y-4">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Required Architectural Signatures</span>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <AnimatePresence mode="wait">
+                        {SKILL_DOMAINS[activeDomainIdx].skills.map((subSkill, subIdx) => (
+                          <motion.div
+                            key={subSkill}
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            transition={{ duration: 0.3, delay: subIdx * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                            className="bg-stone-50 px-4 py-3 rounded-xl border border-stone-200/50 shadow-sm text-xs font-semibold text-foreground flex items-center gap-2.5"
+                          >
+                            <span className="size-1.5 rounded-full bg-accent" />
+                            {subSkill}
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Demand Index Metrics Footer */}
+                <div className="border-t border-stone-200/60 pt-6 mt-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative z-10">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Placements Advantage</div>
+                    <div className="font-heading text-xl font-bold text-accent mt-0.5">{SKILL_DOMAINS[activeDomainIdx].advantage}</div>
+                  </div>
+                  <Link
+                    to="/signup"
+                    className={buttonVariants({ variant: "outline", size: "sm" }) + " font-bold text-xs py-4 px-5 rounded-full border-stone-200 hover:bg-stone-50"}
                   >
-                    {q.role}
+                    Audit My {SKILL_DOMAINS[activeDomainIdx].title.split(' ')[0]} Skills <ArrowRight className="size-3.5 ml-1.5" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Editorial Section Divider */}
+      <div className="w-full flex items-center justify-center py-2 bg-transparent">
+        <div className="w-full max-w-6xl px-6 flex items-center gap-4">
+          <div className="h-[1px] flex-1 bg-primary/10" />
+          <LogoMark size={14} />
+          <div className="h-[1px] flex-1 bg-primary/10" />
+        </div>
+      </div>
+
+      {/* ── Section 5: Pure Speech Arena Sandbox ───────────────── */}
+      <section id="speech" className="relative py-28 border-t border-border bg-white">
+        <div className="relative z-10 max-w-6xl mx-auto px-6 grid gap-16 md:grid-cols-2 items-center">
+          {/* Interactive Console Sandbox */}
+          <div className="bg-stone-50 rounded-2xl p-7 relative overflow-hidden shadow-sm border border-stone-200">
+            <div className="space-y-6 relative z-10">
+              {/* Simulated Console Header */}
+              <div className="flex items-center justify-between border-b border-stone-200/60 pb-4">
+                <div className="flex gap-1.5">
+                  <div className="size-2 rounded-full bg-[#FF5F56]" />
+                  <div className="size-2 rounded-full bg-[#FFBD2E]" />
+                  <div className="size-2 rounded-full bg-[#27C93F]" />
+                </div>
+                <span className="font-mono text-[9px] text-muted-foreground tracking-wider">vocal_arena_panel</span>
+              </div>
+
+              {/* Scenario selector tabs */}
+              <div className="flex gap-1 bg-stone-200/50 p-1 rounded-xl">
+                {SPEECH_SCENARIOS.map((tab, idx) => (
+                  <button
+                    key={tab.role}
+                    type="button"
+                    className={`flex-1 py-2.5 text-center rounded-lg font-heading text-[10px] font-bold transition-all duration-150 ${
+                      speechIdx === idx
+                        ? 'bg-white text-primary shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    onClick={() => {
+                      if (simIntervalRef.current) {
+                        clearInterval(simIntervalRef.current)
+                        simIntervalRef.current = null
+                      }
+                      setSpeechIdx(idx)
+                      setOutputText('')
+                      setIsSimulating(false)
+                    }}
+                  >
+                    {tab.role.split(' ')[0]}
                   </button>
                 ))}
               </div>
 
               {/* Question */}
-              <div className="space-y-1.5">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Topic Challenge</div>
-                <p className="text-sm font-bold text-slate-800 leading-relaxed">{SIMULATOR_QUESTIONS[activeSimIndex].question}</p>
+              <div className="space-y-1">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Active Prompt</span>
+                <div className="text-xs font-bold text-foreground leading-relaxed">{SPEECH_SCENARIOS[speechIdx].question}</div>
               </div>
 
-              {/* Sandbox Answer Area */}
-              <div className="min-h-[90px] rounded-lg border border-slate-200/60 bg-slate-50/40 p-4 shadow-inner">
-                <p className="text-xs leading-relaxed text-slate-600 font-medium">
-                  {simText || <span className="italic text-muted-foreground">Select simulating response below to preview performance grading...</span>}
+              {/* Simulated response log */}
+              <div className="min-h-[135px] rounded-xl bg-white p-4 border border-stone-200 overflow-y-auto">
+                <p className="text-[11px] leading-relaxed text-foreground font-mono">
+                  {outputText || <span className="italic text-stone-400">Trigger vocal practice simulation below...</span>}
                 </p>
               </div>
 
-              {/* Stats & Results */}
-              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              {/* Precision diagnostics */}
+              <div className="flex justify-between items-center border-t border-stone-200/60 pt-4">
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Evaluation Score</div>
-                  <div className="font-heading text-xl font-extrabold text-primary mt-0.5">{SIMULATOR_QUESTIONS[activeSimIndex].score}</div>
+                  <div className="text-[9px] font-bold uppercase tracking-widest text-stone-400">Lexical Index</div>
+                  <div className="font-heading text-lg font-bold text-primary mt-0.5">{SPEECH_SCENARIOS[speechIdx].precision}</div>
                 </div>
-                <div className="flex flex-wrap justify-end gap-1.5 max-w-[60%]">
-                  {SIMULATOR_QUESTIONS[activeSimIndex].conceptsCovered.map(c => (
-                    <Badge key={c} variant="outline" className="border-success/20 bg-success/5 text-success text-[10px] font-bold px-2 py-0.5 rounded-md">{c}</Badge>
+                <div className="flex flex-wrap gap-1 justify-end max-w-[65%]">
+                  {SPEECH_SCENARIOS[speechIdx].skills.map(c => (
+                    <Badge key={c} variant="outline" className="border-accent/15 bg-accent/5 text-accent text-[8px] font-bold px-1.5 py-0.5 rounded-md">
+                      {c}
+                    </Badge>
                   ))}
                 </div>
               </div>
 
               <Button
                 variant="outline"
-                className="w-full font-bold shadow-xs py-5 border-slate-200 hover:bg-slate-50 hover:text-slate-800 gap-2"
+                className="w-full font-bold text-xs py-4.5 rounded-xl border-stone-200 bg-white hover:bg-stone-50 gap-2"
+                onClick={startVoiceSimulator}
                 disabled={isSimulating}
-                onClick={startSimulatingText}
               >
-                <Play className="size-3.5 fill-current" />
-                {isSimulating ? 'Analyzing audio streams...' : 'Simulate voice practice input'}
+                <Play className="size-3 fill-current text-primary" />
+                {isSimulating ? 'Calibrating speech inputs...' : 'Simulate mock verbal response'}
               </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </Section>
+            </div>
+          </div>
 
-      {/* ── GitHub Verifier Panel ────────────────────────────── */}
-      <Section className="border-y border-border bg-white px-6 py-24 md:py-32">
-        <div className="mx-auto grid max-w-6xl items-center gap-16 md:grid-cols-2">
-          {/* Left Panel */}
-          <div className="order-2 md:order-1">
-            <Card className="border-border/60 overflow-hidden shadow-xl bg-white">
-              <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50/70 px-4 py-3">
+          {/* Narrative description */}
+          <div className="space-y-6">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-primary/80">Speech Arena</span>
+            <h2 className="font-heading text-4xl font-semibold text-foreground tracking-tight sm:text-5xl">
+              Perfect your technical articulation.
+            </h2>
+            <p className="text-base leading-relaxed text-muted-foreground font-medium">
+              Improve verbal response flow in seconds. Our Vocal Arena measures lexical keyword coverage, architectural keyphrases, and conceptual clarity to grade spoken interview solutions dynamically.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Editorial Section Divider */}
+      <div className="w-full flex items-center justify-center py-2 bg-transparent">
+        <div className="w-full max-w-6xl px-6 flex items-center gap-4">
+          <div className="h-[1px] flex-1 bg-primary/10" />
+          <LogoMark size={14} />
+          <div className="h-[1px] flex-1 bg-primary/10" />
+        </div>
+      </div>
+
+      {/* ── Section 6: Authenticity Audit Logs ────────────────── */}
+      <section id="attribution" className="relative py-28 border-t border-border bg-[#F4EFEA]/30">
+        <div className="max-w-6xl mx-auto px-6 grid gap-16 md:grid-cols-2 items-center">
+          {/* Narrative description */}
+          <div className="space-y-6">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-primary/80">Attribution Audit</span>
+            <h2 className="font-heading text-4xl font-semibold text-foreground tracking-tight sm:text-5xl">
+              Verify structural project authorship.
+            </h2>
+            <p className="text-base leading-relaxed text-muted-foreground font-medium">
+              Stand out immediately in recruitment boards. CampusSync registers codebase attributions, verifying actual commit signatures, build success logs, and complexity audits directly to your student credentials.
+            </p>
+          </div>
+
+          {/* Visual audit panel */}
+          <div className="space-y-4">
+            <div className="bg-white rounded-2xl p-7 border border-stone-200 shadow-sm relative overflow-hidden">
+              <div className="flex items-center gap-2 border-b border-stone-200/60 pb-4 mb-4">
                 <Github className="size-4 text-muted-foreground" />
-                <span className="font-mono text-[11px] text-muted-foreground font-semibold">github.com/ganesh-0509/campus-sync-edge-ai</span>
+                <span className="font-mono text-[9px] text-muted-foreground">git_attribution_audit</span>
               </div>
-              <CardContent className="space-y-3 p-5">
+              <div className="space-y-3">
                 {[
-                  { label: 'Original structure checking', verdict: 'PASS', color: 'text-success border-success/20 bg-success/5' },
-                  { label: 'Stack signature alignment', verdict: 'PASS', color: 'text-success border-success/20 bg-success/5' },
-                  { label: 'Non-trivial architectural files', verdict: 'PASS', color: 'text-success border-success/20 bg-success/5' },
-                  { label: 'Complexity evaluation thresholds', verdict: 'PASS', color: 'text-success border-success/20 bg-success/5' },
-                  { label: 'Template boilerplate detection', verdict: 'NO FLAG', color: 'text-success border-success/20 bg-success/5' },
-                ].map(row => (
-                  <div key={row.label} className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50/40 px-3.5 py-2.5">
-                    <span className="text-xs font-semibold text-slate-700">{row.label}</span>
-                    <Badge variant="outline" className={`${row.color} text-[10px] font-bold px-2 py-0.5 rounded-md`}>
-                      {row.verdict}
+                  { label: 'Authorship signature verification', status: 'VERIFIED', color: 'text-accent border-accent/15 bg-accent/5' },
+                  { label: 'Commit history footprint check', status: 'VERIFIED', color: 'text-accent border-accent/15 bg-accent/5' },
+                  { label: 'Project complexity diagnostic', status: 'VERIFIED', color: 'text-accent border-accent/15 bg-accent/5' },
+                  { label: 'Plagiarism scan attribution', status: 'CLEAN', color: 'text-accent border-accent/15 bg-accent/5' }
+                ].map(item => (
+                  <div key={item.label} className="flex justify-between items-center bg-stone-50 px-3.5 py-2.5 rounded-xl border border-stone-200/60">
+                    <span className="text-[11px] font-semibold text-foreground">{item.label}</span>
+                    <Badge variant="outline" className={`${item.color} text-[8px] font-bold px-1.5 py-0.5 rounded-md`}>
+                      {item.status}
                     </Badge>
                   </div>
                 ))}
-                <Separator className="bg-slate-100 my-2" />
-                <div className="flex items-center gap-2 text-sm font-bold text-success">
-                  <CheckCircle2 className="size-4.5 text-success" /> AI AUDIT SUCCESS — Project is authentic
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Panel */}
-          <div className="order-1 md:order-2 space-y-6">
-            <div className="text-xs font-bold uppercase tracking-widest text-primary">Plagiarism Verification</div>
-            <h2 className="font-heading text-3xl font-bold tracking-tight md:text-4xl text-slate-900">
-              Prove your projects are <span className="gradient-text">genuinely yours.</span>
-            </h2>
-            <p className="text-[15px] leading-relaxed text-muted-foreground font-medium">
-              Eliminate boilerplate template skepticism. CampusSync parses architecture configurations, checks commit histories, and marks your code as authentic directly on recruiter-shareable sheets.
-            </p>
-            <div className="flex flex-wrap gap-2 pt-2">
-              <Badge variant="outline" className="border-success/30 bg-success/10 text-success font-bold px-3 py-1 rounded-full">VERIFIED</Badge>
-              <Badge variant="outline" className="border-amber/30 bg-amber/10 text-amber font-bold px-3 py-1 rounded-full">Boilerplate flagged</Badge>
-              <Badge variant="outline" className="border-error/30 bg-error/10 text-error font-bold px-3 py-1 rounded-full">Suspicious attribution</Badge>
+              </div>
+              <div className="mt-4 border-t border-stone-200/60 pt-4 text-xs font-bold text-accent flex items-center gap-2">
+                <CheckCircle2 className="size-4 text-accent" /> ATTRIBUTION STAMP — Verified codebase footprints mapped
+              </div>
             </div>
           </div>
         </div>
-      </Section>
+      </section>
 
-      {/* ── Testimonials ───────────────────────────────────── */}
-      <Section className="px-6 py-24 md:py-32 bg-slate-50/30">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Student feedback</div>
-          <h2 className="font-heading text-3xl font-bold tracking-tight md:text-4xl text-slate-900">
-            From students who <span className="gradient-text">actually got placed.</span>
+      {/* Editorial Section Divider */}
+      <div className="w-full flex items-center justify-center py-2 bg-transparent">
+        <div className="w-full max-w-6xl px-6 flex items-center gap-4">
+          <div className="h-[1px] flex-1 bg-primary/10" />
+          <LogoMark size={14} />
+          <div className="h-[1px] flex-1 bg-primary/10" />
+        </div>
+      </div>
+
+      {/* ── Section 7: Gateway Sandbox CTA ───────────────────── */}
+      <section className="relative py-28 border-t border-border bg-white">
+        <div className="relative z-10 max-w-xl mx-auto px-6 text-center space-y-8">
+          <h2 className="font-heading text-4xl font-semibold text-foreground tracking-tight sm:text-5xl">
+            Audit your placement status.
           </h2>
-          <p className="mt-4 max-w-xl text-[15px] text-muted-foreground font-medium">
-            Read comments from seniors who used CampusSync to target and patch their learning deficits.
+          <p className="text-sm md:text-base text-muted-foreground font-medium leading-relaxed max-w-md mx-auto">
+            Securely submit your engineering profile to audit layout deficits, missing keywords, and test conceptual verbal skills in under a minute.
           </p>
 
-          <div className="mt-16 grid gap-8 md:grid-cols-3">
-            {TESTIMONIALS.map((t, i) => (
-              <motion.div
-                key={t.author}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
-              >
-                <Card className="h-full border-border/60 bg-white p-6 shadow-sm flex flex-col justify-between">
-                  <CardContent className="space-y-6 p-0 flex flex-col justify-between h-full">
-                    <div className="flex gap-1">
-                      {[...Array(5)].map((_, j) => (
-                        <span key={j} className="text-amber text-sm font-bold">★</span>
-                      ))}
-                    </div>
-                    <p className="text-sm leading-relaxed text-slate-600 font-medium italic">"{t.quote}"</p>
-                    <div className="flex items-center gap-3.5 pt-4 border-t border-slate-100">
-                      <div className="flex size-9.5 items-center justify-center rounded-full bg-primary/10 font-heading text-xs font-bold text-primary">
-                        {t.initials}
-                      </div>
-                      <div>
-                        <div className="text-sm font-bold text-slate-800">{t.author}</div>
-                        <div className="text-[11px] text-muted-foreground font-medium">{t.role}</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </Section>
-
-      {/* ── CTA ────────────────────────────────────────────── */}
-      <Section className="border-t border-border bg-white px-6 py-24 md:py-32 relative">
-        <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-          <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-primary/5 to-transparent" />
-        </div>
-
-        <div className="relative mx-auto max-w-3xl text-center space-y-6">
-          <h2 className="font-heading text-3xl font-bold tracking-tight md:text-4xl text-slate-900">
-            Ready to find out where you stand?
-          </h2>
-          <p className="mx-auto max-w-xl text-[15px] text-muted-foreground font-medium leading-relaxed">
-            Upload your resume now to generate an immediate, comprehensive readiness report mapping 7 developer and engineering paths — takes less than 60 seconds.
-          </p>
-
-          {/* Dropzone */}
+          {/* Interactive drop sandbox */}
           <div
-            className={`relative mx-auto max-w-xl cursor-pointer rounded-xl border-2 border-dashed p-10 transition-all duration-200 ${
-              uploadFinished ? 'border-success bg-success/5' :
-              dragActive ? 'border-primary bg-primary/5' :
-              'border-slate-200 bg-slate-50/50 hover:border-primary/45 hover:bg-slate-50'
+            className={`relative p-10 rounded-2xl border-2 border-dashed transition-all duration-200 cursor-pointer ${
+              analysisCompleted ? 'border-primary bg-primary/5' :
+              isDragging ? 'border-primary bg-primary/5' :
+              'border-stone-300 bg-stone-50 hover:border-primary/40 hover:bg-stone-100/60'
             }`}
-            onDragEnter={handleDrag}
-            onDragOver={handleDrag}
-            onDragLeave={handleDrag}
-            onDrop={handleDrop}
-            onClick={simulateUpload}
+            onDragEnter={onDragHandler}
+            onDragOver={onDragHandler}
+            onDragLeave={onDragHandler}
+            onDrop={onDropHandler}
+            onClick={startProfileAudits}
           >
-            {isUploading ? (
+            {analyzingFile ? (
               <div className="space-y-4">
-                <div className="text-3xl animate-bounce">⏳</div>
-                <div className="text-sm font-bold text-slate-700">Analyzing resume structures ({uploadProgress}%)</div>
-                <Progress value={uploadProgress} className="mx-auto h-2 w-48 bg-slate-100" />
+                <div className="text-xl animate-spin">⏳</div>
+                <div className="text-[11px] font-bold text-foreground">Running layout parsing diagnostics ({analysisPercent}%)</div>
+                <div className="h-1.5 w-36 mx-auto rounded-full bg-stone-200 overflow-hidden">
+                  <div className="h-full bg-primary transition-all duration-150" style={{ width: `${analysisPercent}%` }} />
+                </div>
               </div>
-            ) : uploadFinished ? (
-              <div className="flex flex-col items-center justify-center gap-3 text-sm font-bold text-success">
-                <CheckCircle2 className="size-6 text-success animate-pulse" />
-                <span>Resume parsed successfully. Redirecting to matching scorecards...</span>
-              </div>
+            ) : analysisCompleted ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-left space-y-4"
+              >
+                <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="size-4.5 text-accent animate-pulse" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-primary">Audit Diagnostic Report</span>
+                  </div>
+                  <Badge className="bg-primary/10 text-primary hover:bg-primary/15 border-none text-[9px] font-bold px-2 py-0.5 rounded-md">
+                    Score: 81 / 100
+                  </Badge>
+                </div>
+
+                <div className="space-y-2.5">
+                  <div className="text-[10px] text-stone-500 font-bold uppercase tracking-widest">Crucial Placement Deficits</div>
+                  
+                  <div className="space-y-1.5">
+                    <div className="flex items-start gap-2 bg-red-50/50 border border-red-100 p-2.5 rounded-xl text-[10px] text-red-700">
+                      <span className="font-bold shrink-0">CRITICAL:</span>
+                      <span>Your resume layout uses a dual-column design which fails ATS scanner checks. We recommend converting to an elegant single-column schema.</span>
+                    </div>
+
+                    <div className="flex items-start gap-2 bg-amber-50/50 border border-amber-100 p-2.5 rounded-xl text-[10px] text-amber-700">
+                      <span className="font-bold shrink-0">MISSING:</span>
+                      <span>3 critical corporate backend SDE terms absent (optimistic locking, change data capture, distributed transaction isolation).</span>
+                    </div>
+
+                    <div className="flex items-start gap-2 bg-green-50/50 border border-green-100 p-2.5 rounded-xl text-[10px] text-green-700">
+                      <span className="font-bold shrink-0">STAMPED:</span>
+                      <span>Github authorships verified (attic repositories validated).</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex justify-between items-center text-[9px] text-stone-400 font-mono border-t border-stone-100 mt-2">
+                  <span>File: engineering_resume.pdf</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setAnalysisCompleted(false)
+                      setAnalysisPercent(0)
+                    }}
+                    className="hover:text-primary underline cursor-pointer font-bold transition-colors"
+                  >
+                    Re-upload resume
+                  </button>
+                </div>
+              </motion.div>
             ) : (
-              <div className="space-y-3">
-                <Upload className="mx-auto size-9 text-slate-400 group-hover:text-primary transition-colors" />
-                <div className="text-sm font-bold text-slate-700">Drag & drop your resume files here</div>
-                <div className="text-[11px] text-muted-foreground font-medium">Supports PDF or DOCX format · Fully encrypted at rest</div>
+              <div className="space-y-2">
+                <Upload className="mx-auto size-8 text-stone-400" />
+                <div className="text-xs font-bold text-foreground">Drag and drop your engineering resume here</div>
+                <div className="text-[9px] text-stone-500 font-semibold tracking-wider">LOCALIZED PROFILE DIAGNOSTIC HUB</div>
               </div>
             )}
           </div>
 
-          <div className="flex flex-wrap justify-center gap-4 pt-4">
-            <Link to="/signup" className={buttonVariants({ size: "lg" }) + " shadow-md font-semibold gap-2"}><ArrowRight className="size-4" /> Scan Resume Free</Link>
-            <a href="https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai" target="_blank" rel="noreferrer" className={buttonVariants({ variant: "outline", size: "lg" }) + " font-semibold gap-2 bg-white shadow-xs"}>
-              <Github className="size-4" /> View on GitHub <ExternalLink className="size-3" />
+          <div className="flex flex-wrap justify-center gap-4 pt-2">
+            <Link to="/signup" className={buttonVariants({ size: "lg" }) + " shadow-md font-semibold gap-2 rounded-full px-9 py-6 text-sm"}>Assess My Profile</Link>
+            <a href="https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai" target="_blank" rel="noreferrer" className={buttonVariants({ variant: "outline", size: "lg" }) + " font-semibold gap-2 rounded-full border-stone-200 bg-white hover:bg-stone-50 px-9 py-6 text-sm"}>
+              <Github className="size-4" /> View Repository <ExternalLink className="size-3" />
             </a>
           </div>
         </div>
-      </Section>
+      </section>
 
-      {/* ── Footer ─────────────────────────────────────────── */}
-      <footer className="border-t border-border bg-slate-50 py-12 relative z-10">
+      {/* Editorial Section Divider */}
+      <div className="w-full flex items-center justify-center py-2 bg-transparent">
+        <div className="w-full max-w-6xl px-6 flex items-center gap-4">
+          <div className="h-[1px] flex-1 bg-primary/10" />
+          <LogoMark size={14} />
+          <div className="h-[1px] flex-1 bg-primary/10" />
+        </div>
+      </div>
+
+      {/* ── Editorial Footer ────────────────────────────────── */}
+      <footer className="border-t border-border bg-white py-12 relative z-10">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-8 px-6 md:flex-row md:justify-between">
           <div className="flex items-center gap-3">
             <LogoMark size={24} />
             <div>
-              <div className="text-sm font-bold text-slate-800">CampusSync Edge AI</div>
-              <div className="text-[11px] text-muted-foreground font-medium">Career Intelligence for Engineering placements</div>
+              <div className="text-xs font-bold text-foreground">CampusSync Edge OS</div>
+              <div className="text-[9px] text-stone-400 font-semibold uppercase tracking-widest mt-0.5">Continuous Placement Engine</div>
             </div>
           </div>
-          <div className="flex flex-wrap justify-center gap-6 text-xs font-semibold text-muted-foreground">
-            <a href="https://campussync-edge.onrender.com" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors">Live App <ExternalLink className="inline size-3" /></a>
-            <a href="https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors">GitHub <ExternalLink className="inline size-3" /></a>
-            <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
-            <Link to="/docs" className="hover:text-foreground transition-colors">Documentation</Link>
-            <Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
+          <div className="flex flex-wrap justify-center gap-6 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            <a href="https://campussync-edge.onrender.com" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors flex items-center gap-1">Live App <ArrowUpRight className="inline size-3" /></a>
+            <a href="https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors flex items-center gap-1">GitHub <ArrowUpRight className="inline size-3" /></a>
+            <Link to="/privacy" className="hover:text-primary transition-colors flex items-center gap-1">Privacy <ArrowUpRight className="inline size-3" /></Link>
+            <Link to="/docs" className="hover:text-primary transition-colors flex items-center gap-1">Docs <ArrowUpRight className="inline size-3" /></Link>
           </div>
-          <div className="text-xs text-muted-foreground font-medium">© 2026 CampusSync Edge AI · Built by Ganesh</div>
+          <div className="text-[10px] text-stone-400 font-medium">© 2026 CampusSync Edge • Placement OS</div>
         </div>
       </footer>
-    </div>
+    </motion.div>
   )
 }

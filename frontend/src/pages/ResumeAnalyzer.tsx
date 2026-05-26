@@ -153,7 +153,7 @@ export default function ResumeAnalyzer() {
 
       {/* Upload Zone */}
       <Card
-        className={`group relative cursor-pointer overflow-hidden transition-all ${drag ? 'border-primary shadow-glow scale-[1.01]' : file ? 'border-primary/30' : 'hover:border-primary/20 hover:shadow-lg'}`}
+        className={`premium-hover-card group relative cursor-pointer overflow-hidden transition-all ${drag ? 'border-primary shadow-glow scale-[1.01]' : file ? 'border-primary/30' : 'hover:border-primary/20 hover:shadow-lg'}`}
         onDragOver={e => { e.preventDefault(); setDrag(true) }}
         onDragLeave={() => setDrag(false)}
         onDrop={e => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
@@ -211,7 +211,7 @@ export default function ResumeAnalyzer() {
       <AnimatePresence>
         {loading && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
-            <Card>
+            <Card className="premium-hover-card">
               <CardContent className="py-4">
                 <div className="space-y-3">
                   {STAGES.map((stage, i) => {
@@ -243,7 +243,7 @@ export default function ResumeAnalyzer() {
       {analysis && !loading && (
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="space-y-4">
           {/* Best-Fit Role Hero */}
-          <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 to-violet/5">
+          <Card className="premium-hover-card relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 to-violet/5">
             {analysis.auto_detected && (
               <div className="absolute right-4 top-4">
                 <Badge variant="outline" className="gap-1 border-primary/30 text-[10px] uppercase tracking-wider">
@@ -300,7 +300,7 @@ export default function ResumeAnalyzer() {
 
           {/* Why This Role? */}
           {roleMatches.length > 1 && (
-            <Card>
+            <Card className="premium-hover-card">
               <button
                 className="flex w-full items-center justify-between px-6 py-4 text-left transition-colors hover:bg-muted/30"
                 onClick={() => setWhyExpanded(v => !v)}
@@ -365,7 +365,7 @@ export default function ResumeAnalyzer() {
           )}
 
           {/* Skills DNA */}
-          <Card>
+          <Card className="premium-hover-card">
             <CardHeader className="flex-row items-center justify-between pb-3">
               <div>
                 <CardTitle className="text-base">Skill DNA</CardTitle>
@@ -396,7 +396,7 @@ export default function ResumeAnalyzer() {
           </Card>
 
           {/* Resume Metadata */}
-          <Card>
+          <Card className="premium-hover-card">
             <CardContent className="py-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="flex items-start gap-2.5">
@@ -439,7 +439,7 @@ export default function ResumeAnalyzer() {
             { icon: Brain, title: 'Skill DNA Extraction', desc: 'Identifies 50+ technologies across languages, frameworks, AI/ML, and infrastructure' },
             { icon: Shield, title: 'ATS Compatibility Check', desc: 'Ensures your resume passes automated tracking systems used by recruiters' },
           ].map((f) => (
-            <Card key={f.title} className="text-center">
+            <Card key={f.title} className="premium-hover-card text-center">
               <CardContent className="flex flex-col items-center gap-3 py-6">
                 <div className="rounded-xl bg-muted p-3">
                   <f.icon className="size-6 text-muted-foreground" />

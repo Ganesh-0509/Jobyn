@@ -65,7 +65,7 @@ export default function AdminDashboard() {
         <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setSelectedView(null)}>
           <ArrowLeft className="size-4" /> Back to Command Center
         </Button>
-        <Card>
+        <Card className="premium-hover-card">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -143,7 +143,7 @@ export default function AdminDashboard() {
                         <p className="text-xs text-muted-foreground">Resume ID: {viewingStudent.resume_id}</p>
                       </div>
                     </div>
-                    <Card className="mb-4"><CardContent className="p-4">
+                    <Card className="premium-hover-card mb-4"><CardContent className="p-4">
                       <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-primary">Target Role Profile</p>
                       <p className="mb-3 font-heading text-lg font-bold">{viewingStudent.role}</p>
                       <div className="grid grid-cols-2 gap-3">
@@ -187,7 +187,7 @@ export default function AdminDashboard() {
           <ArrowLeft className="size-4" /> Back to Command Center
         </Button>
         <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="border-border bg-card">
+          <Card className="premium-hover-card border-border bg-card">
             <CardHeader><div className="flex items-center gap-3">
               <Terminal className="size-5 text-primary" />
               <CardTitle className="text-base">Vector Engine Console</CardTitle>
@@ -206,14 +206,14 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
           <div className="space-y-4">
-            <Card><CardContent className="p-5">
+            <Card className="premium-hover-card"><CardContent className="p-5">
               <div className="mb-3 flex items-center gap-2.5"><Cpu className="size-4 text-violet-500" /><span className="text-sm font-bold">Neural Processing Units</span></div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-muted/30 p-3"><p className="text-[10px] text-muted-foreground">Students</p><p className="text-lg font-bold">{stats?.active_students ?? '--'}</p></div>
                 <div className="rounded-lg bg-green-500/5 p-3"><p className="text-[10px] text-green-500">Courses Cached</p><p className="text-lg font-bold text-green-500">{stats?.total_courses_cached ?? '--'}</p></div>
               </div>
             </CardContent></Card>
-            <Card><CardContent className="p-5">
+            <Card className="premium-hover-card"><CardContent className="p-5">
               <div className="mb-2 flex items-center gap-2.5"><Zap className="size-4 text-primary" /><span className="text-sm font-bold">Cache Strategy</span></div>
               <p className="text-xs leading-relaxed text-muted-foreground">Modern RAG (Retrieval-Augmented Generation) is enabled for all community-approved sources. Semantic indices are updated instantly upon approval.</p>
             </CardContent></Card>
@@ -254,7 +254,7 @@ export default function AdminDashboard() {
           { label: 'AI Inference Latency', value: '142ms', icon: Activity, color: 'text-violet-500', bg: 'bg-violet-500/10', extra: '99.9% SLI', clickable: true, onClick: () => setSelectedView('database') },
         ].map((m, i) => (
           <motion.div key={i} whileHover={m.clickable ? { y: -2 } : undefined} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
-            <Card className={m.clickable ? 'cursor-pointer transition-shadow hover:shadow-lg' : ''} onClick={m.onClick}>
+            <Card className={m.clickable ? 'premium-hover-card cursor-pointer transition-shadow hover:shadow-lg' : 'premium-hover-card'} onClick={m.onClick}>
               <CardContent className="p-5">
                 <div className="mb-2 flex items-center justify-between">
                   <div className={`flex size-8 items-center justify-center rounded-lg ${m.bg}`}>
@@ -272,7 +272,7 @@ export default function AdminDashboard() {
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         {/* Moderation Queue */}
-        <Card>
+        <Card className="premium-hover-card">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -322,14 +322,14 @@ export default function AdminDashboard() {
 
         {/* Right Panel */}
         <div className="space-y-4">
-          <Card className="cursor-pointer" onClick={() => setSelectedView('database')}>
+          <Card className="premium-hover-card cursor-pointer" onClick={() => setSelectedView('database')}>
             <CardContent className="p-5">
               <div className="mb-4 flex items-center gap-3"><Database className="size-4 text-primary" /><span className="font-bold">Vector Index</span></div>
               <div className="mb-2 flex items-center justify-between"><span className="text-xs text-muted-foreground">Health Check</span><span className="text-xs font-bold text-green-500">99.9% Sync</span></div>
               <Progress value={99.9} className="h-1.5" />
             </CardContent>
           </Card>
-          <Card>
+          <Card className="premium-hover-card">
             <CardContent className="p-5">
               <div className="mb-4 flex items-center gap-3"><Activity className="size-4 text-violet-500" /><span className="font-bold">Traffic surge</span></div>
               <div className="flex h-16 items-end gap-1">

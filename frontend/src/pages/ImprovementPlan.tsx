@@ -120,7 +120,7 @@ export default function ImprovementPlan() {
                     <Button className="mt-6 gap-2" onClick={() => navigate('/resume-analyzer')}>
                         <Sparkles className="size-4" /> Analyze Your Resume Now
                     </Button>
-                    <Card className="mt-10 text-left">
+                    <Card className="premium-hover-card mt-10 text-left">
                         <CardContent className="pt-6">
                             <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-primary">What's Inside?</p>
                             <ul className="space-y-2 text-sm text-muted-foreground">
@@ -156,7 +156,7 @@ export default function ImprovementPlan() {
 
             {/* Streak + XP Banner */}
             <motion.div {...fadeUp}>
-                <Card className="border-amber-500/10 bg-gradient-to-r from-amber-500/5 to-primary/5">
+                <Card className="premium-hover-card border-amber-500/10 bg-gradient-to-r from-amber-500/5 to-primary/5">
                     <CardContent className="grid items-center gap-6 pt-6 sm:grid-cols-[auto_1fr_auto]">
                         <div className="flex flex-col items-center">
                             <div className={`flex size-14 items-center justify-center rounded-full border-2 ${streak.currentStreak > 0 ? 'border-amber-500/40 bg-amber-500/15' : 'border-transparent bg-muted'}`}>
@@ -216,7 +216,7 @@ export default function ImprovementPlan() {
             <AnimatePresence>
                 {deadlineOpen && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-                        <Card className="border-destructive/15 bg-destructive/5">
+                        <Card className="premium-hover-card border-destructive/15 bg-destructive/5">
                             <CardContent className="flex flex-wrap items-center gap-4 pt-6">
                                 <CalendarClock className="size-5 text-destructive" />
                                 <div className="min-w-0 flex-1">
@@ -234,7 +234,7 @@ export default function ImprovementPlan() {
             {/* Deadline insights */}
             {smartPlan?.deadline && smartPlan.days_available && (
                 <motion.div {...fadeUp} transition={{ delay: 0.08 }}>
-                    <Card className={smartPlan.recommended_daily_hours > smartPlan.daily_hours ? 'border-destructive/20 bg-destructive/5' : 'border-success/20 bg-success/5'}>
+                    <Card className={`premium-hover-card ${smartPlan.recommended_daily_hours > smartPlan.daily_hours ? 'border-destructive/20 bg-destructive/5' : 'border-success/20 bg-success/5'}`}>
                         <CardContent className="flex items-center gap-3 pt-6">
                             <Target className="size-4 shrink-0" style={{ color: smartPlan.recommended_daily_hours > smartPlan.daily_hours ? 'var(--destructive)' : 'var(--success)' }} />
                             <p className="text-sm">
@@ -252,17 +252,17 @@ export default function ImprovementPlan() {
 
             {/* AI Market Forecast */}
             {forecastLoading && (
-                <Card><CardContent className="flex items-center justify-center gap-3 py-8">
+                <Card className="premium-hover-card"><CardContent className="flex items-center justify-center gap-3 py-8">
                     <div className="size-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                     <span className="text-sm text-muted-foreground">Loading market forecast…</span>
                 </CardContent></Card>
             )}
             {forecastError && !forecastLoading && (
-                <Card className="border-destructive/20 bg-destructive/5"><CardContent className="py-4 text-sm text-destructive">{forecastError}</CardContent></Card>
+                <Card className="premium-hover-card border-destructive/20 bg-destructive/5"><CardContent className="py-4 text-sm text-destructive">{forecastError}</CardContent></Card>
             )}
             {aiForecast && !forecastLoading && (
                 <motion.div {...fadeUp} transition={{ delay: 0.1 }}>
-                    <Card className="cursor-pointer border-success/20" onClick={() => setForecastExpanded(!forecastExpanded)}>
+                    <Card className="premium-hover-card cursor-pointer border-success/20" onClick={() => setForecastExpanded(!forecastExpanded)}>
                         <CardContent className="flex items-center gap-4 pt-6">
                             <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-success/10 text-lg">📈</div>
                             <div className="min-w-0 flex-1">
@@ -309,7 +309,7 @@ export default function ImprovementPlan() {
                             { value: smartPlan.total_days, label: 'Days', color: '' },
                             { value: `${smartPlan.total_hours}h`, label: 'Study Time', color: '' },
                         ].map(s => (
-                            <Card key={s.label} className="text-center"><CardContent className="py-3">
+                            <Card key={s.label} className="premium-hover-card text-center"><CardContent className="py-3">
                                 <p className={`font-heading text-xl font-bold ${s.color}`}>{s.value}</p>
                                 <p className="text-[10px] text-muted-foreground">{s.label}</p>
                             </CardContent></Card>
@@ -320,13 +320,13 @@ export default function ImprovementPlan() {
 
             {/* Plan Loading / Error */}
             {planLoading && (
-                <Card><CardContent className="flex flex-col items-center gap-3 py-10">
+                <Card className="premium-hover-card"><CardContent className="flex flex-col items-center gap-3 py-10">
                     <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                     <p className="text-sm text-muted-foreground">Building your dependency-aware learning plan…</p>
                 </CardContent></Card>
             )}
             {planError && !planLoading && (
-                <Card className="border-destructive/20 bg-destructive/5"><CardContent className="py-4 text-sm text-destructive">{planError}</CardContent></Card>
+                <Card className="premium-hover-card border-destructive/20 bg-destructive/5"><CardContent className="py-4 text-sm text-destructive">{planError}</CardContent></Card>
             )}
 
             {/* Roadmap */}
@@ -349,7 +349,7 @@ export default function ImprovementPlan() {
                                             const isLocked = !canStudy(task) && !isMastered
                                             return (
                                                 <motion.div key={task.id} layout>
-                                                    <Card className={`relative transition-all ${isLocked ? 'opacity-50' : ''} ${isMastered ? 'border-success/30 bg-success/5' : ''} ${highlightSkill?.toLowerCase() === task.skill ? 'ring-2 ring-primary' : ''}`}>
+                                                    <Card className={`premium-hover-card relative transition-all ${isLocked ? 'opacity-50' : ''} ${isMastered ? 'border-success/30 bg-success/5' : ''} ${highlightSkill?.toLowerCase() === task.skill ? 'ring-2 ring-primary' : ''}`}>
                                                         <CardContent className="pt-5">
                                                             <div className="mb-3 flex items-center justify-between">
                                                                 <div className="flex flex-wrap items-center gap-1.5">

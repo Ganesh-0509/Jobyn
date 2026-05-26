@@ -82,7 +82,7 @@ export default function SkillGap() {
 
       {/* Skill Dependency Graph */}
       <motion.div variants={item}>
-        <Card>
+        <Card className="premium-hover-card">
           <CardHeader className="flex-row items-center justify-between pb-3">
             <div>
               <CardTitle className="flex items-center gap-2 text-base">
@@ -110,7 +110,7 @@ export default function SkillGap() {
 
       {/* Active Gaps */}
       <motion.div variants={item}>
-        <Card>
+        <Card className="premium-hover-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Active Priority Gaps</CardTitle>
           </CardHeader>
@@ -164,7 +164,7 @@ export default function SkillGap() {
       {/* Verified Skills */}
       {masteredSkills.length > 0 && (
         <motion.div variants={item}>
-          <Card>
+          <Card className="premium-hover-card">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base text-success">
                 <Trophy className="size-4" /> Verified & Mastered

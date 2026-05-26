@@ -95,7 +95,7 @@ export default function Dashboard() {
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
       {/* Hero */}
       <motion.div variants={item}>
-        <Card className="relative overflow-hidden border-border/50 bg-gradient-to-br from-primary/5 via-transparent to-violet/5">
+        <Card className="premium-hover-card relative overflow-hidden bg-gradient-to-br from-primary/5 via-transparent to-violet/5">
           <CardContent className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
@@ -128,7 +128,7 @@ export default function Dashboard() {
         {METRICS.map((m) => {
           const Icon = m.icon
           return (
-            <Card key={m.label} className="group relative overflow-hidden transition-all hover:border-primary/20 hover:shadow-lg">
+            <Card key={m.label} className="premium-hover-card relative overflow-hidden">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className={`rounded-lg bg-muted p-1.5 ${m.accent}`}>
@@ -151,7 +151,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Skill Coverage */}
         <motion.div variants={item}>
-          <Card className="h-full">
+          <Card className="premium-hover-card h-full">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Skill Coverage</CardTitle>
               <CardDescription>Your proficiency across key areas</CardDescription>
@@ -177,7 +177,7 @@ export default function Dashboard() {
 
         {/* Skill Gaps */}
         <motion.div variants={item}>
-          <Card className="h-full">
+          <Card className="premium-hover-card h-full">
             <CardHeader className="flex-row items-center justify-between pb-3">
               <div>
                 <CardTitle className="text-base">Skill Gaps</CardTitle>
@@ -221,7 +221,7 @@ export default function Dashboard() {
       {/* AI Best Fit Recommendation */}
       {bestFit && (bestFit.predicted_role !== analysis?.role || (score < 50 && bestFit.confidence > 0.6)) && (
         <motion.div variants={item}>
-          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-violet/5">
+          <Card className="premium-hover-card border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-violet/5">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="rounded-lg bg-primary/10 p-1.5">
@@ -264,7 +264,7 @@ export default function Dashboard() {
           { label: 'Start Interview', icon: Zap, to: '/interview-readiness', desc: 'Practice interview questions' },
           { label: 'Study Hub', icon: BookOpen, to: '/improvement-plan', desc: 'Follow your improvement plan' },
         ].map((a) => (
-          <Card key={a.to} className="group cursor-pointer transition-all hover:border-primary/20 hover:shadow-md" onClick={() => navigate(a.to)}>
+          <Card key={a.to} className="premium-hover-card group cursor-pointer" onClick={() => navigate(a.to)}>
             <CardContent className="flex items-center gap-3 p-4">
               <div className="rounded-lg bg-muted p-2 text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
                 <a.icon className="size-5" />

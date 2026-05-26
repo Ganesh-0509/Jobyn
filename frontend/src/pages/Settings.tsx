@@ -119,7 +119,7 @@ export default function Settings() {
         {/* LEFT COLUMN */}
         <div className="space-y-5">
           {/* Profile Intel */}
-          <Card>
+          <Card className="premium-hover-card">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm"><User className="size-3.5" /> Profile Intel</CardTitle>
             </CardHeader>
@@ -152,7 +152,7 @@ export default function Settings() {
           </Card>
 
           {/* Learning Commitment */}
-          <Card>
+          <Card className="premium-hover-card">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm"><Sliders className="size-3.5" /> Daily Learning Goal</CardTitle>
             </CardHeader>
@@ -171,7 +171,7 @@ export default function Settings() {
           </Card>
 
           {/* Preferences */}
-          <Card>
+          <Card className="premium-hover-card">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm"><Monitor className="size-3.5" /> Preferences</CardTitle>
             </CardHeader>
@@ -195,7 +195,7 @@ export default function Settings() {
           </Card>
 
           {/* Danger Zone */}
-          <Card className="border-destructive/20">
+          <Card className="premium-hover-card border-destructive/20">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm text-destructive"><Trash2 className="size-3.5" /> Danger Zone</CardTitle>
             </CardHeader>
@@ -217,7 +217,7 @@ export default function Settings() {
         {/* RIGHT COLUMN */}
         <div className="space-y-5">
           {/* System Status */}
-          <Card>
+          <Card className="premium-hover-card">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm"><Cloud className="size-3.5" /> System Status</CardTitle>
             </CardHeader>
@@ -250,7 +250,7 @@ export default function Settings() {
           </Card>
 
           {/* Data Vault */}
-          <Card>
+          <Card className="premium-hover-card">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm"><HardDrive className="size-3.5" /> Data Vault</CardTitle>
             </CardHeader>
@@ -279,7 +279,7 @@ export default function Settings() {
           </Card>
 
           {/* Keyboard Shortcuts */}
-          <Card>
+          <Card className="premium-hover-card">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm"><Keyboard className="size-3.5" /> Keyboard Shortcuts</CardTitle>
             </CardHeader>
@@ -296,7 +296,7 @@ export default function Settings() {
           </Card>
 
           {/* About */}
-          <Card>
+          <Card className="premium-hover-card">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm"><Info className="size-3.5" /> About</CardTitle>
             </CardHeader>

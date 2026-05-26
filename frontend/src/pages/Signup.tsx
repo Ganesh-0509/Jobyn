@@ -54,7 +54,13 @@ export default function Signup() {
     }
 
     return (
-        <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-background p-4">
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.15 } }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-background p-4"
+        >
             {/* Gradient mesh background */}
             <div className="pointer-events-none absolute inset-0" aria-hidden="true">
                 <div className="absolute -top-1/4 -right-1/4 h-[600px] w-[600px] rounded-full bg-primary/5 blur-[120px]" />
@@ -166,6 +172,6 @@ export default function Signup() {
                     </CardContent>
                 </Card>
             </motion.div>
-        </div>
+        </motion.div>
     )
 }

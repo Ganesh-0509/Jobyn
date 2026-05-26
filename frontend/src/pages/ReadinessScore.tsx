@@ -73,7 +73,7 @@ export default function ReadinessScore() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Score + Prediction Card */}
         <motion.div variants={item}>
-          <Card className="flex h-full flex-col items-center justify-center">
+          <Card className="premium-hover-card flex h-full flex-col items-center justify-center">
             <CardContent className="flex flex-col items-center gap-4 py-8">
               <CircularProgress pct={score} size={160} stroke={14} color="hsl(var(--primary))" label="Overall" />
               <div className="text-center">
@@ -153,7 +153,7 @@ export default function ReadinessScore() {
 
         {/* Weighted Breakdown */}
         <motion.div variants={item}>
-          <Card className="h-full">
+          <Card className="premium-hover-card h-full">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Weighted Breakdown</CardTitle>
               <CardDescription>How each metric contributes to your final score</CardDescription>
@@ -181,7 +181,7 @@ export default function ReadinessScore() {
 
       {/* Readiness Classification */}
       <motion.div variants={item}>
-        <Card>
+        <Card className="premium-hover-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Readiness Classification</CardTitle>
           </CardHeader>

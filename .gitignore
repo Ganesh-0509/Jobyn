@@ -33,5 +33,9 @@ _tmp_*
 _tmp_skills/
 gen_batch*.py
 
+# Skills / agent configs
+.claude/
+.agents/
+
 # Artifacts / evaluation output
 artifacts/

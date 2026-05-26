@@ -160,7 +160,7 @@ export default function ProgressTracking() {
                             { icon: Trophy,    title: 'XP Leveling',  desc: 'Earn XP for mastering skills and completing tasks' },
                             { icon: Flame,     title: 'Velocity',     desc: 'See how your readiness score changes over time' },
                         ].map(f => (
-                            <Card key={f.title} className="text-center">
+                            <Card key={f.title} className="premium-hover-card text-center">
                                 <CardContent className="pt-6">
                                     <f.icon className="mx-auto mb-2 size-5 text-muted-foreground" />
                                     <p className="text-sm font-semibold">{f.title}</p>
@@ -178,7 +178,7 @@ export default function ProgressTracking() {
         <div className="mx-auto max-w-5xl space-y-6">
             {/* XP Bar */}
             <motion.div {...fadeUp}>
-                <Card className="bg-gradient-to-r from-amber-500/5 to-primary/5">
+                <Card className="premium-hover-card bg-gradient-to-r from-amber-500/5 to-primary/5">
                     <CardContent className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-4">
                             <Badge variant="outline" className="border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
@@ -215,7 +215,7 @@ export default function ProgressTracking() {
             <motion.div {...fadeUp} transition={{ delay: 0.1 }}>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {/* Coverage Ring */}
-                    <Card className="col-span-1 flex flex-col items-center justify-center py-6">
+                    <Card className="premium-hover-card col-span-1 flex flex-col items-center justify-center py-6">
                         <div className="relative size-24">
                             <svg viewBox="0 0 120 120" className="size-full -rotate-90">
                                 <circle cx="60" cy="60" r="52" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
@@ -237,16 +237,16 @@ export default function ProgressTracking() {
                         </div>
                     </Card>
 
-                    <Card className="flex flex-col items-center justify-center py-6 text-center">
+                    <Card className="premium-hover-card flex flex-col items-center justify-center py-6 text-center">
                         <p className="font-heading text-3xl font-bold">{totalVerified}<span className="text-lg text-muted-foreground">/{totalSkills}</span></p>
                         <p className="text-xs text-muted-foreground">Skills Verified</p>
                     </Card>
-                    <Card className="flex flex-col items-center justify-center py-6 text-center">
+                    <Card className="premium-hover-card flex flex-col items-center justify-center py-6 text-center">
                         <p className="font-heading text-3xl font-bold">{score}<span className="text-lg text-muted-foreground">/100</span></p>
                         <p className="text-xs text-muted-foreground">Readiness Score</p>
                     </Card>
                     <Card
-                        className={`flex flex-col items-center justify-center py-6 text-center ${nextSkill ? 'cursor-pointer border-primary/20 hover:border-primary/40' : ''}`}
+                        className={`premium-hover-card flex flex-col items-center justify-center py-6 text-center ${nextSkill ? 'cursor-pointer border-primary/20 hover:border-primary/40' : ''}`}
                         onClick={() => nextSkill && setSelectedSkill(nextSkill)}
                     >
                         <Target className="mb-1 size-5 text-primary" />
@@ -268,7 +268,7 @@ export default function ProgressTracking() {
                         const Icon = cat.icon
                         const isOpen = expandedCat === cat.code
                         return (
-                            <Card key={cat.code} className={`transition-all ${isOpen ? 'border-primary/20' : ''}`}>
+                            <Card key={cat.code} className={`premium-hover-card transition-all ${isOpen ? 'border-primary/20' : ''}`}>
                                 <button
                                     type="button"
                                     className="flex w-full items-center gap-3 p-4 text-left"
@@ -337,7 +337,7 @@ export default function ProgressTracking() {
                     <h2 className="font-heading text-lg font-semibold">Career Milestones</h2>
                     <span className="text-xs text-muted-foreground">{milestones.filter(m => m.done).length} of {milestones.length} unlocked</span>
                 </div>
-                <Card>
+                <Card className="premium-hover-card">
                     <CardContent className="pt-6">
                         {/* Rail */}
                         <div className="relative mb-8">
@@ -370,7 +370,7 @@ export default function ProgressTracking() {
             {/* Verified Strip */}
             {verifiedAll.length > 0 && (
                 <motion.div {...fadeUp} transition={{ delay: 0.25 }}>
-                    <Card>
+                    <Card className="premium-hover-card">
                         <CardContent className="pt-6">
                             <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
                                 <Zap className="size-3 text-primary" />
