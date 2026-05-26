@@ -11,14 +11,6 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { AlertCircle, Loader2 } from 'lucide-react'
 
-const SHOWCASE_CHIPS = [
-    { label: 'Readiness Score', color: 'bg-primary/10 text-primary' },
-    { label: 'Role Matching', color: 'bg-violet/10 text-violet' },
-    { label: 'Skill Graphs', color: 'bg-secondary/50 text-secondary-foreground' },
-    { label: 'ML-Powered', color: 'bg-success/10 text-success' },
-    { label: 'Edge AI', color: 'bg-amber/10 text-amber' },
-]
-
 export default function Signup() {
     const { signup, loginWithGoogle } = useAuth()
     const navigate = useNavigate()
@@ -73,21 +65,12 @@ export default function Signup() {
                 transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 className="relative w-full max-w-sm"
             >
-                <Card className="border-border/50 shadow-lg">
-                    <CardHeader className="items-center gap-3 pb-2">
-                        <div className="flex items-center gap-3">
-                            <LogoMark size={28} />
-                            <div>
-                                <div className="font-heading text-sm font-bold tracking-tight text-foreground">CampusSync</div>
-                                <div className="text-[10px] font-semibold uppercase tracking-widest text-primary">Edge AI</div>
-                            </div>
-                        </div>
-                        <div className="flex flex-wrap justify-center gap-1.5 pt-2">
-                            {SHOWCASE_CHIPS.map(c => (
-                                <Badge key={c.label} variant="outline" className={`${c.color} text-[10px] font-medium`}>
-                                    {c.label}
-                                </Badge>
-                            ))}
+                <Card className="premium-hover-card border-border/50 shadow-lg">
+                    <CardHeader className="flex flex-col items-center gap-2 pt-6 pb-2 text-center">
+                        <LogoMark size={56} className="transition-transform duration-300 hover:scale-105" />
+                        <div className="space-y-0.5">
+                            <div className="font-heading text-2xl font-bold tracking-tight text-foreground">CampusSync</div>
+                            <div className="text-xs font-semibold uppercase tracking-widest text-primary">Edge AI</div>
                         </div>
                     </CardHeader>
 

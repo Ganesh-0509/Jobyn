@@ -66,14 +66,12 @@ export default function Login() {
                 transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 className="relative w-full max-w-sm"
             >
-                <Card className="border-border/50 shadow-lg">
-                    <CardHeader className="items-center gap-4 pb-2">
-                        <div className="flex items-center gap-3">
-                            <LogoMark size={28} />
-                            <div>
-                                <div className="font-heading text-sm font-bold tracking-tight text-foreground">CampusSync</div>
-                                <div className="text-[10px] font-semibold uppercase tracking-widest text-primary">Edge AI</div>
-                            </div>
+                <Card className="premium-hover-card border-border/50 shadow-lg">
+                    <CardHeader className="flex flex-col items-center gap-2 pt-6 pb-2 text-center">
+                        <LogoMark size={56} className="transition-transform duration-300 hover:scale-105" />
+                        <div className="space-y-0.5">
+                            <div className="font-heading text-2xl font-bold tracking-tight text-foreground">CampusSync</div>
+                            <div className="text-xs font-semibold uppercase tracking-widest text-primary">Edge AI</div>
                         </div>
                     </CardHeader>
 

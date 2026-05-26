@@ -1,4 +1,4 @@
-export default function LogoMark({ size = 28 }: { size?: number }) {
+export default function LogoMark({ size = 28, className }: { size?: number; className?: string }) {
     return (
         <svg
             width={size}
@@ -6,6 +6,7 @@ export default function LogoMark({ size = 28 }: { size?: number }) {
             viewBox="0 0 32 32"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
+            className={className}
             aria-hidden="true"
         >
             {/* The sweeping 'C' loop (Terracotta) */}
