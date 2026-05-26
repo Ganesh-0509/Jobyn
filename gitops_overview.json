@@ -1,0 +1,16 @@
+{
+  "skill": "gitops",
+  "quick_summary": "GitOps is an operational framework where Git serves as the single source of truth for infrastructure and application deployment, with automated controllers reconciling actual state to desired state. It's the modern approach to Kubernetes deployments and infrastructure management. Interview questions focus on declarative vs imperative deployment, drift detection, and reconciliation loops.",
+  "estimated_study_time": "50 min",
+  "detailed_content": [
+    {
+      "subheading": "GitOps Principles",
+      "explanation": "GitOps uses Git as the single source of truth for infrastructure and application state. Desired state is declared in Git; a controller reconciles actual state with desired state. Changes happen through PRs, not manual commands.\n\nFour principles define GitOps: (1) Declarative — all system state is described declaratively (YAML/HCL), not imperatively. (2) Versioned and immutable — Git provides full audit trail and rollback capability. (3) Automatically applied — controllers pull changes and reconcile, rather than humans pushing to servers. (4) Continuously reconciled — the controller watches for drift and corrects it. Think of it like a thermostat: you set the desired temperature (Git), and the controller continuously adjusts the system to match.",
+      "example": "```yaml\n# ArgoCD Application manifest — defines a GitOps-managed deployment\napiVersion: argoproj.io/v1alpha1\nkind: Application\nmetadata:\n  name: my-app\n  namespace: argocd\nspec:\n  project: default\n  source:\n    repoURL: https://github.com/org/k8s-manifests.git\n    targetRevision: main\n    path: apps/my-app/overlays/production\n  destination:\n    server: https://kubernetes.default.svc\n    namespace: my-app\n  syncPolicy:\n    automated:\n      prune: true       # Delete resources removed from Git\n      selfHeal: true     # Revert manual changes (drift correction)\n    syncOptions:\n      - CreateNamespace=true\n    retry:\n      limit: 3\n      backoff:\n        duration: 5s\n        factor: 2\n        maxDuration: 3m\n```\n\n```bash\n# The GitOps workflow:\n# 1. Developer pushes code change to app repo\n# 2. CI pipeline builds image, updates k8s manifests in config repo\n# 3. ArgoCD detects config repo change, syncs to cluster\n# 4. ArgoCD continuously monitors for drift and self-heals\n\n# Check sync status\nargocd app get my-app\nargocd app sync my-app --dry-run  # Preview changes\n```",
+      "key_takeaway": "In GitOps, you never kubectl apply directly to production — all changes flow through Git PRs, giving you code review, audit trails, and instant rollback by reverting a commit.",
+      "try_it": "Set up a simple ArgoCD application that watches a GitHub repo folder containing a Kubernetes Deployment and Service YAML. Push a change to the image tag and observe ArgoCD automatically sync the update.",
+      "complexity": "N/A — operational framework"
+    }
+  ],
+  "pro_tip": "In interviews, distinguish between 'push-based' CI/CD (CI pipeline pushes to cluster) and 'pull-based' GitOps (controller pulls from Git) — GitOps is pull-based, which is more secure because the cluster doesn't need external CI credentials, and the controller has full visibility into desired vs actual state."
+}

@@ -1,0 +1,16 @@
+{
+  "skill": "github_actions",
+  "quick_summary": "GitHub Actions is GitHub's built-in CI/CD platform that automates builds, tests, and deployments triggered by repository events. It's the most widely adopted CI/CD tool and essential for DevOps and all developer roles. Interview questions test pipeline design, caching strategies, and workflow optimization.",
+  "estimated_study_time": "55 min",
+  "detailed_content": [
+    {
+      "subheading": "CI/CD Concepts & GitHub Actions Architecture",
+      "explanation": "Continuous Integration (CI) is like a quality checkpoint on a factory conveyor belt — every time a developer pushes code, automated tests verify nothing is broken before it merges. Continuous Deployment (CD) takes it further, automatically shipping verified code to production. GitHub Actions implements this with YAML workflow files that define jobs, steps, and triggers.\n\nThe architecture is event-driven: a 'workflow' is triggered by an event (push, pull request, schedule), runs on a 'runner' (Ubuntu, Windows, or macOS VM), and executes 'jobs' composed of 'steps'. Jobs run in parallel by default; steps run sequentially. You can use 'needs' to create job dependencies and 'matrix' to test across multiple configurations simultaneously.",
+      "example": "```yaml\n# .github/workflows/ci.yml\nname: CI Pipeline\n\non:\n  push:\n    branches: [main]\n  pull_request:\n    branches: [main]\n\njobs:\n  test:\n    runs-on: ubuntu-latest\n    strategy:\n      matrix:\n        node-version: [18, 20]\n    steps:\n      - uses: actions/checkout@v4\n      - name: Setup Node.js ${{ matrix.node-version }}\n        uses: actions/setup-node@v4\n        with:\n          node-version: ${{ matrix.node-version }}\n          cache: 'npm'\n      - run: npm ci\n      - run: npm test\n      - run: npm run lint\n\n  deploy:\n    needs: test\n    if: github.ref == 'refs/heads/main'\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - name: Deploy to production\n        run: echo 'Deploying...' # Replace with actual deploy command\n        env:\n          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}\n```",
+      "key_takeaway": "Cache dependencies aggressively (`cache: 'npm'`, `actions/cache@v4`) — CI builds that download dependencies from scratch waste 1-3 minutes per run, and caching typically cuts build time by 50-70%.",
+      "try_it": "Create a GitHub Actions workflow that runs on every PR, executes tests, and posts a comment with the test results. Use `actions/github-script@v7` to interact with the GitHub API.",
+      "complexity": "N/A — CI/CD pipeline configuration"
+    }
+  ],
+  "pro_tip": "In interviews, mention that you use `concurrency` groups to cancel in-progress workflow runs when a new push arrives to the same branch — this saves runner minutes and prevents stale deployments. Example: `concurrency: { group: '${{ github.ref }}', cancel-in-progress: true }`."
+}

@@ -1,0 +1,16 @@
+{
+  "skill": "express",
+  "quick_summary": "Express.js is the most widely used Node.js web framework, powering REST APIs and web applications with a minimalist, unopinionated design. It's essential for backend and full-stack interviews because it tests your understanding of middleware, routing, and HTTP fundamentals. Most Node.js job listings require Express experience.",
+  "estimated_study_time": "50 min",
+  "detailed_content": [
+    {
+      "subheading": "Routing & Route Parameters",
+      "explanation": "Express routing maps HTTP method + URL pattern combinations to handler functions. Routes are matched in declaration order — the first match wins, so specific routes must come before generic ones. Route parameters (`:id`) extract dynamic URL segments into `req.params`, query strings go to `req.query`, and POST body data lands in `req.body` after body-parsing middleware.\n\nThink of the router like a switchboard operator: a request comes in, and the router connects it to the right handler based on the URL pattern. The beauty of Express is that routes are just functions — they're composable, chainable, and can be split across multiple files using `express.Router()`.",
+      "example": "```javascript\nconst express = require('express');\nconst app = express();\napp.use(express.json());\n\n// Static route\napp.get('/api/health', (req, res) => {\n    res.json({ status: 'ok', uptime: process.uptime() });\n});\n\n// Route with parameters\napp.get('/api/users/:id', async (req, res) => {\n    const user = await db.findUser(req.params.id);\n    if (!user) return res.status(404).json({ error: 'Not found' });\n    res.json(user);\n});\n\n// Route with query parameters\napp.get('/api/products', async (req, res) => {\n    const { category, limit = 10 } = req.query;\n    const products = await db.getProducts({ category, limit: Number(limit) });\n    res.json(products);\n});\n\n// Router for modular routes\nconst router = express.Router();\nrouter.get('/', (req, res) => res.json({ items: [] }));\nrouter.post('/', (req, res) => res.status(201).json(req.body));\napp.use('/api/items', router);\n\napp.listen(3000);\n```",
+      "key_takeaway": "Route order matters — Express matches top-to-bottom, so put specific routes (`/users/me`) before parameterized ones (`/users/:id`) to avoid the parameter route swallowing the specific path.",
+      "try_it": "Build a mini REST API with GET (list + by ID), POST, PUT, and DELETE routes for a 'books' resource. Add query parameter filtering for `?author=` and `?limit=`.",
+      "complexity": "Time: O(1) for route matching, O(n) where n = number of registered routes in worst case"
+    }
+  ],
+  "pro_tip": "In interviews, always mention error-handling middleware (4-argument `(err, req, res, next)` functions) — it's the Express pattern for centralized error handling and shows you think about production robustness, not just happy-path routing."
+}

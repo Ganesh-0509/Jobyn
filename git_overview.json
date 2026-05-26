@@ -1,0 +1,16 @@
+{
+  "skill": "git",
+  "quick_summary": "Git is the industry-standard distributed version control system that tracks changes to code, enabling collaboration, history browsing, and safe experimentation with branches. It's a non-negotiable skill for every developer role. Interview questions test branching strategies, merge vs rebase, and conflict resolution.",
+  "estimated_study_time": "45 min",
+  "detailed_content": [
+    {
+      "subheading": "Init, Clone, Add & Commit",
+      "explanation": "Git tracks changes to your files like a time machine for your code. Every time you 'commit,' Git saves a snapshot of your entire project — you can jump back to any snapshot at any time. This beats saving copies like 'project_v2_final_FINAL.zip.'\n\nThe workflow is simple: `git init` creates a new repository, `git clone` copies an existing one. Changes go through a staging area (`git add`) before being committed (`git commit`). Think of staging as a shipping dock — you organize items before loading them onto the ship (commit). This two-step process lets you craft clean, logical commits instead of dumping all changes at once.",
+      "example": "```bash\n# Start a new project\ngit init my-project && cd my-project\n\n# Make changes and stage them\necho '# My Project' > README.md\necho 'print(\"hello\")' > main.py\ngit add README.md main.py\n\n# Commit with a clear message\ngit commit -m 'feat: initial project setup with README and main script'\n\n# Check history\ngit log --oneline\n# Output: a1b2c3d feat: initial project setup with README and main script\n\n# Make more changes\necho 'def greet(name): return f\"Hello, {name}\"' >> main.py\ngit add main.py\ngit commit -m 'feat: add greet function to main script'\n\n# View diff between commits\ngit diff HEAD~1 HEAD\n\n# Clone an existing repo\ngit clone https://github.com/octocat/Hello-World.git\n```",
+      "key_takeaway": "Write commit messages as 'what this change does' in imperative mood (feat: add, fix: resolve, refactor: move) — this matches the convention used by semantic versioning tools and makes `git log` readable.",
+      "try_it": "Create a new git repo, make 3 commits with different types (feat, fix, docs), then use `git log --oneline` and `git diff HEAD~2 HEAD` to see the full history of changes.",
+      "complexity": "Time: O(1) for commits, O(n) for clone where n = repository size"
+    }
+  ],
+  "pro_tip": "In interviews, explain that you use `git add -p` (patch mode) to stage partial changes within a file — this lets you create atomic, focused commits and shows discipline in version control hygiene."
+}

@@ -1,0 +1,16 @@
+{
+  "skill": "fastapi",
+  "quick_summary": "FastAPI is a modern Python web framework that leverages type hints and async/await for high-performance APIs with automatic documentation. It's increasingly preferred over Flask for new Python APIs because of its speed (built on Starlette and Pydantic) and developer experience. Interview questions test your understanding of dependency injection, validation, and async patterns.",
+  "estimated_study_time": "55 min",
+  "detailed_content": [
+    {
+      "subheading": "Foundations of Modern Python Web APIs",
+      "explanation": "A RESTful API is like a well-organized restaurant kitchen — clients send orders (requests) through a fixed menu (endpoints), and the kitchen prepares exactly what was ordered and sends it back (responses). Python dominates API development because its type hints, async support, and rich ecosystem let developers build production-grade APIs with minimal boilerplate.\n\nFastAPI uses Pydantic models to validate request/response data at runtime — if a client sends a string where a number is expected, FastAPI rejects it automatically with a clear error message. This eliminates manual validation code and ensures your API contract is always enforced. Combined with async endpoints, FastAPI can handle thousands of concurrent requests efficiently.",
+      "example": "```python\nfrom fastapi import FastAPI, HTTPException\nfrom pydantic import BaseModel\nfrom typing import Optional\nimport asyncio\n\napp = FastAPI(title='Task Manager API')\n\nclass TaskCreate(BaseModel):\n    title: str\n    priority: int = 1\n    completed: bool = False\n\nclass TaskResponse(TaskCreate):\n    id: int\n\ntasks_db: dict[int, TaskCreate] = {}\ncounter = 0\n\n@app.post('/tasks', response_model=TaskResponse, status_code=201)\nasync def create_task(task: TaskCreate):\n    global counter\n    counter += 1\n    tasks_db[counter] = task\n    return TaskResponse(id=counter, **task.model_dump())\n\n@app.get('/tasks/{task_id}', response_model=TaskResponse)\nasync def get_task(task_id: int):\n    if task_id not in tasks_db:\n        raise HTTPException(status_code=404, detail='Task not found')\n    return TaskResponse(id=task_id, **tasks_db[task_id].model_dump())\n\n@app.get('/tasks')\nasync def list_tasks(completed: Optional[bool] = None):\n    results = [{'id': k, **v.model_dump()} for k, v in tasks_db.items()]\n    if completed is not None:\n        results = [t for t in results if t['completed'] == completed]\n    return results\n```",
+      "key_takeaway": "FastAPI's power comes from Pydantic models — define your data shape once, and you get automatic validation, serialization, and OpenAPI docs for free.",
+      "try_it": "Add a PUT endpoint to update a task and a DELETE endpoint. Test with `curl` and check the auto-generated docs at `/docs`.",
+      "complexity": "Time: O(1) for dict lookups, O(n) for list filtering on query params"
+    }
+  ],
+  "pro_tip": "In interviews, mention that FastAPI generates interactive Swagger docs at `/docs` automatically — this is a major selling point over Flask and shows you value API discoverability and developer experience in production."
+}
