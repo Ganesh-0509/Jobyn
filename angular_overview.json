@@ -1,0 +1,16 @@
+{
+  "skill": "angular",
+  "quick_summary": "Angular is a TypeScript-based frontend framework for building single-page applications using a component architecture with built-in dependency injection, routing, and reactive forms. It matters for interviews because enterprises (banks, healthcare, government) heavily adopt Angular for its opinionated structure and TypeScript-first approach.",
+  "estimated_study_time": "60 minutes",
+  "detailed_content": [
+    {
+      "subheading": "Components & Templates",
+      "explanation": "Angular applications are built from components — self-contained units with a TypeScript class, an HTML template, and optional styles. Think of components as custom HTML elements: you create `<app-header>` or `<user-card>` and Angular renders them with their own logic and appearance.\n\nThe template binding system is the heart of Angular. Data flows from the component class to the template via interpolation `{{ value }}` and property binding `[src]=\"imageUrl\"`. Events flow back via event binding `(click)=\"handleClick()\"`. Two-way binding `[(ngModel)]=\"name\"` combines both. This unidirectional data flow with explicit event handling makes state changes predictable and debuggable.",
+      "example": "```typescript\n// user-card.component.ts\nimport { Component, Input, Output, EventEmitter } from '@angular/core';\n\n@Component({\n  selector: 'app-user-card',\n  template: `\n    <div class=\"card\">\n      <h3>{{ user.name }}</h3>\n      <p>{{ user.email }}</p>\n      <button (click)=\"onSelect.emit(user)\">Select</button>\n    </div>\n  `\n})\nexport class UserCardComponent {\n  @Input() user!: { name: string; email: string };\n  @Output() onSelect = new EventEmitter<{ name: string; email: string }>();\n}\n\n// parent.component.ts template:\n// <app-user-card *ngFor=\"let u of users\" [user]=\"u\" (onSelect)=\"handleSelect($event)\">\n```",
+      "key_takeaway": "Angular's component model enforces unidirectional data flow — @Input for parent-to-child, @Output with EventEmitter for child-to-parent — making state changes traceable and testable.",
+      "try_it": "Create a parent component that holds a list of products. Build a child ProductCardComponent that receives a product via @Input and emits an addToCart event via @Output. Display the cart count in the parent.",
+      "complexity": "Time: O(1) per component render, Space: O(n) for n tracked components in change detection"
+    }
+  ],
+  "pro_tip": "In Angular interviews, always mention OnPush change detection strategy — it's the single biggest performance optimization most teams overlook. Explain that the default strategy checks every component on every event, while OnPush only checks when @Input references change or events fire from that component."
+}

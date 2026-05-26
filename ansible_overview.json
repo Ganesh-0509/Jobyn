@@ -1,0 +1,16 @@
+{
+  "skill": "ansible",
+  "quick_summary": "Ansible is an agentless IT automation tool that uses SSH to configure servers, deploy applications, and orchestrate workflows through declarative YAML playbooks. It matters for interviews because it's the standard for configuration management alongside Terraform, and understanding IaC is non-negotiable for DevOps roles.",
+  "estimated_study_time": "55 minutes",
+  "detailed_content": [
+    {
+      "subheading": "Agentless Automation & Ansible Architecture",
+      "explanation": "Ansible connects to remote machines over SSH, executes tasks, and disconnects — no daemon, no agent, no persistent process on managed nodes. Think of it like a manager who walks into each office, gives instructions, and leaves. This agentless model means zero overhead on target machines and no security surface from installed agents.\n\nThe architecture is simple: the control node (your machine or CI server) reads an inventory file listing target hosts, parses YAML playbooks describing desired state, generates Python scripts, pushes them over SSH, executes them, and collects results. The managed nodes only need Python and SSH — nothing else installed.",
+      "example": "```yaml\n# playbook.yml - Configure web servers\n---\n- name: Configure web servers\n  hosts: webservers\n  become: yes\n  vars:\n    http_port: 80\n    app_env: production\n\n  tasks:\n    - name: Install nginx\n      apt:\n        name: nginx\n        state: present\n        update_cache: yes\n\n    - name: Deploy config from template\n      template:\n        src: templates/nginx.conf.j2\n        dest: /etc/nginx/nginx.conf\n      notify: Restart nginx\n\n    - name: Ensure nginx is running\n      service:\n        name: nginx\n        state: started\n        enabled: yes\n\n  handlers:\n    - name: Restart nginx\n      service:\n        name: nginx\n        state: restarted\n```",
+      "key_takeaway": "Ansible's power comes from its agentless, declarative model — you describe the desired state in YAML, and Ansible figures out what needs to change to get there (idempotency).",
+      "try_it": "Write a playbook that installs Docker on 3 servers, adds the current user to the docker group, and ensures the Docker service is running. Use handlers to restart Docker only when the config file changes.",
+      "complexity": "Time: O(n*t) where n is hosts and t is tasks per host, Space: O(1) per host"
+    }
+  ],
+  "pro_tip": "Interviewers love asking 'Ansible vs Terraform.' The key distinction: Terraform provisions infrastructure (creates VMs, networks, databases) while Ansible configures what's already running (installs packages, deploys code, manages services). They're complementary, not competing tools."
+}

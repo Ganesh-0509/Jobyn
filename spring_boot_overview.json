@@ -1,0 +1,15 @@
+{
+  "skill": "spring_boot",
+  "quick_summary": "Spring Boot is the dominant Java framework for building production-ready microservices and REST APIs. It's heavily tested in Java backend interviews, focusing on dependency injection, auto-configuration, and how Spring's ecosystem (Security, Data, Cloud) fits together.",
+  "estimated_study_time": "60 minutes",
+  "detailed_content": [
+    {
+      "subheading": "Project Setup & Auto-configuration",
+      "explanation": "Spring Boot eliminates the boilerplate of traditional Spring applications by auto-configuring beans based on the dependencies on your classpath. Think of it like a smart home system — when it detects you've plugged in a thermostat, it automatically wires up temperature control without manual setup. Add spring-boot-starter-web? You get an embedded Tomcat, JSON serialization, and request mapping — zero config.\n\nThe `@SpringBootApplication` annotation combines `@Configuration`, `@EnableAutoConfiguration`, and `@ComponentScan`. It bootstraps the entire application by scanning for components, auto-configuring beans, and starting the embedded server.",
+      "example": "```java\nimport org.springframework.boot.SpringApplication;\nimport org.springframework.boot.autoconfigure.SpringBootApplication;\nimport org.springframework.web.bind.annotation.*;\nimport org.springframework.stereotype.*;\n\n@SpringBootApplication\npublic class Application {\n    public static void main(String[] args) {\n        SpringApplication.run(Application.class, args);\n    }\n}\n\n@RestController\n@RequestMapping(\"/api/greeting\")\nclass GreetingController {\n\n    @Value(\"${app.default-name:World}\")\n    private String defaultName;\n\n    @GetMapping\n    public Greeting greet(@RequestParam(defaultValue = \"\") String name) {\n        String who = name.isEmpty() ? defaultName : name;\n        return new Greeting(\"Hello, \" + who + \"!\");\n    }\n}\n\nrecord Greeting(String message) {}\n```",
+      "key_takeaway": "Spring Boot's auto-configuration reads your classpath and configures beans automatically — you only override what you need to customize.",
+      "try_it": "Create a Spring Boot REST API with a GET /api/users endpoint that returns a list of users from an in-memory H2 database using Spring Data JPA. What annotations do you need?"
+    }
+  ],
+  "pro_tip": "Interviewers expect you to explain the Spring Bean lifecycle, the difference between @Component/@Service/@Repository, how @Transactional works (proxy-based), and Spring Security's filter chain. Know profiles for environment-specific config, and actuator endpoints for production monitoring."
+}

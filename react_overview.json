@@ -1,0 +1,16 @@
+{
+  "skill": "react",
+  "quick_summary": "React is the most in-demand frontend library, powering apps at Facebook, Netflix, and Airbnb. Interview questions focus on component design, hooks, state management, and performance optimization. Mastery of React signals you can build production-grade UIs.",
+  "estimated_study_time": "60 minutes",
+  "detailed_content": [
+    {
+      "subheading": "Components & JSX",
+      "explanation": "React components are like LEGO bricks — small, reusable pieces that snap together to build a UI. Each component is a JavaScript function that returns JSX (JavaScript XML), a syntax that looks like HTML but compiles to function calls. JSX lets you embed expressions with curly braces: `{name}` renders the variable's value.\n\nComponents can be functional (preferred) or class-based (legacy). Functional components use hooks for state and side effects. Props flow data parent-to-child, while state is local to a component. Think of props as function arguments and state as local variables.",
+      "example": "```javascript\nfunction UserCard({ name, role, isActive }) {\n  return (\n    <div className=\"card\">\n      <h2>{name}</h2>\n      <p>{role}</p>\n      <span className={isActive ? 'online' : 'offline'}>\n        {isActive ? 'Active' : 'Away'}\n      </span>\n    </div>\n  );\n}\n\nfunction App() {\n  const users = [\n    { name: 'Alice', role: 'Dev', isActive: true },\n    { name: 'Bob', role: 'Designer', isActive: false }\n  ];\n  return (\n    <div>\n      <h1>Team</h1>\n      {users.map(u => <UserCard key={u.name} {...u} />)}\n    </div>\n  );\n}\nconsole.log('React components render a team list');\n```",
+      "key_takeaway": "Components are functions that take props and return JSX — keep them small, focused, and composable.",
+      "try_it": "Build a TodoItem component that accepts `text` and `done` props, rendering a strikethrough when done is true.",
+      "complexity": "Time: O(1) per component render, Space: O(n) for n components in the tree"
+    }
+  ],
+  "pro_tip": "In interviews, always mention React's reconciliation algorithm (virtual DOM diffing) and how keys help it efficiently update lists. Show you understand that React re-renders a component when its state or props change, and discuss optimization techniques like React.memo, useMemo, and useCallback."
+}

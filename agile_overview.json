@@ -1,0 +1,16 @@
+{
+  "skill": "agile",
+  "quick_summary": "Agile is the dominant software development methodology emphasizing iterative delivery, team collaboration, and responding to change over rigid planning. Interviewers test Agile knowledge to gauge whether you can thrive in modern team environments where requirements evolve constantly.",
+  "estimated_study_time": "45 minutes",
+  "detailed_content": [
+    {
+      "subheading": "Agile Manifesto & Principles",
+      "explanation": "In 2001, 17 software practitioners gathered and wrote the Agile Manifesto — four values and twelve principles that revolutionized how teams build software. The core idea is simple: deliver working software frequently, collaborate closely with stakeholders, and embrace changing requirements rather than fighting them.\n\nThink of Agile like a GPS navigation system versus a printed paper map. The paper map (Waterfall) plans the entire route upfront and can't adapt to road closures. The GPS (Agile) recalculates every few seconds based on real-time conditions, getting you to the destination through the best available path.",
+      "example": "# Python script demonstrating Agile sprint velocity tracking\nclass Sprint:\n    def __init__(self, name, planned_points):\n        self.name = name\n        self.planned = planned_points\n        self.completed = 0\n\n    def finish(self, completed_points):\n        self.completed = completed_points\n        return self.completed / self.planned\n\n# Track velocity across sprints\nsprints = [\n    Sprint(\"Sprint 1\", 34),\n    Sprint(\"Sprint 2\", 40),\n    Sprint(\"Sprint 3\", 38),\n]\nresults = [s.finish(pts) for s, pts in zip(sprints, [30, 42, 36])]\navg_velocity = sum(s.completed for s in sprints) / len(sprints)\n\nfor s in sprints:\n    print(f\"{s.name}: {s.completed}/{s.planned} points ({s.completed/s.planned:.0%} completion)\")\nprint(f\"Average velocity: {avg_velocity:.1f} points/sprint\")",
+      "key_takeaway": "The four Agile values prioritize individuals, working software, customer collaboration, and responding to change — every Agile practice (Scrum, Kanban) exists to serve these values.",
+      "try_it": "List the 12 Agile principles from memory, then check which ones your current team actually follows. How many are practiced daily versus just talked about?",
+      "complexity": "Time: O(1), Space: O(n) where n is the number of sprints tracked"
+    }
+  ],
+  "pro_tip": "In interviews, don't just recite Agile values — describe a specific situation where changing requirements mid-sprint led to a better product outcome. Hiring managers want to see you've internalized Agile thinking, not just memorized the manifesto."
+}

@@ -1,0 +1,15 @@
+{
+  "skill": "redis",
+  "quick_summary": "Redis is the industry-standard in-memory data store for caching, session management, and real-time features. It's a go-to interview topic for backend and DevOps roles, testing your understanding of data structures, pub/sub patterns, and cache invalidation strategies.",
+  "estimated_study_time": "50 minutes",
+  "detailed_content": [
+    {
+      "subheading": "Data Structures",
+      "explanation": "Redis is an in-memory data store that supports rich data structures beyond simple key-value pairs. Strings store text, numbers, or binary data (up to 512MB). Lists are ordered sequences supporting push/pop from both ends — perfect for queues. Sets are unordered unique collections with intersection/union operations. Sorted Sets combine uniqueness with scores for ranking. Hashes store field-value maps, ideal for user profiles.\n\nThink of Redis as a Swiss Army knife for data — each structure has atomic operations optimized for specific use cases. The key insight is choosing the right structure for your access pattern.",
+      "example": "```python\nimport redis\n\nr = redis.Redis(host='localhost', port=6379, decode_responses=True)\n\n# String — simple cache\nr.set('user:1:name', 'Alice')\nprint(r.get('user:1:name'))  # Alice\n\n# Hash — user profile\nr.hset('user:1', mapping={'name': 'Alice', 'score': '1500', 'level': '5'})\nprint(r.hgetall('user:1'))\n\n# Sorted Set — leaderboard\nr.zadd('leaderboard', {'Alice': 1500, 'Bob': 2000, 'Charlie': 1800})\nprint(r.zrevrange('leaderboard', 0, -1, withscores=True))\n\n# List — message queue\nr.lpush('tasks', 'task1', 'task2', 'task3')\nprint(r.rpop('tasks'))  # task1 (FIFO)\n```",
+      "key_takeaway": "Choose the Redis data structure that matches your access pattern — Hashes for objects, Sorted Sets for rankings, Lists for queues.",
+      "try_it": "Design a rate limiter using Redis INCR with TTL on a string key. What data structure and commands would you use?"
+    }
+  ],
+  "pro_tip": "Interviewers love asking about cache invalidation strategies (TTL-based, write-through, write-behind). Also know Redis persistence options: RDB snapshots vs AOF logs, and when to use each. Mention Redis Cluster for horizontal scaling and Sentinel for high availability."
+}

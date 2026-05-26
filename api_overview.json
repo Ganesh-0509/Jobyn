@@ -1,0 +1,16 @@
+{
+  "skill": "api",
+  "quick_summary": "API (Application Programming Interface) design is the skill of building interfaces that allow software systems to communicate. REST, GraphQL, and gRPC are the dominant patterns. This matters for interviews because virtually every system you build or work with exposes or consumes APIs — it's the universal contract between services.",
+  "estimated_study_time": "50 minutes",
+  "detailed_content": [
+    {
+      "subheading": "REST Fundamentals",
+      "explanation": "REST (Representational State Transfer) is an architecture style for building web APIs. It treats everything as a resource — users, orders, products — each identified by a URL. You interact with resources using standard HTTP methods: GET reads, POST creates, PUT/PATCH updates, DELETE removes. This uniformity means any client (browser, mobile app, another server) can use the API without special knowledge.\n\nThink of REST like a well-organized library. Each book has a unique call number (URL). You can look up a book (GET), add a new one to the catalog (POST), update its location (PUT), or remove it (DELETE). The librarian (server) follows the same process regardless of who's asking. The key constraint is statelessness — each request contains everything needed to process it, just like each library transaction is independent.",
+      "example": "```python\n# FastAPI REST endpoint with proper status codes and validation\nfrom fastapi import FastAPI, HTTPException, status\nfrom pydantic import BaseModel, Field\nfrom typing import Optional\nimport uuid\n\napp = FastAPI()\nusers_db: dict = {}\n\nclass UserCreate(BaseModel):\n    name: str = Field(..., min_length=1, max_length=100)\n    email: str\n\nclass UserResponse(BaseModel):\n    id: str\n    name: str\n    email: str\n\n@app.post(\"/users\", response_model=UserResponse, status_code=201)\ndef create_user(user: UserCreate):\n    user_id = str(uuid.uuid4())\n    record = {\"id\": user_id, **user.model_dump()}\n    users_db[user_id] = record\n    return record\n\n@app.get(\"/users/{user_id}\", response_model=UserResponse)\ndef get_user(user_id: str):\n    if user_id not in users_db:\n        raise HTTPException(status_code=404, detail=\"User not found\")\n    return users_db[user_id]\n\n# Test it:\n# POST /users {\"name\": \"Alice\", \"email\": \"alice@example.com\"} -> 201\n# GET /users/{id} -> 200 with user data\n# GET /users/nonexistent -> 404\nprint(\"REST API ready at http://localhost:8000\")\n```",
+      "key_takeaway": "REST isn't just about URLs and HTTP methods — the real power is in using proper status codes (201 for created, 404 for not found, 409 for conflicts) and resource-based naming that makes the API self-documenting.",
+      "try_it": "Build a REST API for a todo list with endpoints: GET /todos (list), POST /todos (create), PATCH /todos/{id} (update status), DELETE /todos/{id}. Use proper status codes and validation.",
+      "complexity": "Time: O(1) for CRUD operations, Space: O(n) for n resources"
+    }
+  ],
+  "pro_tip": "In API interviews, always mention pagination for list endpoints — `GET /users?page=2&limit=20`. Returning all records is a rookie mistake that will crash production when you hit 100K rows. Also discuss idempotency: PUT and DELETE should be safe to retry, POST should use idempotency keys for payment-like operations."
+}

@@ -1,0 +1,15 @@
+{
+  "skill": "statistics",
+  "quick_summary": "Statistics is the mathematical foundation of data science and machine learning, critical for A/B testing, model evaluation, and data-driven decision making. Interviewers test your ability to choose the right statistical test, interpret p-values, and explain concepts to non-technical stakeholders.",
+  "estimated_study_time": "55 minutes",
+  "detailed_content": [
+    {
+      "subheading": "Descriptive Statistics",
+      "explanation": "Descriptive statistics summarize the main features of a dataset without making predictions. Measures of central tendency (mean, median, mode) tell you where the data clusters. Measures of spread (variance, standard deviation, IQR) tell you how dispersed the data is. Skewness measures asymmetry; kurtosis measures tail heaviness.\n\nThink of describing a person: central tendency is their 'typical' height, spread is how much heights vary in their family, skewness is whether most relatives are taller or shorter, and kurtosis is whether there are extreme outliers (basketball players in the family). Always visualize before computing — a histogram reveals patterns that numbers alone miss.",
+      "example": "```python\nimport numpy as np\nfrom collections import Counter\n\ndata = [23, 25, 28, 30, 30, 32, 35, 38, 42, 55, 88]\n\n# Central tendency\nmean = sum(data) / len(data)\nsorted_data = sorted(data)\nn = len(sorted_data)\nmedian = sorted_data[n//2] if n % 2 else (sorted_data[n//2-1] + sorted_data[n//2]) / 2\nmode = Counter(data).most_common(1)[0][0]\n\nprint(f\"Mean: {mean:.1f}\")\nprint(f\"Median: {median}\")\nprint(f\"Mode: {mode}\")\n\n# Spread\ndeviations = [(x - mean)**2 for x in data]\nvariance = sum(deviations) / (len(data) - 1)  # sample variance\nstd_dev = variance ** 0.5\nq1 = np.percentile(data, 25)\nq3 = np.percentile(data, 75)\niqr = q3 - q1\n\nprint(f\"Std Dev: {std_dev:.1f}\")\nprint(f\"IQR: {iqr}\")\nprint(f\"Outlier fence: [{q1 - 1.5*iqr:.0f}, {q3 + 1.5*iqr:.0f}]\")\n```",
+      "key_takeaway": "Always check mean vs median — if they differ significantly, your data is skewed and mean is misleading. Use median for skewed distributions.",
+      "try_it": "Given a dataset of house prices, compute mean, median, and standard deviation. Why is median a better measure of 'typical' house price than mean?"
+    }
+  ],
+  "pro_tip": "Interviewers expect you to explain p-values correctly (probability of seeing data this extreme if null hypothesis is true), know when to use t-test vs chi-squared vs ANOVA, and discuss Type I vs Type II errors. For data science roles, also cover Bayesian vs Frequentist approaches and confidence intervals."
+}

@@ -1,0 +1,15 @@
+{
+  "skill": "sql",
+  "quick_summary": "SQL is the universal language for data manipulation, required in virtually every technical interview from frontend to data science. Mastery of SELECT, JOINs, subqueries, and window functions separates candidates who can actually work with data from those who can't.",
+  "estimated_study_time": "60 minutes",
+  "detailed_content": [
+    {
+      "subheading": "SELECT, Filtering & Basic Queries",
+      "explanation": "SQL (Structured Query Language) is the universal language for interacting with relational databases. The `SELECT` statement retrieves data from tables — it's like asking questions of your data. `FROM` specifies which table, `WHERE` filters rows, and `SELECT` chooses which columns to return. Think of a spreadsheet: `FROM` picks the sheet, `WHERE` hides rows that don't match, and `SELECT` picks which columns to show.\n\nThe execution order matters: FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT. This is why you can't use a column alias in WHERE — it hasn't been defined yet at that stage.",
+      "example": "```sql\n-- Create and populate a table\nCREATE TABLE employees (\n    id INT PRIMARY KEY,\n    name VARCHAR(100),\n    department VARCHAR(50),\n    salary DECIMAL(10,2),\n    hire_date DATE\n);\n\nINSERT INTO employees VALUES\n(1, 'Alice', 'Engineering', 120000, '2022-01-15'),\n(2, 'Bob', 'Marketing', 85000, '2021-06-20'),\n(3, 'Charlie', 'Engineering', 135000, '2020-03-10'),\n(4, 'Diana', 'Marketing', 92000, '2023-02-01'),\n(5, 'Eve', 'Engineering', 110000, '2023-08-15');\n\n-- Basic SELECT with filtering\nSELECT name, salary, department\nFROM employees\nWHERE salary > 100000\n  AND department = 'Engineering'\nORDER BY salary DESC;\n\n-- Aggregation\nSELECT department,\n       COUNT(*) as headcount,\n       AVG(salary) as avg_salary,\n       MAX(salary) as top_salary\nFROM employees\nGROUP BY department\nHAVING COUNT(*) > 1;\n```",
+      "key_takeaway": "SQL execution order is FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY — understanding this prevents 90% of common query errors.",
+      "try_it": "Write a query that finds departments where the average salary is above the company-wide average. Use a subquery in the HAVING clause."
+    }
+  ],
+  "pro_tip": "Interviewers love window functions (ROW_NUMBER, RANK, LAG/LEAD), CTEs for readability, and correlated subqueries vs JOINs. Always discuss indexing strategy: when to use B-tree vs hash indexes, covering indexes, and how EXPLAIN ANALYZE helps you optimize slow queries."
+}

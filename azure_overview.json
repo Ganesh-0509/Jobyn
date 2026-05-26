@@ -1,0 +1,16 @@
+{
+  "skill": "azure",
+  "quick_summary": "Azure is Microsoft's cloud platform, dominant in enterprise environments using the Microsoft ecosystem (.NET, Active Directory, Office 365). It matters for interviews because enterprises migrating from on-prem Windows infrastructure almost always choose Azure, and understanding Azure AD, RBAC, and resource management is critical for those roles.",
+  "estimated_study_time": "60 minutes",
+  "detailed_content": [
+    {
+      "subheading": "Azure AD & RBAC",
+      "explanation": "Azure Active Directory (Entra ID) is the identity provider for Azure. It manages users, groups, and service principals. RBAC (Role-Based Access Control) assigns permissions at subscription, resource group, or resource scope. Think of Azure AD as the bouncer checking IDs at a club, and RBAC as the list of who can enter which rooms.\n\nThe hierarchy is: Management Group > Subscription > Resource Group > Resource. RBAC roles flow down — if you grant 'Contributor' at the resource group level, it applies to every resource inside it. Built-in roles include Owner (full access), Contributor (no access management), Reader (view only), and specialized roles like Virtual Machine Contributor. Custom roles let you define exactly which actions are allowed.",
+      "example": "```python\n# Azure RBAC operations using Azure SDK\nfrom azure.identity import DefaultAzureCredential\nfrom azure.mgmt.authorization import AuthorizationManagementClient\nfrom azure.mgmt.resource import ResourceManagementClient\n\ncredential = DefaultAzureCredential()\nsubscription_id = \"your-sub-id\"\n\n# Create resource group\nresource_client = ResourceManagementClient(credential, subscription_id)\nresource_client.resource_groups.create_or_update(\n    \"my-app-rg\",\n    {\"location\": \"eastus\", \"tags\": {\"env\": \"production\"}}\n)\n\n# Assign Reader role to a user at resource group scope\nauth_client = AuthorizationManagementClient(credential, subscription_id)\nrole_assignment = auth_client.role_assignments.create(\n    scope=f\"/subscriptions/{subscription_id}/resourceGroups/my-app-rg\",\n    role_assignment_name=\"reader-assignment\",\n    parameters={\n        \"role_definition_id\": \"/subscriptions/.../roleDefinitions/acdd72a7-3385-48ef-bd42-f606fba81ae7\",\n        \"principal_id\": \"user-object-id\"\n    }\n)\nprint(f\"Role assigned: {role_assignment.id}\")\n```",
+      "key_takeaway": "Azure RBAC follows the principle of least privilege — assign roles at the narrowest scope possible (resource group, not subscription), use built-in roles before custom ones, and audit role assignments regularly.",
+      "try_it": "Create a resource group, assign the Virtual Machine Contributor role to a service principal at that scope, and verify it can create VMs but cannot modify networking resources.",
+      "complexity": "Time: O(1) for RBAC assignments, Space: O(n) for n role assignments"
+    }
+  ],
+  "pro_tip": "In Azure interviews, the killer differentiator is understanding Managed Identity — Azure's equivalent of AWS IAM roles. It lets your App Service or VM authenticate to Azure SQL, Key Vault, or Storage without any stored credentials. Mention it whenever discussing service-to-service authentication."
+}

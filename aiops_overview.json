@@ -1,0 +1,16 @@
+{
+  "skill": "aiops",
+  "quick_summary": "AIOps applies machine learning to IT operations — detecting anomalies in metrics, correlating events across services, and automating remediation. It matters for interviews because modern infrastructure generates too much data for humans to monitor manually, and companies need engineers who can bridge ML and ops.",
+  "estimated_study_time": "55 minutes",
+  "detailed_content": [
+    {
+      "subheading": "AIOps Overview",
+      "explanation": "AIOps processes massive volumes of monitoring data (logs, metrics, traces) to reduce Mean Time To Resolution (MTTR) from hours to minutes. Instead of an on-call engineer manually sifting through dashboards at 3 AM, AIOps platforms automatically detect anomalies, correlate related alerts into a single incident, and suggest or execute remediation steps.\n\nThink of it like a hospital triage system. When 50 patients arrive at the ER, a triage nurse doesn't treat them in order — they assess severity, group related symptoms, and route critical cases first. AIOps does the same for system alerts: it filters noise, correlates related events (CPU spike + slow DB queries + increased error rate = one root cause), and prioritizes what matters.",
+      "example": "# Python: Simple anomaly detection using Z-score for AIOps\nimport statistics\n\ndef detect_anomalies(metrics: list, threshold: float = 2.0) -> list:\n    \"\"\"Flag data points that deviate more than threshold standard deviations.\"\"\"\n    if len(metrics) < 3:\n        return []\n    mean = statistics.mean(metrics)\n    stdev = statistics.stdev(metrics)\n    if stdev == 0:\n        return []\n    anomalies = []\n    for i, value in enumerate(metrics):\n        z_score = abs(value - mean) / stdev\n        if z_score > threshold:\n            anomalies.append({\n                \"index\": i,\n                \"value\": value,\n                \"z_score\": round(z_score, 2),\n                \"severity\": \"critical\" if z_score > 3 else \"warning\"\n            })\n    return anomalies\n\n# Simulate CPU metrics over 20 minutes\ncpu_metrics = [45, 48, 42, 50, 47, 44, 98, 51, 46, 49,\n               43, 47, 95, 48, 44, 46, 50, 47, 43, 45]\n\nanomalies = detect_anomalies(cpu_metrics)\nfor a in anomalies:\n    print(f\"Minute {a['index']}: CPU {a['value']}% (z={a['z_score']}, {a['severity']})\")",
+      "key_takeaway": "AIOps isn't about replacing human operators — it's about reducing alert noise by 90% so engineers focus on the 10% of alerts that actually require human judgment.",
+      "try_it": "Implement a sliding-window anomaly detector that compares the current 5-minute average against the last hour's average. Flag when the current window exceeds 2x the historical average.",
+      "complexity": "Time: O(n) for single-pass detection, Space: O(w) for sliding window"
+    }
+  ],
+  "pro_tip": "In interviews, show you understand that AIOps adoption is a maturity curve — start with log aggregation and alert correlation (easy wins), then move to predictive alerting and auto-remediation (harder, higher value). Companies want engineers who can incrementally deliver value."
+}
