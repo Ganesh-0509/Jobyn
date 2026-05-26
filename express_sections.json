@@ -1,0 +1,147 @@
+[
+  {
+    "subheading": "Routing & Route Parameters",
+    "explanation": "Express routing maps HTTP requests (method + URL pattern) to handler functions. Routes can have static paths (`/users`), named parameters (`/users/:id`), optional parameters (`/users/:id?`), and regex patterns. The router matches routes in the order they're defined — the first match wins.\n\nRoute parameters extract dynamic segments from the URL. They're available in `req.params`. Query strings are in `req.query`. The router supports all HTTP methods and can chain multiple handlers for the same route.",
+    "example": "```javascript\nconst express = require('express');\nconst app = express();\n\n// Basic routes\napp.get('/', (req, res) => {\n  res.send('Home page');\n});\n\n// Route parameters\napp.get('/users/:id', (req, res) => {\n  res.json({ userId: req.params.id });\n});\n\n// Multiple parameters\napp.get('/users/:userId/posts/:postId', (req, res) => {\n  const { userId, postId } = req.params;\n  res.json({ userId, postId });\n});\n\n// Query strings: /search?q=hello&page=2\napp.get('/search', (req, res) => {\n  const { q, page = 1 } = req.query;\n  res.json({ query: q, page: Number(page) });\n});\n\n// Regex routes: only numeric IDs\napp.get('/items/:id(\\\\d+)', (req, res) => {\n  res.json({ id: Number(req.params.id) });\n});\n\n// Router for grouping\nconst router = express.Router();\nrouter.get('/', (req, res) => res.json({ list: [] }));\nrouter.post('/', (req, res) => res.status(201).json(req.body));\nrouter.get('/:id', (req, res) => res.json({ id: req.params.id }));\nrouter.put('/:id', (req, res) => res.json({ updated: true }));\nrouter.delete('/:id', (req, res) => res.status(204).end());\napp.use('/api/v1/todos', router);\n\n// Route prefixing\nconst v1 = express.Router();\nconst v2 = express.Router();\nv1.get('/users', (req, res) => res.json({ version: 1 }));\nv2.get('/users', (req, res) => res.json({ version: 2 }));\napp.use('/api/v1', v1);\napp.use('/api/v2', v2);\n\napp.listen(3000);\n```",
+    "key_takeaway": "Express routing matches first-match — define specific routes before catch-all ones. Use `express.Router()` to group related routes and mount them at a prefix.",
+    "try_it": "Build a router for `/api/books` with GET (list, by ID), POST, PUT, and DELETE. Add a regex constraint that book IDs must be numeric."
+  },
+  {
+    "subheading": "Middleware Chain",
+    "explanation": "Middleware functions receive `(req, res, next)`. They can modify the request/response, end the response, or call `next()` to pass control to the next middleware. The chain executes in registration order — like an assembly line where each station inspects or modifies the product.\n\nThis pattern is the backbone of Express. Authentication, logging, validation, CORS, and error handling are all middleware. You can apply middleware globally (`app.use`), to specific routes, or to groups of routes using routers.",
+    "example": "```javascript\nconst express = require('express');\nconst app = express();\n\n// Global middleware — runs on every request\napp.use((req, res, next) => {\n  req.requestId = Math.random().toString(36).slice(2);\n  req.startTime = Date.now();\n  next();\n});\n\n// Logging middleware\napp.use((req, res, next) => {\n  res.on('finish', () => {\n    console.log(`[${req.requestId}] ${req.method} ${req.url} ${res.statusCode} ${Date.now() - req.startTime}ms`);\n  });\n  next();\n});\n\n// Conditional middleware\napp.use('/api', (req, res, next) => {\n  // Only runs for /api/* routes\n  res.setHeader('X-API-Version', '1.0');\n  next();\n});\n\n// Route-specific middleware\nfunction requireAuth(req, res, next) {\n  if (!req.headers.authorization) {\n    return res.status(401).json({ error: 'Unauthorized' });\n  }\n  req.user = { id: 1, role: 'admin' };\n  next();\n}\n\nfunction requireRole(...roles) {\n  return (req, res, next) => {\n    if (!roles.includes(req.user?.role)) {\n      return res.status(403).json({ error: 'Forbidden' });\n    }\n    next();\n  };\n}\n\n// Public route\napp.get('/health', (req, res) => res.json({ ok: true }));\n\n// Protected route with role check\napp.get('/admin', requireAuth, requireRole('admin'), (req, res) => {\n  res.json({ message: 'Welcome, admin' });\n});\n\n// Multiple handlers per route\napp.post('/users',\n  (req, res, next) => { console.log('Step 1: Validate'); next(); },\n  (req, res, next) => { console.log('Step 2: Transform'); next(); },\n  (req, res) => { res.json({ created: true }); }\n);\n\napp.listen(3000);\n```",
+    "key_takeaway": "Middleware chains execute in order — each function calls `next()` to pass control forward. Use route-specific middleware for auth and validation, global middleware for logging and CORS.",
+    "try_it": "Create a middleware that times each request and adds an `X-Response-Time` header. Apply it globally and verify it works on all routes."
+  },
+  {
+    "subheading": "Request & Response Objects",
+    "explanation": "The `req` object contains everything about the incoming request: URL, method, headers, query parameters, route parameters, and body (parsed by middleware). The `res` object sends the response back to the client. Express extends both with helpful methods like `res.json()`, `res.status()`, and `res.redirect()`.\n\nUnderstanding `req` and `res` is essential because they're the primary interface between your application and the outside world. Every route handler receives both and must send a response — otherwise the client hangs indefinitely.",
+    "example": "```javascript\nconst express = require('express');\nconst app = express();\n\napp.use(express.json());\napp.use(express.urlencoded({ extended: true }));\n\napp.all('/debug', (req, res) => {\n  res.json({\n    method: req.method,\n    url: req.originalUrl,\n    path: req.path,\n    baseUrl: req.baseUrl,\n    query: req.query,\n    params: req.params,\n    headers: req.headers,\n    contentType: req.get('Content-Type'),\n    ip: req.ip,\n    protocol: req.protocol,\n    secure: req.secure,\n    xhr: req.xhr,\n  });\n});\n\n// Response methods\napp.get('/text', (req, res) => {\n  res.send('Plain text response');\n});\n\napp.get('/json', (req, res) => {\n  res.json({ message: 'JSON response', timestamp: Date.now() });\n});\n\napp.get('/status', (req, res) => {\n  res.status(201).json({ created: true });\n});\n\napp.get('/headers', (req, res) => {\n  res.set({\n    'X-Custom-Header': 'value',\n    'Cache-Control': 'max-age=3600'\n  });\n  res.json({ headers: res.getHeaders() });\n});\n\napp.get('/redirect', (req, res) => {\n  res.redirect(301, '/new-location');\n});\n\napp.get('/download', (req, res) => {\n  res.download('./report.pdf', 'annual-report.pdf');\n});\n\napp.get('/cookies', (req, res) => {\n  res.cookie('session', 'abc123', { httpOnly: true, maxAge: 86400000 });\n  res.json({ cookies: req.cookies });\n});\n\n// Chaining\napp.get('/chain', (req, res) => {\n  res\n    .status(200)\n    .set('X-Powered-By', 'MyApp')\n    .cookie('visited', 'true')\n    .json({ chained: true });\n});\n\napp.listen(3000);\n```",
+    "key_takeaway": "`req` has everything about the incoming request (params, query, body, headers). `res` sends the response — use `.json()` for JSON, `.status()` for status codes, `.set()` for headers.",
+    "try_it": "Create a `/mirror` endpoint that echoes back the request method, URL, headers, query params, and body as JSON."
+  },
+  {
+    "subheading": "Error Handling Middleware",
+    "explanation": "Express error-handling middleware has a special signature: four arguments `(err, req, res, next)`. When any middleware or route handler calls `next(err)` or throws an exception, Express skips all remaining normal middleware and jumps to the error handler. This centralized pattern catches all errors in one place.\n\nWithout proper error handling, unhandled errors crash the server or leave clients hanging. The pattern: create custom error classes, wrap async handlers, define a global error handler last, and add process-level handlers for uncaught exceptions and unhandled rejections.",
+    "example": "```javascript\nconst express = require('express');\nconst app = express();\n\napp.use(express.json());\n\n// Custom error hierarchy\nclass AppError extends Error {\n  constructor(message, statusCode, code) {\n    super(message);\n    this.statusCode = statusCode;\n    this.code = code;\n    this.isOperational = true;\n  }\n}\n\nclass NotFoundError extends AppError {\n  constructor(resource) {\n    super(`${resource} not found`, 404, 'NOT_FOUND');\n  }\n}\n\nclass ValidationError extends AppError {\n  constructor(fields) {\n    super('Validation failed', 400, 'VALIDATION_ERROR');\n    this.fields = fields;\n  }\n}\n\n// Async wrapper — catches rejected promises\nconst wrap = (fn) => (req, res, next) => {\n  Promise.resolve(fn(req, res, next)).catch(next);\n};\n\n// Routes\napp.get('/users/:id', wrap(async (req, res) => {\n  const user = await db.findUser(req.params.id);\n  if (!user) throw new NotFoundError('User');\n  res.json(user);\n}));\n\napp.post('/users', wrap(async (req, res) => {\n  const { name, email } = req.body;\n  const errors = {};\n  if (!name) errors.name = 'Required';\n  if (!email?.includes('@')) errors.email = 'Invalid email';\n  if (Object.keys(errors).length) throw new ValidationError(errors);\n  const user = await db.createUser({ name, email });\n  res.status(201).json(user);\n}));\n\n// 404 handler — after all routes\napp.use((req, res) => {\n  res.status(404).json({ error: { code: 'NOT_FOUND', message: `${req.method} ${req.url} not found` } });\n});\n\n// Global error handler — LAST\napp.use((err, req, res, next) => {\n  const status = err.statusCode || 500;\n  const response = {\n    error: {\n      code: err.code || 'INTERNAL_ERROR',\n      message: err.isOperational ? err.message : 'Something went wrong',\n    }\n  };\n  if (err.fields) response.error.fields = err.fields;\n  if (!err.isOperational) console.error('Unexpected error:', err);\n  res.status(status).json(response);\n});\n\napp.listen(3000);\n```",
+    "key_takeaway": "Error-handling middleware (4 args) catches all errors — use `wrap()` for async routes, custom error classes for domain errors, and never expose internal errors to clients.",
+    "try_it": "Add a `wrap()` helper, create a route that throws a custom error, and verify the error handler returns a proper JSON response with the correct status code."
+  },
+  {
+    "subheading": "Template Engines",
+    "explanation": "Template engines generate HTML on the server by combining templates (files with placeholders) with data. Express supports many engines: EJS (embedded JavaScript), Pug (indentation-based), and Handlebars (Mustache-style). Server-side rendering (SSR) sends fully-formed HTML to the browser — good for SEO and initial page load.\n\nEJS is the most popular because it uses plain JavaScript syntax. You set the engine with `app.set('view engine', 'ejs')`, place templates in a `views/` directory, and render them with `res.render('template', data)`. Layouts, partials, and includes keep templates DRY.",
+    "example": "```javascript\nconst express = require('express');\nconst app = express();\n\n// Setup EJS\napp.set('view engine', 'ejs');\napp.set('views', './views');\napp.use(express.static('public'));\n\n// Render templates\napp.get('/', (req, res) => {\n  res.render('index', {\n    title: 'Home Page',\n    user: { name: 'Alice', role: 'admin' },\n    items: ['Node.js', 'Express', 'EJS'],\n  });\n});\n\napp.get('/users', (req, res) => {\n  const users = [\n    { id: 1, name: 'Alice', email: 'alice@example.com' },\n    { id: 2, name: 'Bob', email: 'bob@example.com' },\n  ];\n  res.render('users', { title: 'Users', users });\n});\n```\n\n```html\n<!-- views/layout.ejs -->\n<!DOCTYPE html>\n<html>\n<head><title><%= title %></title></head>\n<body>\n  <%- include('partials/nav') %>\n  <main><%- body %></main>\n  <%- include('partials/footer') %>\n</body>\n</html>\n\n<!-- views/index.ejs -->\n<%- include('layout', { body: `>\n  <h1>Welcome, <%= user.name %>!</h1>\n  <p>Role: <%= user.role %></p>\n  <ul>\n    <% items.forEach(item => { %>\n      <li><%= item %></li>\n    <% }) %>\n  </ul>\n` }) %>\n\n<!-- views/users.ejs -->\n<h1><%= title %></h1>\n<table>\n  <tr><th>Name</th><th>Email</th></tr>\n  <% users.forEach(user => { %>\n    <tr>\n      <td><%= user.name %></td>\n      <td><%= user.email %></td>\n    </tr>\n  <% }) %>\n</table>\n```",
+    "key_takeaway": "Template engines render HTML on the server — EJS uses `<%= %>` for output and `<% %>` for logic. Use layouts and partials to keep templates DRY.",
+    "try_it": "Create an EJS template that renders a product catalog from a JSON array, with a layout, header partial, and conditional rendering for out-of-stock items."
+  },
+  {
+    "subheading": "Security Best Practices",
+    "explanation": "Web applications face constant attacks: injection, XSS, CSRF, DDoS, and more. Express doesn't include security features by default — you must add them via middleware. The principle of defense in depth: multiple layers of security so that if one fails, others protect you.\n\nEssential security middleware: `helmet` sets secure HTTP headers, `cors` controls cross-origin access, `express-rate-limit` prevents brute-force attacks, and `hpp` prevents HTTP parameter pollution. Input validation, parameterized queries, and HTTPS are non-negotiable.",
+    "example": "```javascript\nconst express = require('express');\nconst helmet = require('helmet');\nconst cors = require('cors');\nconst rateLimit = require('express-rate-limit');\nconst hpp = require('hpp');\nconst mongoSanitize = require('express-mongo-sanitize');\n\nconst app = express();\n\n// Security headers (XSS, clickjacking, MIME sniffing)\napp.use(helmet());\n\n// CORS — restrict to known origins\napp.use(cors({\n  origin: ['https://myapp.com', 'http://localhost:3000'],\n  credentials: true,\n  methods: ['GET', 'POST', 'PUT', 'DELETE'],\n}));\n\n// Rate limiting\nconst apiLimiter = rateLimit({\n  windowMs: 15 * 60 * 1000,\n  max: 100,\n  standardHeaders: true,\n  legacyHeaders: false,\n  message: { error: 'Too many requests, try again later' },\n});\napp.use('/api/', apiLimiter);\n\nconst authLimiter = rateLimit({\n  windowMs: 60 * 60 * 1000,\n  max: 5,\n  message: { error: 'Too many login attempts' },\n});\napp.use('/auth/login', authLimiter);\n\n// Prevent HTTP parameter pollution\napp.use(hpp());\n\n// Sanitize against NoSQL injection\napp.use(mongoSanitize());\n\n// Body parsing with size limits\napp.use(express.json({ limit: '10kb' }));\napp.use(express.urlencoded({ extended: true, limit: '10kb' }));\n\n// Input validation example\nfunction validateUser(req, res, next) {\n  const { name, email } = req.body;\n  if (typeof name !== 'string' || name.length > 100) {\n    return res.status(400).json({ error: 'Invalid name' });\n  }\n  if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) {\n    return res.status(400).json({ error: 'Invalid email' });\n  }\n  // Sanitize\n  req.body.name = name.replace(/[<>]/g, '');\n  next();\n}\n\napp.post('/users', validateUser, (req, res) => {\n  res.status(201).json(req.body);\n});\n\n// Force HTTPS in production\nif (process.env.NODE_ENV === 'production') {\n  app.use((req, res, next) => {\n    if (req.header('x-forwarded-proto') !== 'https') {\n      return res.redirect(301, `https://${req.header('host')}${req.url}`);\n    }\n    next();\n  });\n}\n\napp.listen(3000);\n```",
+    "key_takeaway": "Use helmet for security headers, cors for cross-origin control, rate-limit for brute-force protection, and always validate/sanitize input. Defense in depth — no single layer is enough.",
+    "try_it": "Add helmet, cors, and rate-limiting to an existing Express API. Use curl to verify the security headers are present and rate limiting works.",
+    "complexity": "Varies by problem",
+    "practice_challenges": [
+      {
+        "title": "CRUD API with Express Router",
+        "difficulty": "Easy",
+        "pattern": "RESTful Resource Routing",
+        "hint": "Use express.Router() for /api/books, handle GET/POST/PUT/DELETE",
+        "description": "Build a RESTful API for a bookstore with Express Router. Implement all CRUD operations with proper status codes, error handling, and input validation using express-validator.",
+        "example_input": "POST /api/books {title: 1984, author: Orwell}",
+        "example_output": "201 Created with book object including generated ID"
+      },
+      {
+        "title": "JWT Authentication Middleware",
+        "difficulty": "Easy",
+        "pattern": "Middleware Chain",
+        "hint": "Create auth middleware that verifies JWT from Authorization header",
+        "description": "Implement JWT-based authentication with login, register, and protected routes. Include refresh token rotation and proper error responses for expired/invalid tokens.",
+        "example_input": "GET /api/profile with Authorization: Bearer <token>",
+        "example_output": "200 OK with user profile, or 401 Unauthorized for invalid token"
+      },
+      {
+        "title": "File Upload with Streaming",
+        "difficulty": "Medium",
+        "pattern": "Multer + Stream Processing",
+        "hint": "Use multer for multipart handling, fs.createWriteStream for large files",
+        "description": "Build a file upload endpoint that handles multipart uploads, validates file types and sizes, streams large files to disk (not memory), generates thumbnails for images, and stores metadata in a database.",
+        "example_input": "POST /api/upload with 50MB image file",
+        "example_output": "File saved to uploads/, thumbnail generated, metadata stored"
+      },
+      {
+        "title": "Real-Time Notification System",
+        "difficulty": "Medium",
+        "pattern": "Socket.io + Express Integration",
+        "hint": "Attach Socket.io to Express server, use rooms for user-specific messages",
+        "description": "Build a real-time notification system with Express and Socket.io. Support user-specific notifications via rooms, broadcast announcements, notification persistence in database, and unread count tracking.",
+        "example_input": "Admin sends broadcast: System maintenance at 3 AM",
+        "example_output": "All connected users receive notification, stored in DB for offline users"
+      },
+      {
+        "title": "API Gateway with Proxy and Circuit Breaker",
+        "difficulty": "Hard",
+        "pattern": "Reverse Proxy + Fault Tolerance",
+        "hint": "Use http-proxy-middleware for proxying, implement circuit breaker state machine",
+        "description": "Build an Express-based API gateway that proxies requests to multiple microservices, implements circuit breaker (open/half-open/closed states), request logging, rate limiting per client, and health check aggregation.",
+        "example_input": "Requests to /api/users -> user-service, /api/orders -> order-service",
+        "example_output": "Requests routed correctly, circuit opens after 5 failures, cached response served"
+      }
+    ]
+  },
+  {
+    "subheading": "Practice Problems",
+    "explanation": "Express interviews test your ability to build robust middleware pipelines, handle errors gracefully, and design clean RESTful APIs. The most common challenge is ordering middleware correctly — authentication before routes, error handlers last. Interviewers also love asking about JWT validation, file uploads, and rate limiting in real-world scenarios.",
+    "example": "",
+    "key_takeaway": "Middleware order matters: parsing before validation, auth before routes, error handlers last. Always wrap async handlers to catch promise rejections.",
+    "try_it": "Build a small REST API with JWT auth and error handling before checking solutions",
+    "complexity": "Varies by problem",
+    "practice_challenges": [
+      {
+        "title": "Logging Middleware with Timing",
+        "difficulty": "Easy",
+        "pattern": "Middleware Chain",
+        "hint": "Record Date.now() at start, calculate duration when response finishes using res.on('finish', ...)",
+        "description": "Create a global middleware that logs each request as `[METHOD] /path — STATUS — Xms`. It should capture the start time, wait for the response to finish, then log the method, URL, status code, and elapsed time in milliseconds.",
+        "example_input": "GET /api/users responds with 200 after 15ms",
+        "example_output": "Console: [GET] /api/users — 200 — 15ms"
+      },
+      {
+        "title": "JWT Authentication Guard",
+        "difficulty": "Easy",
+        "pattern": "Route-Level Middleware",
+        "hint": "Extract token from Authorization: Bearer <token> header, verify with jsonwebtoken, attach decoded payload to req.user",
+        "description": "Write an auth middleware that extracts a JWT from the Authorization header, verifies it using a secret key, and attaches the decoded user payload to req.user. If the token is missing or invalid, respond with 401. Apply it to protect a /profile route.",
+        "example_input": "Authorization: Bearer eyJhbG... with valid payload {id: 1, role: 'user'}",
+        "example_output": "req.user = {id: 1, role: 'user'}; next() called"
+      },
+      {
+        "title": "RESTful CRUD Router",
+        "difficulty": "Medium",
+        "pattern": "Express Router + Route Parameters",
+        "hint": "Use express.Router() to group routes, validate req.params.id exists, return proper status codes (201 for POST, 204 for DELETE)",
+        "description": "Build a complete RESTful router for /api/products with: GET / (list with pagination via ?page=&limit=), GET /:id (single item), POST / (create with validation), PUT /:id (update), DELETE /:id (delete). Return appropriate status codes and handle not-found cases for GET/PUT/DELETE.",
+        "example_input": "POST /api/products {name: 'Widget', price: 9.99}",
+        "example_output": "201 Created with {id: 3, name: 'Widget', price: 9.99}"
+      },
+      {
+        "title": "File Upload with Validation",
+        "difficulty": "Medium",
+        "pattern": "Multer Middleware + Error Handling",
+        "hint": "Use multer with fileFilter to accept only images (mimetype starts with 'image/'), set limits for file size, handle MulterError in error handler",
+        "description": "Create a POST /upload endpoint using multer that accepts a single image file (max 5MB). Validate the MIME type is an image (jpeg, png, gif). Return the filename and size on success. If the file is too large or wrong type, return a structured error response with the appropriate status code.",
+        "example_input": "Multipart form-data with file: photo.jpg (2MB, image/jpeg)",
+        "example_output": "200 {filename: 'abc123.jpg', size: 2097152, mimetype: 'image/jpeg'}"
+      },
+      {
+        "title": "API Rate Limiter per User",
+        "difficulty": "Hard",
+        "pattern": "Custom Middleware + In-Memory Store",
+        "hint": "Use a Map to track request counts per user key, implement sliding window with timestamps array, return 429 with Retry-After header when limit exceeded",
+        "description": "Implement a custom rate-limiting middleware that limits each authenticated user to 10 requests per 60-second window. Use an in-memory Map keyed by user ID. Track timestamps of requests. When the limit is exceeded, respond with 429 and a Retry-After header showing seconds until the oldest request expires. Include cleanup logic to prevent memory leaks from stale entries.",
+        "example_input": "User 'u1' sends 11 requests within 60 seconds",
+        "example_output": "First 10: pass through with next(). 11th: 429 {error: 'Rate limit exceeded', retryAfter: 23}"
+      }
+    ]
+  }
+]

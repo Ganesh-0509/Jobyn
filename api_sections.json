@@ -1,0 +1,154 @@
+[
+  {
+    "subheading": "REST Fundamentals",
+    "explanation": "REST (Representational State Transfer) is an architecture style for building web APIs. It treats everything as a resource — users, orders, products — each identified by a URL. You interact with resources using standard HTTP methods: GET reads, POST creates, PUT/PATCH updates, DELETE removes. This uniformity makes REST APIs predictable and easy to consume.\n\nThink of REST like a library catalog system. Each book has a unique call number (URL). You can look up a book (GET), add a new one (POST), update its record (PUT), or remove it (DELETE). The catalog doesn't care what language you speak — it responds in a standard format (JSON), just like REST APIs.",
+    "example": "```python\nfrom fastapi import FastAPI\n\napp = FastAPI()\n\n# Resource: /books\nbooks_db = {1: {\"title\": \"1984\", \"author\": \"Orwell\"}}\n\n@app.get(\"/books\")\ndef list_books():\n    return list(books_db.values())       # GET collection\n\n@app.get(\"/books/{book_id}\")\ndef get_book(book_id: int):\n    return books_db.get(book_id, {})     # GET single resource\n\n@app.post(\"/books\")\ndef create_book(title: str, author: str):\n    new_id = max(books_db.keys()) + 1\n    books_db[new_id] = {\"title\": title, \"author\": author}\n    return books_db[new_id]              # POST create\n\n@app.put(\"/books/{book_id}\")\ndef update_book(book_id: int, title: str, author: str):\n    books_db[book_id] = {\"title\": title, \"author\": author}\n    return books_db[book_id]             # PUT replace\n\n@app.delete(\"/books/{book_id}\")\ndef delete_book(book_id: int):\n    del books_db[book_id]\n    return {\"deleted\": True}             # DELETE remove\n```",
+    "key_takeaway": "REST maps CRUD operations to HTTP methods on resource URLs — this uniformity is what makes APIs predictable and self-documenting.",
+    "try_it": "Add a `/books/search?q=` query parameter endpoint that filters books by title."
+  },
+  {
+    "subheading": "HTTP Methods & Status Codes",
+    "explanation": "HTTP methods are verbs that tell the server what action to perform. GET is safe (no side effects), PUT is idempotent (repeating it gives the same result), and POST is neither — each call may create a new resource. Understanding these semantics prevents bugs like accidental duplicate orders on page refresh.\n\nStatus codes are the server's response signal. 2xx means success (200 OK, 201 Created, 204 No Content). 4xx means client error (400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found). 5xx means server error (500 Internal Server Error). Using the right code helps clients handle responses correctly without reading the body.",
+    "example": "```python\nfrom fastapi import FastAPI, HTTPException, status\nfrom pydantic import BaseModel\nfrom typing import Optional\n\napp = FastAPI()\n\nclass Item(BaseModel):\n    name: str\n    price: float\n    description: Optional[str] = None\n\nitems_db: dict[int, Item] = {}\n\n@app.post(\"/items\", status_code=status.HTTP_201_CREATED)\ndef create_item(item: Item):\n    new_id = len(items_db) + 1\n    items_db[new_id] = item\n    return {\"id\": new_id, **item.model_dump()}\n\n@app.get(\"/items/{item_id}\")\ndef read_item(item_id: int):\n    if item_id not in items_db:\n        raise HTTPException(\n            status_code=status.HTTP_404_NOT_FOUND,\n            detail=f\"Item {item_id} not found\"\n        )\n    return items_db[item_id]\n\n@app.put(\"/items/{item_id}\")\ndef update_item(item_id: int, item: Item):\n    if item_id not in items_db:\n        raise HTTPException(status_code=404, detail=\"Not found\")\n    items_db[item_id] = item\n    return items_db[item_id]\n\n@app.delete(\"/items/{item_id}\", status_code=status.HTTP_204_NO_CONTENT)\ndef delete_item(item_id: int):\n    if item_id not in items_db:\n        raise HTTPException(status_code=404, detail=\"Not found\")\n    del items_db[item_id]\n```",
+    "key_takeaway": "Use 2xx for success, 4xx for client mistakes, 5xx for server failures — the status code is the first thing clients check before reading the body.",
+    "try_it": "Add a PATCH endpoint that returns 400 if the client tries to change the item's `id` field."
+  },
+  {
+    "subheading": "Request & Response Cycle",
+    "explanation": "Every API call follows a cycle: the client sends a request with a method, URL, headers, and body. The server processes it and returns a response with a status code, headers, and body. Headers carry metadata — Content-Type tells the format (application/json), Authorization carries the token, Accept tells what format the client wants back.\n\nUnderstanding this cycle is critical for debugging. A request might fail because of a missing header, wrong Content-Type, or a CORS policy blocking the origin. Tools like `curl`, Postman, or browser DevTools let you inspect every piece of the request-response pair.",
+    "example": "```python\nfrom fastapi import FastAPI, Request, Response, Header\nfrom fastapi.responses import JSONResponse\nfrom typing import Optional\nimport json\nimport time\n\napp = FastAPI()\n\n@app.middleware(\"http\")\nasync def log_request(request: Request, call_next):\n    print(f\"→ {request.method} {request.url}\")\n    print(f\"  Headers: {dict(request.headers)}\")\n    start = time.time()\n    response = await call_next(request)\n    duration = time.time() - start\n    response.headers[\"X-Response-Time\"] = f\"{duration:.3f}s\"\n    print(f\"← {response.status_code} ({duration:.3f}s)\")\n    return response\n\n@app.get(\"/echo\")\ndef echo(\n    accept_language: Optional[str] = Header(None),\n    user_agent: Optional[str] = Header(None)\n):\n    return {\n        \"your_language\": accept_language,\n        \"your_browser\": user_agent,\n        \"message\": \"Headers received!\"\n    }\n\n@app.post(\"/mirror\")\ndef mirror(request_body: dict):\n    return JSONResponse(\n        content={\"you_sent\": request_body},\n        status_code=200,\n        headers={\"X-Custom\": \"mirrored\"}\n    )\n\n# Test with curl:\n# curl -X POST http://localhost:8000/mirror -H \"Content-Type: application/json\" -d '{\"hello\":\"world\"}'\n```",
+    "key_takeaway": "Every API interaction is a request-response pair — headers carry metadata, the body carries data, and middleware can intercept both sides.",
+    "try_it": "Add a middleware that returns 415 Unsupported Media Type if a POST request doesn't have `Content-Type: application/json`."
+  },
+  {
+    "subheading": "Authentication: API Keys, OAuth2 & JWT",
+    "explanation": "Authentication answers \"who are you?\" The simplest method is an API key — a secret string sent in a header. It works but offers no granularity (all-or-nothing access). OAuth2 is the industry standard: users authorize third-party apps without sharing passwords (\"Login with Google\"). The app receives an access token after the user approves.\n\nJWT (JSON Web Token) is a self-contained token encoding the user's identity and permissions. The server signs it with a secret; clients send it in the `Authorization: Bearer <token>` header. JWTs are stateless — the server doesn't store session data — but can't be revoked easily, so short expiration times are essential.",
+    "example": "```python\nfrom fastapi import FastAPI, Depends, HTTPException\nfrom fastapi.security import OAuth2PasswordBearer, APIKeyHeader\nfrom jose import jwt, JWTError\nfrom datetime import datetime, timedelta\n\napp = FastAPI()\nSECRET = \"super-secret-key\"\n\n# API Key auth\napi_key_header = APIKeyHeader(name=\"X-API-Key\")\ndef verify_api_key(key: str = Depends(api_key_header)):\n    if key != \"my-secret-api-key\":\n        raise HTTPException(status_code=401, detail=\"Invalid API key\")\n    return key\n\n@app.get(\"/api-key-protected\")\ndef protected(key: str = Depends(verify_api_key)):\n    return {\"message\": \"Access granted via API key\"}\n\n# JWT auth\noauth2 = OAuth2PasswordBearer(tokenUrl=\"/login\")\n\ndef create_token(data: dict, expires: timedelta = timedelta(hours=1)):\n    payload = data.copy()\n    payload[\"exp\"] = datetime.utcnow() + expires\n    return jwt.encode(payload, SECRET, algorithm=\"HS256\")\n\ndef get_current_user(token: str = Depends(oauth2)):\n    try:\n        payload = jwt.decode(token, SECRET, algorithms=[\"HS256\"])\n        return {\"user\": payload[\"sub\"], \"role\": payload.get(\"role\", \"user\")}\n    except JWTError:\n        raise HTTPException(status_code=401, detail=\"Invalid token\")\n\n@app.post(\"/login\")\ndef login(username: str, password: str):\n    if username == \"admin\" and password == \"pass\":\n        token = create_token({\"sub\": username, \"role\": \"admin\"})\n        return {\"access_token\": token, \"token_type\": \"bearer\"}\n    raise HTTPException(status_code=401, detail=\"Bad credentials\")\n\n@app.get(\"/jwt-protected\")\ndef jwt_protected(user: dict = Depends(get_current_user)):\n    return {\"message\": f\"Hello {user['user']}\"}\n```",
+    "key_takeaway": "API keys are simple but coarse; OAuth2 delegates auth to identity providers; JWTs are self-verifying tokens — use short expiry and never store secrets in them.",
+    "try_it": "Add a `require_admin` dependency that decodes the JWT and returns 403 if `role != \"admin\"`."
+  },
+  {
+    "subheading": "Rate Limiting & Pagination",
+    "explanation": "Without rate limiting, a single client can overwhelm your API with thousands of requests per second, degrading service for everyone. Rate limiting caps how many requests a client can make in a time window (e.g., 100 requests per minute). Exceeding the limit returns 429 Too Many Requests, and response headers (`X-RateLimit-Remaining`) tell clients how much quota they have left.\n\nPagination prevents a single request from returning millions of records. Offset-based pagination uses `?page=2&limit=20` but can miss items if data changes between pages. Cursor-based pagination uses a pointer to the last item (`?after=abc123`) — more reliable for large, changing datasets. Always set a maximum page size to protect your database.",
+    "example": "```python\nfrom fastapi import FastAPI, Query, HTTPException, Request\nfrom fastapi.responses import JSONResponse\nfrom collections import defaultdict\nimport time\n\napp = FastAPI()\n\n# In-memory rate limiter\nrate_limit_store: dict[str, list[float]] = defaultdict(list)\nRATE_LIMIT = 10  # requests per window\nWINDOW = 60      # seconds\n\n@app.middleware(\"http\")\nasync def rate_limit(request: Request, call_next):\n    client_ip = request.client.host\n    now = time.time()\n    rate_limit_store[client_ip] = [\n        t for t in rate_limit_store[client_ip] if now - t < WINDOW\n    ]\n    if len(rate_limit_store[client_ip]) >= RATE_LIMIT:\n        return JSONResponse(\n            status_code=429,\n            content={\"detail\": \"Rate limit exceeded\"},\n            headers={\"Retry-After\": str(WINDOW)}\n        )\n    rate_limit_store[client_ip].append(now)\n    response = await call_next(request)\n    remaining = RATE_LIMIT - len(rate_limit_store[client_ip])\n    response.headers[\"X-RateLimit-Remaining\"] = str(remaining)\n    return response\n\n# Cursor-based pagination\ndata = [{\"id\": i, \"name\": f\"Item {i}\"} for i in range(1, 101)]\n\n@app.get(\"/items\")\ndef list_items(\n    cursor: int = Query(0, ge=0),\n    limit: int = Query(20, ge=1, le=100)\n):\n    start = cursor\n    end = start + limit\n    items = data[start:end]\n    next_cursor = end if end < len(data) else None\n    return {\n        \"items\": items,\n        \"next_cursor\": next_cursor,\n        \"has_more\": next_cursor is not None\n    }\n```",
+    "key_takeaway": "Rate limiting protects your API from abuse; pagination protects your database from runaway queries — both are non-negotiable in production.",
+    "try_it": "Change the rate limiter to use a token bucket algorithm instead of a fixed window."
+  },
+  {
+    "subheading": "API Design Best Practices",
+    "explanation": "Good API design is invisible — developers intuitively know how to use it. Use nouns for resources (`/users`, not `/getUsers`), plural names consistently, and nested resources for relationships (`/users/123/orders`). Version your API from day one (`/v1/users`) so breaking changes don't break clients. Keep request/response shapes consistent across endpoints.\n\nError responses should follow a predictable structure: include an error code, a human-readable message, and optional details. Use HATEOAS links sparingly — most REST APIs don't need them. Document your conventions in a style guide so all endpoints feel like they were designed by one person.",
+    "example": "```python\nfrom fastapi import FastAPI, HTTPException, Query\nfrom pydantic import BaseModel, Field\nfrom typing import Optional\nfrom datetime import datetime\n\napp = FastAPI(title=\"E-Commerce API\", version=\"1.0.0\")\n\n# Consistent response model\nclass ApiResponse(BaseModel):\n    data: dict | list | None = None\n    error: Optional[str] = None\n    meta: Optional[dict] = None\n\nclass OrderCreate(BaseModel):\n    product_id: int\n    quantity: int = Field(gt=0, le=100)\n    note: Optional[str] = Field(None, max_length=500)\n\norders_db: dict[int, dict] = {}\n\n# Nouns, plural, nested resources\n@app.get(\"/v1/users/{user_id}/orders\")\ndef list_user_orders(\n    user_id: int,\n    status: Optional[str] = Query(None, pattern=\"^(pending|shipped|delivered)$\"),\n    limit: int = Query(20, ge=1, le=100),\n    offset: int = Query(0, ge=0)\n):\n    user_orders = [o for o in orders_db.values() if o[\"user_id\"] == user_id]\n    if status:\n        user_orders = [o for o in user_orders if o[\"status\"] == status]\n    return ApiResponse(\n        data=user_orders[offset:offset + limit],\n        meta={\"total\": len(user_orders), \"limit\": limit, \"offset\": offset}\n    )\n\n@app.post(\"/v1/users/{user_id}/orders\", status_code=201)\ndef create_order(user_id: int, order: OrderCreate):\n    order_id = len(orders_db) + 1\n    orders_db[order_id] = {\n        \"id\": order_id,\n        \"user_id\": user_id,\n        \"product_id\": order.product_id,\n        \"quantity\": order.quantity,\n        \"status\": \"pending\",\n        \"created_at\": datetime.now().isoformat()\n    }\n    return ApiResponse(data=orders_db[order_id])\n\n# Consistent error format\n@app.exception_handler(HTTPException)\nasync def custom_error(request, exc):\n    from fastapi.responses import JSONResponse\n    return JSONResponse(\n        status_code=exc.status_code,\n        content={\"data\": None, \"error\": exc.detail, \"meta\": None}\n    )\n```",
+    "key_takeaway": "Use nouns for resources, plural names, versioned URLs, and consistent response shapes — if every endpoint feels different, your API is badly designed.",
+    "try_it": "Add a PATCH endpoint for updating order status with validation that only allows valid transitions (pending → shipped → delivered).",
+    "complexity": "Varies by problem",
+    "practice_challenges": [
+      {
+        "title": "RESTful Resource Design",
+        "difficulty": "Easy",
+        "pattern": "REST Conventions & HTTP Methods",
+        "hint": "Map CRUD operations to POST/GET/PUT/DELETE with proper status codes",
+        "description": "Design and implement a RESTful API for a library system with /books, /authors, and /borrowers resources. Each endpoint must use appropriate HTTP methods, return correct status codes (201 for creation, 204 for deletion), and support pagination.",
+        "example_input": "POST /books with body: title=1984, author_id=1",
+        "example_output": "201 Created with Location header: /books/1"
+      },
+      {
+        "title": "API Rate Limiting Middleware",
+        "difficulty": "Easy",
+        "pattern": "Token Bucket Algorithm",
+        "hint": "Use a sliding window counter stored in Redis or in-memory",
+        "description": "Implement a rate limiting middleware that allows 100 requests per minute per API key. Return proper 429 Too Many Requests responses with Retry-After headers. Support both per-user and global rate limits.",
+        "example_input": "API key abc123 makes 101st request in 60 seconds",
+        "example_output": "429 Too Many Requests | Retry-After: 15"
+      },
+      {
+        "title": "API Versioning Strategy",
+        "difficulty": "Medium",
+        "pattern": "Version Negotiation & Backward Compatibility",
+        "hint": "Use URL path versioning (/v1/, /v2/) with a deprecation header for old versions",
+        "description": "Design an API versioning system that supports v1 and v2 simultaneously. V2 adds a metadata wrapper around responses. Implement a middleware that routes to the correct version handler and adds deprecation headers for v1 endpoints.",
+        "example_input": "GET /v1/users/1 vs GET /v2/users/1",
+        "example_output": "v1: {id:1,name:Alice} | v2: {data:{id:1,name:Alice},metadata:{version:2.0}}"
+      },
+      {
+        "title": "GraphQL Schema with Pagination",
+        "difficulty": "Medium",
+        "pattern": "Cursor-Based Pagination",
+        "hint": "Use relay-style cursor pagination with first, after, hasNextPage",
+        "description": "Implement a GraphQL schema for an e-commerce platform with products and categories. Support cursor-based pagination (Relay specification) for product listings. Include filtering by category, price range, and availability.",
+        "example_input": "query { products(first: 10, after: cursor123, filter: {category: electronics}) }",
+        "example_output": "Connection with edges, pageInfo { hasNextPage, endCursor }, and filtered products"
+      },
+      {
+        "title": "Webhook Delivery System with Retry",
+        "difficulty": "Hard",
+        "pattern": "Event-Driven Architecture & Exponential Backoff",
+        "hint": "Use a message queue with dead-letter handling and exponential backoff retries",
+        "description": "Build a webhook delivery system that sends HTTP POST requests to registered endpoints when events occur. Implement exponential backoff retry (up to 5 attempts), dead-letter queue for permanently failed deliveries, and signature verification using HMAC-SHA256.",
+        "example_input": "Event: order.created | Webhook URL: https://client.com/webhooks | Payload: {order_id: 42}",
+        "example_output": "Delivery with X-Webhook-Signature header; retry at 1s, 2s, 4s, 8s, 16s intervals"
+      }
+    ]
+  },
+  {
+    "subheading": "API Documentation with OpenAPI/Swagger",
+    "explanation": "An undocumented API is a product nobody can use. OpenAPI (formerly Swagger) is the industry standard for describing REST APIs in a machine-readable YAML/JSON format. It defines every endpoint, its parameters, request/response schemas, authentication methods, and error codes. Tools generate interactive docs, client SDKs, and test suites from this single source of truth.\n\nFastAPI auto-generates OpenAPI specs from your code — the type hints, Pydantic models, and decorators become the documentation. Visit `/docs` for Swagger UI (interactive try-it-out panels) or `/redoc` for ReDoc (clean reference docs). This means your docs are always in sync with your code — no manual updating required.",
+    "example": "```python\nfrom fastapi import FastAPI, Query, Path\nfrom pydantic import BaseModel, Field\nfrom typing import Optional\nfrom datetime import datetime\n\napp = FastAPI(\n    title=\"Task Manager API\",\n    description=\"A simple task management API built with FastAPI.\",\n    version=\"1.0.0\",\n    contact={\"name\": \"Dev Team\", \"email\": \"api@example.com\"},\n    license_info={\"name\": \"MIT\"}\n)\n\nclass TaskCreate(BaseModel):\n    title: str = Field(..., min_length=1, max_length=200, description=\"Task title\")\n    priority: str = Field(\"medium\", pattern=\"^(low|medium|high)$\", description=\"Priority level\")\n    due_date: Optional[datetime] = Field(None, description=\"Optional deadline\")\n\nclass TaskResponse(BaseModel):\n    id: int\n    title: str\n    priority: str\n    completed: bool\n    created_at: datetime\n\ntasks_db: dict[int, dict] = {}\n\n@app.post(\n    \"/tasks\",\n    response_model=TaskResponse,\n    status_code=201,\n    summary=\"Create a new task\",\n    description=\"Creates a task with a title, optional priority, and due date.\",\n    tags=[\"tasks\"]\n)\ndef create_task(task: TaskCreate):\n    \"\"\"Create a new task in the system.\"\"\"\n    task_id = len(tasks_db) + 1\n    record = {\n        \"id\": task_id,\n        \"title\": task.title,\n        \"priority\": task.priority,\n        \"completed\": False,\n        \"created_at\": datetime.now()\n    }\n    tasks_db[task_id] = record\n    return record\n\n@app.get(\n    \"/tasks/{task_id}\",\n    response_model=TaskResponse,\n    summary=\"Get a task by ID\",\n    tags=[\"tasks\"]\n)\ndef get_task(\n    task_id: int = Path(..., ge=1, description=\"The task ID\")\n):\n    \"\"\"Retrieve a single task by its ID.\"\"\"\n    if task_id not in tasks_db:\n        from fastapi import HTTPException\n        raise HTTPException(404, \"Task not found\")\n    return tasks_db[task_id]\n\n@app.get(\"/tasks\", response_model=list[TaskResponse], tags=[\"tasks\"])\ndef list_tasks(\n    completed: Optional[bool] = Query(None, description=\"Filter by status\"),\n    limit: int = Query(50, ge=1, le=200)\n):\n    \"\"\"List all tasks with optional filters.\"\"\"\n    results = list(tasks_db.values())\n    if completed is not None:\n        results = [t for t in results if t[\"completed\"] == completed]\n    return results[:limit]\n\n# Visit http://localhost:8000/docs for Swagger UI\n# Visit http://localhost:8000/redoc for ReDoc\n# Visit http://localhost:8000/openapi.json for raw spec\n```",
+    "key_takeaway": "FastAPI auto-generates OpenAPI docs from your type hints — your docs are always in sync because they ARE your code. Visit /docs to see the magic.",
+    "try_it": "Add `tags=[\"admin\"]` and a `deprecated=True` parameter to an endpoint, then check how it appears in the Swagger UI at `/docs`."
+  },
+  {
+    "subheading": "Practice Problems",
+    "explanation": "API interview problems test your ability to design, implement, and secure RESTful endpoints. The key patterns are: resource-oriented URL design, proper HTTP method and status code usage, authentication with JWT/OAuth2, pagination strategies, and rate limiting. Understanding these patterns separates developers who build usable APIs from those who just make endpoints work.\n\nThe most important skill is designing APIs that feel consistent across every endpoint. If one endpoint returns {data: [...]} and another returns {results: [...]}, developers will struggle. Pick conventions (naming, response shape, error format) and enforce them everywhere. Practice by designing APIs for real-world scenarios: e-commerce, social media, project management.",
+    "example": "",
+    "key_takeaway": "Design APIs with consistent resource naming, proper HTTP status codes, and standardized response shapes across every endpoint.",
+    "try_it": "Design a complete REST API for a library system with books, authors, and borrowing records.",
+    "complexity": "Varies by problem",
+    "practice_challenges": [
+      {
+        "title": "Design a User Registration API",
+        "difficulty": "Easy",
+        "pattern": "CRUD Operations & Status Codes",
+        "hint": "Use POST for creation, 201 Created on success, 409 Conflict for duplicate emails, and validate input with Pydantic.",
+        "description": "Build a user registration endpoint that validates email format, enforces unique emails, hashes passwords before storage, and returns proper HTTP status codes for each case.",
+        "example_input": "POST /users {\"name\": \"Alice\", \"email\": \"alice@example.com\", \"password\": \"secret123\"}",
+        "example_output": "201 Created: {\"id\": 1, \"name\": \"Alice\", \"email\": \"alice@example.com\"}"
+      },
+      {
+        "title": "Implement Cursor-Based Pagination",
+        "difficulty": "Easy",
+        "pattern": "Pagination",
+        "hint": "Return a cursor (encoded ID or timestamp) with each page. The client passes the cursor to get the next page. Include hasMore boolean.",
+        "description": "Add cursor-based pagination to a products endpoint. Support limit parameter and return products sorted by creation date with a next_cursor for fetching the next page.",
+        "example_input": "GET /products?limit=2&cursor=eyJpZCI6MTB9",
+        "example_output": "{\"products\": [...], \"next_cursor\": \"eyJpZCI6MTJ9\", \"has_more\": true}"
+      },
+      {
+        "title": "Build an API with JWT Authentication",
+        "difficulty": "Medium",
+        "pattern": "Authentication & Authorization",
+        "hint": "Implement login endpoint that returns JWT, then protect other endpoints with a dependency that decodes and validates the token.",
+        "description": "Create a login endpoint returning JWT tokens, protect a /profile endpoint that requires authentication, and implement role-based access where only admins can access /admin/users.",
+        "example_input": "POST /login {\"username\": \"admin\", \"password\": \"pass\"} then GET /profile with Bearer token",
+        "example_output": "Login returns {\"access_token\": \"eyJ...\", \"token_type\": \"bearer\"}. Profile returns user data. Admin-only returns 403 for non-admins."
+      },
+      {
+        "title": "Implement Rate Limiting with Sliding Window",
+        "difficulty": "Medium",
+        "pattern": "Rate Limiting & Middleware",
+        "hint": "Use a sliding window algorithm: store timestamps of requests per client, remove expired entries, and reject when count exceeds the limit.",
+        "description": "Build middleware that limits each client to 100 requests per minute using a sliding window algorithm. Return 429 status with Retry-After header when exceeded, and include X-RateLimit-Remaining in responses.",
+        "example_input": "Client sends 101 requests within 60 seconds",
+        "example_output": "First 100: 200 OK with X-RateLimit-Remaining header. 101st: 429 Too Many Requests with Retry-After: 60"
+      },
+      {
+        "title": "Design a REST API for an E-Commerce Platform",
+        "difficulty": "Hard",
+        "pattern": "API Design & Resource Relationships",
+        "hint": "Think about resource hierarchies: /users/{id}/orders, /orders/{id}/items. Include proper status codes for each operation, nested filtering, and consistent error responses.",
+        "description": "Design and implement a complete e-commerce API with users, products, shopping carts, and orders. Support nested resources, proper HTTP methods, versioned URLs (/v1/), pagination, and consistent error response format across all endpoints.",
+        "example_input": "POST /v1/users/1/cart/items {\"product_id\": 5, \"quantity\": 2} then POST /v1/users/1/orders",
+        "example_output": "Cart adds item with 200. Order creation returns 201 with order details including calculated total from cart items."
+      }
+    ]
+  }
+]

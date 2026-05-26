@@ -1,0 +1,161 @@
+[
+  {
+    "subheading": "Foundations of Modern Python Web APIs",
+    "explanation": "A RESTful API is like a well-organized restaurant kitchen — clients send orders (requests) through a fixed menu (endpoints), and the kitchen prepares exactly what was ordered and sends it back (responses). Python dominates API development because its type hints, async support, and rich ecosystem let developers build these kitchens faster and with fewer bugs.\n\nFastAPI stands out from Flask and Django REST by using Python type hints not just for documentation but for automatic request validation, serialization, and OpenAPI spec generation. Where Flask gives you flexibility and Django gives you structure, FastAPI gives you both speed and safety — it's built on Starlette (async) and Pydantic (validation), making it one of the fastest Python frameworks available.",
+    "example": "```python\n# main.py — Your first FastAPI application\nfrom fastapi import FastAPI\n\napp = FastAPI(\n    title=\"My First API\",\n    description=\"A simple FastAPI application\",\n    version=\"0.1.0\",\n)\n\n@app.get(\"/\")\nasync def root():\n    return {\"message\": \"Hello, World!\"}\n\n@app.get(\"/health\")\nasync def health_check():\n    return {\"status\": \"healthy\", \"version\": \"0.1.0\"}\n\n# Run with: uvicorn main:app --reload\n# Visit: http://127.0.0.1:8000\n# Docs: http://127.0.0.1:8000/docs\n# Alt:  http://127.0.0.1:8000/redoc\n```",
+    "key_takeaway": "FastAPI turns your Python type hints into automatic validation, documentation, and serialization — write less, get more.",
+    "try_it": "Add a third endpoint `/greet/{name}` that returns `{\"message\": \"Hello, {name}!\"}`. Then visit `/docs` to see it appear automatically in the Swagger UI."
+  },
+  {
+    "subheading": "Path Parameters, Query Strings & Request Bodies",
+    "explanation": "Think of an API endpoint like a mail delivery system. Path parameters are the street address — they identify *which* resource you want (`/users/42`). Query strings are delivery instructions — they modify *how* you want it (`?format=summary&lang=en`). Request bodies are the package contents — the actual data you're sending (a JSON object with user details).\n\nFastAPI uses Python type hints to declare all three. Path params are extracted from the URL, query params are detected from function arguments not in the path, and request bodies use Pydantic models. This means you get automatic validation, type conversion, and error messages — if someone sends `\"abc\"` where an `int` is expected, FastAPI rejects it with a clear 422 error before your code even runs.",
+    "example": "```python\nfrom fastapi import FastAPI, Query\nfrom pydantic import BaseModel\nfrom typing import Optional\n\napp = FastAPI()\n\n# Path parameter\n@app.get(\"/users/{user_id}\")\nasync def get_user(user_id: int):\n    return {\"user_id\": user_id, \"name\": f\"User {user_id}\"}\n\n# Query parameters with defaults and validation\n@app.get(\"/users/\")\nasync def list_users(\n    skip: int = Query(default=0, ge=0),\n    limit: int = Query(default=10, ge=1, le=100),\n    search: Optional[str] = None,\n):\n    return {\n        \"skip\": skip,\n        \"limit\": limit,\n        \"search\": search,\n        \"results\": [f\"user_{i}\" for i in range(skip, skip + limit)],\n    }\n\n# Request body with Pydantic model\nclass UserCreate(BaseModel):\n    name: str\n    email: str\n    age: int\n    bio: Optional[str] = None\n\n@app.post(\"/users/\", status_code=201)\nasync def create_user(user: UserCreate):\n    return {\"id\": 42, **user.model_dump()}\n```",
+    "key_takeaway": "FastAPI infers parameter sources from your function signature — path params come from the URL, query params from `?key=val`, and body from a Pydantic model.",
+    "try_it": "Add a `PUT /users/{user_id}` endpoint that accepts both a path parameter and a request body. Validate that `age` is between 0 and 150 using Pydantic's `Field`."
+  },
+  {
+    "subheading": "Pydantic Models & Data Validation",
+    "explanation": "Pydantic models are like bouncers at a nightclub — they check every piece of data at the door, reject anything that doesn't match the dress code (schema), and transform what they can into the right format. A string `\"42\"` for an `int` field? Converted. A missing required field? Rejected with a clear error listing exactly what's wrong.\n\nFastAPI uses Pydantic for both input validation (request bodies) and output serialization (response models). You define `BaseModel` subclasses with typed fields, validators, and defaults. Nested models handle complex structures, and `model_config` controls behaviors like forbidding extra fields. This dual role means your API contracts are enforced at both boundaries — nothing invalid gets in, nothing unexpected gets out.",
+    "example": "```python\nfrom fastapi import FastAPI\nfrom pydantic import BaseModel, Field, field_validator\nfrom typing import Optional\nfrom datetime import datetime\n\napp = FastAPI()\n\n\nclass Address(BaseModel):\n    street: str\n    city: str\n    zip_code: str = Field(pattern=r\"^\\d{5}(-\\d{4})?$\")\n\n\nclass User(BaseModel):\n    id: Optional[int] = None\n    name: str = Field(min_length=1, max_length=100)\n    email: str\n    age: int = Field(ge=0, le=150)\n    address: Optional[Address] = None\n    created_at: datetime = Field(default_factory=datetime.now)\n\n    @field_validator(\"email\")\n    @classmethod\n    def validate_email(cls, v: str) -> str:\n        if \"@\" not in v:\n            raise ValueError(\"Invalid email format\")\n        return v.lower()\n\n\n@app.post(\"/users/\", response_model=User)\nasync def create_user(user: User):\n    user.id = 1\n    return user\n\n# Pydantic validates on request AND serializes on response\n# Invalid data returns 422 with detailed error locations\n```",
+    "key_takeaway": "Pydantic models are your API's single source of truth — they validate input, serialize output, and generate docs from the same schema.",
+    "try_it": "Add a `@field_validator` for `name` that strips whitespace and capitalizes the first letter. Then add a `model_validator` that ensures `age >= 18` if `address` is provided."
+  },
+  {
+    "subheading": "Dependency Injection System",
+    "explanation": "Dependency injection is like a restaurant's supply chain. Instead of each chef going to the market themselves, ingredients are delivered to them — they just declare what they need. In FastAPI, your route handlers declare dependencies (database connections, config objects, auth checks), and the framework delivers resolved instances before calling your function.\n\nThis pattern decouples your business logic from infrastructure. Your route handler doesn't know *how* the database connection was created — it just receives one. Dependencies can be nested (dependencies can have dependencies), scoped per-request, and used as path-operation decorators for auth guards. The `yield` keyword enables cleanup logic (like closing connections) after the response is sent.",
+    "example": "```python\nfrom fastapi import FastAPI, Depends, Header, HTTPException\nfrom typing import Optional\nimport secrets\n\napp = FastAPI()\n\n\n# Simple dependency — acts as an auth guard\nasync def verify_api_key(x_api_key: str = Header()):\n    if not secrets.compare_digest(x_api_key, \"my-secret-key\"):\n        raise HTTPException(status_code=403, detail=\"Invalid API key\")\n    return {\"tier\": \"premium\"}\n\n\n# Dependency with cleanup using yield\nasync def get_db_session():\n    session = {\"id\": 1, \"connected\": True}  # Simulated DB session\n    try:\n        yield session\n    finally:\n        session[\"connected\"] = False  # Cleanup after response\n\n\n# Nested dependency — auth depends on api_key check\nasync def get_current_user(\n    auth: dict = Depends(verify_api_key),\n    db: dict = Depends(get_db_session),\n):\n    return {\"user\": \"alice\", \"tier\": auth[\"tier\"], \"db\": db}\n\n\n@app.get(\"/protected\")\nasync def protected_route(user: dict = Depends(get_current_user)):\n    return {\"message\": f\"Hello {user['user']}\", \"tier\": user[\"tier\"]}\n\n\n# Class-based dependency\nclass Pagination:\n    def __init__(self, skip: int = 0, limit: int = 10):\n        self.skip = skip\n        self.limit = limit\n\n\n@app.get(\"/items\")\nasync def list_items(pagination: Pagination = Depends()):\n    return {\"skip\": pagination.skip, \"limit\": pagination.limit}\n```",
+    "key_takeaway": "Declare what you need as function parameters — FastAPI's DI system resolves the entire dependency tree, including cleanup, before your handler runs.",
+    "try_it": "Create a `RateLimiter` dependency class that tracks request count per API key and raises HTTP 429 after 10 requests. Apply it to specific routes using `Depends()`."
+  },
+  {
+    "subheading": "Authentication, Security & OAuth2",
+    "explanation": "API authentication is like a building's security system. The front door (login endpoint) checks your ID and gives you a keycard (JWT token). Every room (protected endpoint) requires tapping that keycard — and different cards open different floors (roles/scopes). The keycard has an expiry, can't be forged, and carries your identity encoded inside.\n\nFastAPI provides `OAuth2PasswordBearer` for token-based flows, `Security` for scope-aware auth, and helpers for password hashing. JWTs (JSON Web Tokens) encode user claims in a signed, tamper-proof payload. The flow: user sends credentials, server validates and returns a JWT, client sends JWT in the `Authorization` header on every request, server decodes and verifies it. Never store passwords in plain text — use `bcrypt` or `passlib`.",
+    "example": "```python\nfrom fastapi import FastAPI, Depends, HTTPException, status\nfrom fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm\nfrom pydantic import BaseModel\nfrom datetime import datetime, timedelta, timezone\nfrom typing import Optional\nimport hashlib\nimport hmac\nimport json\nimport base64\n\napp = FastAPI()\n\nSECRET_KEY = \"your-secret-key-change-in-production\"\nALGORITHM = \"HS256\"\nACCESS_TOKEN_EXPIRE_MINUTES = 30\n\noauth2_scheme = OAuth2PasswordBearer(tokenUrl=\"token\")\n\n# Simulated user database\nfake_users = {\n    \"alice\": {\n        \"username\": \"alice\",\n        \"hashed_password\": hashlib.sha256(\"password123\".encode()).hexdigest(),\n        \"role\": \"admin\",\n    }\n}\n\n\ndef create_access_token(data: dict, expires_delta: Optional[timedelta] = None):\n    to_encode = data.copy()\n    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=15))\n    to_encode.update({\"exp\": expire.timestamp()})\n    # Simplified JWT — use python-jose in production\n    payload_b64 = base64.urlsafe_b64encode(json.dumps(to_encode).encode()).decode()\n    signature = hmac.new(SECRET_KEY.encode(), payload_b64.encode(), hashlib.sha256).hexdigest()\n    return f\"{payload_b64}.{signature}\"\n\n\nasync def get_current_user(token: str = Depends(oauth2_scheme)):\n    try:\n        payload_b64, signature = token.rsplit(\".\", 1)\n        expected = hmac.new(SECRET_KEY.encode(), payload_b64.encode(), hashlib.sha256).hexdigest()\n        if not hmac.compare_digest(signature, expected):\n            raise HTTPException(status_code=401, detail=\"Invalid token\")\n        payload = json.loads(base64.urlsafe_b64decode(payload_b64))\n        if datetime.now(timezone.utc).timestamp() > payload[\"exp\"]:\n            raise HTTPException(status_code=401, detail=\"Token expired\")\n        username = payload.get(\"sub\")\n        if username not in fake_users:\n            raise HTTPException(status_code=401, detail=\"User not found\")\n        return fake_users[username]\n    except (ValueError, KeyError):\n        raise HTTPException(status_code=401, detail=\"Invalid token\")\n\n\n@app.post(\"/token\")\nasync def login(form_data: OAuth2PasswordRequestForm = Depends()):\n    user = fake_users.get(form_data.username)\n    if not user:\n        raise HTTPException(status_code=401, detail=\"Invalid credentials\")\n    hashed = hashlib.sha256(form_data.password.encode()).hexdigest()\n    if not hmac.compare_digest(hashed, user[\"hashed_password\"]):\n        raise HTTPException(status_code=401, detail=\"Invalid credentials\")\n    token = create_access_token(\n        {\"sub\": user[\"username\"], \"role\": user[\"role\"]},\n        timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),\n    )\n    return {\"access_token\": token, \"token_type\": \"bearer\"}\n\n\n@app.get(\"/me\")\nasync def read_me(current_user: dict = Depends(get_current_user)):\n    return {\"username\": current_user[\"username\"], \"role\": current_user[\"role\"]}\n```",
+    "key_takeaway": "OAuth2 + JWT gives you stateless authentication — the token carries the user's identity and is verified cryptographically on every request without a server-side session store.",
+    "try_it": "Add a `role`-based guard dependency that checks `current_user[\"role\"] == \"admin\"` and apply it to a `DELETE /users/{user_id}` endpoint. Non-admins should get a 403 Forbidden."
+  },
+  {
+    "subheading": "Database Integration with SQLAlchemy & Async",
+    "explanation": "Connecting a database is like wiring a building's plumbing — you need pipes (connections), valves (sessions), and a blueprint (models). SQLAlchemy 2.0's async ORM provides all three: `create_async_engine` manages a connection pool, `AsyncSession` handles transactions, and declarative models map Python classes to database tables.\n\nFastAPI's dependency injection pairs perfectly with async sessions. Define a `get_db` dependency that yields a session per request, ensuring proper cleanup. Alembic manages schema migrations — when you change a model, it generates SQL to alter the database without losing data. Connection pooling means your app reuses database connections instead of creating a new one per request, dramatically improving performance under load.",
+    "example": "```python\nfrom fastapi import FastAPI, Depends, HTTPException\nfrom sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column\nfrom sqlalchemy import String, select\nfrom typing import AsyncGenerator\n\n# Database setup\nDATABASE_URL = \"sqlite+aiosqlite:///./app.db\"  # Use asyncpg for PostgreSQL\nengine = create_async_engine(DATABASE_URL, echo=True)\nasync_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)\n\n\nclass Base(DeclarativeBase):\n    pass\n\n\nclass User(Base):\n    __tablename__ = \"users\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    name: Mapped[str] = mapped_column(String(100))\n    email: Mapped[str] = mapped_column(String(255), unique=True)\n\n\n# Dependency for database sessions\nasync def get_db() -> AsyncGenerator[AsyncSession, None]:\n    async with async_session() as session:\n        try:\n            yield session\n            await session.commit()\n        except Exception:\n            await session.rollback()\n            raise\n\n\napp = FastAPI()\n\n\n@app.on_event(\"startup\")\nasync def startup():\n    async with engine.begin() as conn:\n        await conn.run_sync(Base.metadata.create_all)\n\n\n@app.post(\"/users/\")\nasync def create_user(name: str, email: str, db: AsyncSession = Depends(get_db)):\n    user = User(name=name, email=email)\n    db.add(user)\n    await db.flush()\n    await db.refresh(user)\n    return {\"id\": user.id, \"name\": user.name, \"email\": user.email}\n\n\n@app.get(\"/users/{user_id}\")\nasync def get_user(user_id: int, db: AsyncSession = Depends(get_db)):\n    result = await db.execute(select(User).where(User.id == user_id))\n    user = result.scalar_one_or_none()\n    if not user:\n        raise HTTPException(status_code=404, detail=\"User not found\")\n    return {\"id\": user.id, \"name\": user.name, \"email\": user.email}\n\n\n@app.get(\"/users/\")\nasync def list_users(skip: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db)):\n    result = await db.execute(select(User).offset(skip).limit(limit))\n    users = result.scalars().all()\n    return [{\"id\": u.id, \"name\": u.name, \"email\": u.email} for u in users]\n```",
+    "key_takeaway": "Use `async_session` with a `yield`-based dependency so every request gets its own session with automatic commit/rollback — the database connection pool handles the rest.",
+    "try_it": "Add an `update_user` PUT endpoint that modifies an existing user's `name` and `email`. Handle the case where the user doesn't exist with a 404."
+  },
+  {
+    "subheading": "Middleware, CORS, Background Tasks & Error Handling",
+    "explanation": "Middleware is like a security checkpoint — every request passes through it before reaching your handler, and every response passes through it on the way out. You can log requests, measure timing, rate-limit abusive clients, or add security headers — all without touching individual endpoints.\n\nCORS (Cross-Origin Resource Sharing) controls which frontend domains can call your API. Without it, browsers block requests from `localhost:3000` (React) to `localhost:8000` (FastAPI). Background tasks let you offload slow operations (sending emails, generating reports) so the client gets an immediate response. Exception handlers catch errors and return consistent JSON error responses instead of stack traces.",
+    "example": "```python\nfrom fastapi import FastAPI, Request, BackgroundTasks, HTTPException\nfrom fastapi.middleware.cors import CORSMiddleware\nfrom fastapi.responses import JSONResponse\nfrom starlette.middleware.base import BaseHTTPMiddleware\nimport time\nimport logging\n\nlogging.basicConfig(level=logging.INFO)\nlogger = logging.getLogger(__name__)\n\napp = FastAPI()\n\n\n# CORS middleware — allow frontend at localhost:3000\napp.add_middleware(\n    CORSMiddleware,\n    allow_origins=[\"http://localhost:3000\", \"https://myapp.com\"],\n    allow_credentials=True,\n    allow_methods=[\"*\"],\n    allow_headers=[\"*\"],\n)\n\n\n# Custom middleware — request timing\nclass TimingMiddleware(BaseHTTPMiddleware):\n    async def dispatch(self, request: Request, call_next):\n        start = time.perf_counter()\n        response = await call_next(request)\n        duration = time.perf_counter() - start\n        response.headers[\"X-Process-Time\"] = f\"{duration:.4f}\"\n        logger.info(f\"{request.method} {request.url.path} took {duration:.4f}s\")\n        return response\n\n\napp.add_middleware(TimingMiddleware)\n\n\n# Custom exception handler\n@app.exception_handler(HTTPException)\nasync def custom_http_exception(request: Request, exc: HTTPException):\n    return JSONResponse(\n        status_code=exc.status_code,\n        content={\n            \"error\": True,\n            \"message\": exc.detail,\n            \"path\": str(request.url.path),\n            \"status_code\": exc.status_code,\n        },\n    )\n\n\n# Background task function\nasync def send_welcome_email(email: str, name: str):\n    logger.info(f\"Sending welcome email to {email} for {name}\")\n    # In production: await email_client.send(...)\n\n\n@app.post(\"/users/\", status_code=201)\nasync def create_user(\n    name: str, email: str, background_tasks: BackgroundTasks\n):\n    user = {\"id\": 1, \"name\": name, \"email\": email}\n    background_tasks.add_task(send_welcome_email, email, name)\n    return user\n\n\n@app.get(\"/items/{item_id}\")\nasync def get_item(item_id: int):\n    if item_id < 1:\n        raise HTTPException(status_code=400, detail=\"Item ID must be positive\")\n    if item_id > 100:\n        raise HTTPException(status_code=404, detail=\"Item not found\")\n    return {\"id\": item_id, \"name\": f\"Item {item_id}\"}\n```",
+    "key_takeaway": "Middleware intercepts every request/response globally, CORS controls cross-origin access, background tasks decouple slow work from response time, and exception handlers return clean JSON errors.",
+    "try_it": "Add a `RateLimitMiddleware` that tracks requests per IP in a dictionary and returns 429 Too Many Requests if an IP exceeds 30 requests per minute."
+  },
+  {
+    "subheading": "Testing, Deployment & Production Best Practices",
+    "explanation": "Testing an API is like rehearsing a play before opening night — you want every scene (endpoint) to work perfectly before real audiences (users) arrive. FastAPI's `TestClient` lets you test endpoints without starting a real server, making tests fast and deterministic. Pytest fixtures handle setup/teardown for database state, and mocking isolates external services.\n\nDeployment is about taking your development setup and hardening it for production. Docker containers ensure consistency across environments. Gunicorn with Uvicorn workers handles concurrent requests across CPU cores. Nginx sits in front as a reverse proxy handling SSL termination, static files, and load balancing. The key difference from development: production uses multiple workers, disables auto-reload, and uses environment variables for secrets instead of hardcoded values.",
+    "example": "```python\n# tests/test_main.py — Comprehensive API tests\nimport pytest\nfrom httpx import AsyncClient, ASGITransport\nfrom main import app  # Your FastAPI app\n\n\n@pytest.fixture\nasync def client():\n    transport = ASGITransport(app=app)\n    async with AsyncClient(transport=transport, base_url=\"http://test\") as ac:\n        yield ac\n\n\n@pytest.mark.anyio\nasync def test_root(client):\n    response = await client.get(\"/\")\n    assert response.status_code == 200\n    assert response.json() == {\"message\": \"Hello, World!\"}\n\n\n@pytest.mark.anyio\nasync def test_create_user(client):\n    response = await client.post(\n        \"/users/\",\n        json={\"name\": \"Alice\", \"email\": \"alice@example.com\", \"age\": 30},\n    )\n    assert response.status_code == 201\n    data = response.json()\n    assert data[\"name\"] == \"Alice\"\n    assert \"id\" in data\n\n\n@pytest.mark.anyio\nasync def test_create_user_invalid(client):\n    response = await client.post(\n        \"/users/\",\n        json={\"name\": \"\", \"email\": \"not-an-email\", \"age\": -1},\n    )\n    assert response.status_code == 422  # Validation error\n\n\n@pytest.mark.anyio\nasync def test_get_user_not_found(client):\n    response = await client.get(\"/users/99999\")\n    assert response.status_code == 404\n```\n\n```dockerfile\n# Dockerfile — Production-ready container\nFROM python:3.12-slim\n\nWORKDIR /app\nCOPY requirements.txt .\nRUN pip install --no-cache-dir -r requirements.txt\n\nCOPY . .\n\n# Run with Gunicorn managing Uvicorn workers\nCMD [\"gunicorn\", \"main:app\",\n     \"--worker-class\", \"uvicorn.workers.UvicornWorker\",\n     \"--workers\", \"4\",\n     \"--bind\", \"0.0.0.0:8000\",\n     \"--timeout\", \"120\"]\n```\n\n```bash\n# Build and run\ndocker build -t myapi .\ndocker run -p 8000:8000 -e DATABASE_URL=postgresql://... myapi\n```",
+    "key_takeaway": "Test with `AsyncClient` + pytest for deterministic coverage, deploy with Docker + Gunicorn + Uvicorn workers for production-grade concurrency.",
+    "try_it": "Write a test that mocks an external API call (e.g., an email service) using `unittest.mock.patch` and verifies your endpoint still returns 200 when the external service is down.",
+    "complexity": "Varies by problem",
+    "practice_challenges": [
+      {
+        "title": "Dependency Injection Chain",
+        "difficulty": "Easy",
+        "pattern": "FastAPI Dependencies",
+        "hint": "Use Depends() for database sessions, authentication, and pagination",
+        "description": "Build a FastAPI endpoint that uses chained dependencies: one for database session, one for current user extraction from JWT, and one for pagination parameters (offset, limit).",
+        "example_input": "GET /api/items?offset=10&limit=20 with valid JWT",
+        "example_output": "200 OK with paginated items for authenticated user"
+      },
+      {
+        "title": "Pydantic Validation with Custom Validators",
+        "difficulty": "Easy",
+        "pattern": "Pydantic Models",
+        "hint": "Use @field_validator and @model_validator for cross-field validation",
+        "description": "Create a Pydantic model for a user registration endpoint that validates email format, password strength (8+ chars, mixed case, digit, special char), confirms password match, and normalizes the username to lowercase.",
+        "example_input": "email: USER@Example.COM, password: Abc123!@, confirm: Abc123!@",
+        "example_output": "Validated data with normalized email and username"
+      },
+      {
+        "title": "Background Tasks with Progress Tracking",
+        "difficulty": "Medium",
+        "pattern": "BackgroundTasks + SSE",
+        "hint": "Use BackgroundTasks for async work, SSE endpoint to stream progress updates",
+        "description": "Build an endpoint that accepts a CSV file upload, processes it in the background (validate rows, import to DB), and provides a Server-Sent Events endpoint that streams real-time progress updates to the client.",
+        "example_input": "POST /api/import with 10K row CSV file",
+        "example_output": "202 Accepted, SSE stream shows processed 5000/10000 rows (50%)"
+      },
+      {
+        "title": "Multi-Database Transaction Manager",
+        "difficulty": "Medium",
+        "pattern": "Async SQLAlchemy + Context Manager",
+        "hint": "Use async session with begin(), implement a context manager for transaction scope",
+        "description": "Implement a transaction manager that coordinates writes across two databases (PostgreSQL for users, MongoDB for logs) with saga pattern: if either fails, both roll back. Include retry logic.",
+        "example_input": "Create user + audit log in single transaction",
+        "example_output": "Both operations succeed atomically, or both roll back on failure"
+      },
+      {
+        "title": "GraphQL plus REST Hybrid API",
+        "difficulty": "Hard",
+        "pattern": "Strawberry GraphQL + FastAPI",
+        "hint": "Mount GraphQL app alongside REST endpoints, share database session via dependency",
+        "description": "Build an API that exposes both REST and GraphQL endpoints. REST for simple CRUD, GraphQL for complex queries with nested relations, filtering, and pagination. Share the same database layer and authentication.",
+        "example_input": "GraphQL query: { user(id: 1) { name, posts { title, comments { body } } } }",
+        "example_output": "Nested user data with posts and comments in single query"
+      }
+    ]
+  },
+  {
+    "subheading": "Practice Problems",
+    "explanation": "FastAPI interviews test your ability to design clean API contracts with Pydantic, wire up dependency injection for auth and database access, and handle async workloads efficiently. The most common challenge is building a complete CRUD API with proper validation, error handling, and authentication from scratch.",
+    "example": "",
+    "key_takeaway": "Master Pydantic models for validation, Depends() for reusable auth and DB logic, and TestClient for integration testing.",
+    "try_it": "Build a simple task manager API with auth before checking the solutions below",
+    "complexity": "Varies by problem",
+    "practice_challenges": [
+      {
+        "title": "Validated User Registration with Pydantic",
+        "difficulty": "Easy",
+        "pattern": "Pydantic Model Validation",
+        "hint": "Use BaseModel with Field validators for email format, password strength, and age range",
+        "description": "Create a POST /register endpoint that accepts a Pydantic model with name, email, password, and age. Validate that email contains @, password is at least 8 characters, and age is between 13 and 120. Return the user data without the password field using response_model.",
+        "example_input": "POST /register {\"name\": \"Alice\", \"email\": \"alice@example.com\", \"password\": \"secret123\", \"age\": 25}",
+        "example_output": "201 Created: {\"name\": \"Alice\", \"email\": \"alice@example.com\", \"age\": 25}"
+      },
+      {
+        "title": "JWT Authentication with Login Endpoint",
+        "difficulty": "Easy",
+        "pattern": "OAuth2 Password Flow",
+        "hint": "Use OAuth2PasswordBearer and OAuth2PasswordRequestForm for token generation",
+        "description": "Implement POST /token that accepts username and password via form data, validates against a fake user store, and returns a JWT access token. Add a GET /me endpoint protected by a Depends() that decodes the token and returns the current user.",
+        "example_input": "POST /token with form data username=alice, password=secret123",
+        "example_output": "200 OK: {\"access_token\": \"eyJhbG...\", \"token_type\": \"bearer\"}"
+      },
+      {
+        "title": "CRUD API with SQLAlchemy Async Sessions",
+        "difficulty": "Medium",
+        "pattern": "Dependency-Injected Database Sessions",
+        "hint": "Create a get_db dependency that yields an AsyncSession with commit/rollback in a try/finally",
+        "description": "Build a full CRUD API for a Book model (id, title, author, isbn, published_year) using SQLAlchemy 2.0 async ORM. Use a yield-based dependency for session management. Implement GET /books with pagination (skip/limit query params), GET /books/{id}, POST /books, PUT /books/{id}, and DELETE /books/{id}. Handle 404 for missing books.",
+        "example_input": "POST /books {\"title\": \"1984\", \"author\": \"Orwell\", \"isbn\": \"978-0451524935\", \"published_year\": 1949}",
+        "example_output": "201 Created: {\"id\": 1, \"title\": \"1984\", \"author\": \"Orwell\", \"isbn\": \"978-0451524935\", \"published_year\": 1949}"
+      },
+      {
+        "title": "File Upload with Background Processing",
+        "difficulty": "Medium",
+        "pattern": "UploadFile + BackgroundTasks",
+        "hint": "Use UploadFile for the endpoint parameter and BackgroundTasks to process the file after returning a response",
+        "description": "Create a POST /upload endpoint that accepts an image file (PNG/JPG) via UploadFile, validates the content type, saves it to disk, and uses BackgroundTasks to generate a thumbnail. Return the file metadata immediately while thumbnail generation happens in the background. Add a GET /upload/status/{filename} endpoint to check if the thumbnail was created.",
+        "example_input": "POST /upload with multipart file data (image.png, 2MB)",
+        "example_output": "200 OK: {\"filename\": \"image.png\", \"size\": 2048576, \"thumbnail_pending\": true}"
+      },
+      {
+        "title": "API Gateway with Rate Limiting and Role-Based Access",
+        "difficulty": "Hard",
+        "pattern": "Middleware + Dependency Chains",
+        "hint": "Combine a custom middleware for rate limiting with a dependency chain: verify_token -> get_user_role -> require_role",
+        "description": "Build an API gateway with three layers: (1) RateLimitMiddleware that tracks requests per IP and returns 429 after 60 requests/minute, (2) JWT authentication via a verify_token dependency, (3) role-based access control with require_role('admin') and require_role('user') dependencies. Create three endpoints: GET /admin/users (admin only), GET /profile (any authenticated user), GET /public (no auth required). The middleware should log each request's method, path, status code, and processing time.",
+        "example_input": "GET /admin/users with valid admin JWT token",
+        "example_output": "200 OK: {\"users\": [...]} with X-Process-Time and X-RateLimit-Remaining headers"
+      }
+    ]
+  }
+]
