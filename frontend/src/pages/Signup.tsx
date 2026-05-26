@@ -1,22 +1,22 @@
 import { useState, FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import LogoMark from '../components/LogoMark'
 import { isValidEmail, isValidPassword, isValidName, sanitizeText } from '../utils/sanitize'
-import CharacterAssistant from '../components/CharacterAssistant'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { AlertCircle, Loader2 } from 'lucide-react'
 
 const SHOWCASE_CHIPS = [
-    { label: '📊 Readiness Score', cls: 'blue' },
-    { label: '🎯 Role Matching', cls: 'cyan' },
-    { label: '📈 Skill Graphs', cls: 'purple' },
-    { label: '🤖 ML-Powered', cls: 'green' },
-    { label: '⚡ Edge AI', cls: 'orange' },
-]
-
-const SHOWCASE_STATS = [
-    { val: '15min', lbl: 'Daily Plans' },
-    { val: '100%', lbl: 'On Device' },
-    { val: '₹0', lbl: 'Free Tier' },
+    { label: 'Readiness Score', color: 'bg-primary/10 text-primary' },
+    { label: 'Role Matching', color: 'bg-violet/10 text-violet' },
+    { label: 'Skill Graphs', color: 'bg-secondary/50 text-secondary-foreground' },
+    { label: 'ML-Powered', color: 'bg-success/10 text-success' },
+    { label: 'Edge AI', color: 'bg-amber/10 text-amber' },
 ]
 
 export default function Signup() {
@@ -29,181 +29,143 @@ export default function Signup() {
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
-    const [charState, setCharState] = useState<'idle' | 'typing' | 'loading' | 'error' | 'success'>('idle')
 
     const handle = async (e: FormEvent) => {
         e.preventDefault()
-        if (!name || !email || !password) { setCharState('error'); setError('Please fill all required fields.'); return }
+        if (!name || !email || !password) { setError('Please fill all required fields.'); return }
         const nameCheck = isValidName(name)
-        if (!nameCheck.valid) { setCharState('error'); setError(nameCheck.message); return }
-        if (!isValidEmail(email)) { setCharState('error'); setError('Please enter a valid email address.'); return }
+        if (!nameCheck.valid) { setError(nameCheck.message); return }
+        if (!isValidEmail(email)) { setError('Please enter a valid email address.'); return }
         const pwCheck = isValidPassword(password)
-        if (!pwCheck.valid) { setCharState('error'); setError(pwCheck.message); return }
+        if (!pwCheck.valid) { setError(pwCheck.message); return }
 
-        setLoading(true); setError(''); setCharState('loading')
+        setLoading(true); setError('')
         try {
             await signup(sanitizeText(name.trim()), email.trim(), password)
-            setCharState('success')
-            setTimeout(() => navigate('/dashboard'), 1500)
+            setTimeout(() => navigate('/dashboard'), 1000)
         } catch (err: unknown) {
             if (err instanceof Error && err.message === 'VerificationEmailSent') {
-                setCharState('success')
-                setError('Registration successful! Please check your email inbox to verify your account before logging in.')
+                setError('Registration successful! Please check your email to verify your account.')
                 setTimeout(() => navigate('/login'), 5000)
             } else {
-                setCharState('error')
                 setError(err instanceof Error ? err.message : 'Signup failed. Please try again.')
             }
         } finally { setLoading(false) }
     }
 
-    const onTyping = () => { if (charState === 'idle' || charState === 'error') setCharState('typing') }
-
     return (
-        <div className="signup-v2">
-            {/* ── Animated background (full page) ── */}
-            <div className="gradient-mesh" aria-hidden="true">
-                <div className="gradient-mesh__orb gradient-mesh__orb--1" />
-                <div className="gradient-mesh__orb gradient-mesh__orb--2" />
-                <div className="gradient-mesh__orb gradient-mesh__orb--3" />
+        <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-background p-4">
+            {/* Gradient mesh background */}
+            <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+                <div className="absolute -top-1/4 -right-1/4 h-[600px] w-[600px] rounded-full bg-primary/5 blur-[120px]" />
+                <div className="absolute -left-1/4 -bottom-1/4 h-[500px] w-[500px] rounded-full bg-violet/5 blur-[120px]" />
             </div>
 
-            {/* ── LEFT: Showcase panel ── */}
-            <div className="signup-v2__showcase">
-                {/* Orbital animation rings */}
-                <div className="signup-v2__orbital" aria-hidden="true">
-                    <div className="signup-v2__orbit signup-v2__orbit--1">
-                        <div className="signup-v2__orbit-dot" />
-                    </div>
-                    <div className="signup-v2__orbit signup-v2__orbit--2">
-                        <div className="signup-v2__orbit-dot" />
-                    </div>
-                    <div className="signup-v2__orbit signup-v2__orbit--3">
-                        <div className="signup-v2__orbit-dot" />
-                    </div>
-                </div>
-
-                <div className="signup-v2__showcase-content">
-                    {/* Brand */}
-                    <div className="auth-v2__logo" style={{ justifyContent: 'center', marginBottom: 32 }}>
-                        <div className="auth-v2__logo-icon"><LogoMark size={30} /></div>
-                        <div className="auth-v2__logo-text">
-                            <div className="auth-v2__logo-name">CampusSync</div>
-                            <div className="auth-v2__logo-tag">Edge AI</div>
-                        </div>
-                    </div>
-
-                    {/* Skill chips */}
-                    <div className="skill-chips" style={{ marginBottom: 32 }}>
-                        {SHOWCASE_CHIPS.map((c, i) => (
-                            <span key={i} className={`skill-chip skill-chip--${c.cls}`}>{c.label}</span>
-                        ))}
-                    </div>
-
-                    {/* Tagline */}
-                    <div className="signup-v2__tagline">
-                        <h2>Start your <span className="gradient-text">AI-powered</span><br />placement journey</h2>
-                        <p>Upload your resume. Get a job readiness score in seconds. Know exactly what to improve.</p>
-                    </div>
-
-                    {/* Mini stats */}
-                    <div className="auth-stats" style={{ marginTop: 32 }}>
-                        {SHOWCASE_STATS.map((s, i) => (
-                            <div key={i} className="auth-stat">
-                                <div className="auth-stat__val">{s.val}</div>
-                                <div className="auth-stat__lbl">{s.lbl}</div>
+            <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="relative w-full max-w-sm"
+            >
+                <Card className="border-border/50 shadow-lg">
+                    <CardHeader className="items-center gap-3 pb-2">
+                        <div className="flex items-center gap-3">
+                            <LogoMark size={28} />
+                            <div>
+                                <div className="font-heading text-sm font-bold tracking-tight text-foreground">CampusSync</div>
+                                <div className="text-[10px] font-semibold uppercase tracking-widest text-primary">Edge AI</div>
                             </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            {/* ── RIGHT: Form panel ── */}
-            <div className="signup-v2__form-side">
-                <div className="signup-v2__form-box">
-                    <CharacterAssistant state={charState} message={error && charState === 'error' ? error : undefined} />
-
-                    <h1>Create account 🚀</h1>
-                    <div className="signup-v2__form-sub">Your AI career coach is ready. Let's get started.</div>
-
-                    {error && <div className="auth-v2__error">{error}</div>}
-
-                    <form onSubmit={handle}>
-                        <div className="auth-field">
-                            <label htmlFor="signup-name">Full Name *</label>
-                            <input
-                                id="signup-name"
-                                type="text" placeholder="Ganesh Kumar"
-                                value={name} onChange={e => setName(e.target.value)}
-                                autoComplete="name" onFocus={onTyping}
-                            />
                         </div>
-                        <div className="auth-field">
-                            <label htmlFor="signup-email">College Email *</label>
-                            <input
-                                id="signup-email"
-                                type="email" placeholder="you@college.edu"
-                                value={email} onChange={e => setEmail(e.target.value)}
-                                autoComplete="email" onFocus={onTyping}
-                            />
+                        <div className="flex flex-wrap justify-center gap-1.5 pt-2">
+                            {SHOWCASE_CHIPS.map(c => (
+                                <Badge key={c.label} variant="outline" className={`${c.color} text-[10px] font-medium`}>
+                                    {c.label}
+                                </Badge>
+                            ))}
                         </div>
-                        <div className="auth-field">
-                            <label htmlFor="signup-college">College Name</label>
-                            <input
-                                id="signup-college"
-                                type="text" placeholder="Anna University"
-                                value={college} onChange={e => setCollege(e.target.value)}
-                                onFocus={onTyping}
-                            />
-                        </div>
-                        <div className="auth-field">
-                            <label htmlFor="signup-password">Password *</label>
-                            <input
-                                id="signup-password"
-                                type="password" placeholder="Min 6 characters"
-                                value={password} onChange={e => setPassword(e.target.value)}
-                                autoComplete="new-password" onFocus={onTyping}
-                            />
+                    </CardHeader>
+
+                    <CardContent className="space-y-5">
+                        <div className="text-center">
+                            <h1 className="font-heading text-xl font-bold tracking-tight">Create account</h1>
+                            <p className="mt-1 text-sm text-muted-foreground">Your AI career coach is ready. Let's get started.</p>
                         </div>
 
-                        <button type="submit" className="auth-btn" disabled={loading}>
-                            {loading ? '⏳ Creating account...' : '→ Create Free Account'}
-                        </button>
-                    </form>
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -4 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+                            >
+                                <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                                <span>{error}</span>
+                            </motion.div>
+                        )}
 
-                    <div className="auth-divider">or</div>
+                        <form onSubmit={handle} className="space-y-4">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="signup-name" className="text-xs font-medium">Full Name *</Label>
+                                <Input id="signup-name" type="text" placeholder="Ganesh Kumar" value={name} onChange={e => setName(e.target.value)} autoComplete="name" className="h-9" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="signup-email" className="text-xs font-medium">College Email *</Label>
+                                <Input id="signup-email" type="email" placeholder="you@college.edu" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" className="h-9" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="signup-college" className="text-xs font-medium">College Name</Label>
+                                <Input id="signup-college" type="text" placeholder="Anna University" value={college} onChange={e => setCollege(e.target.value)} className="h-9" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="signup-password" className="text-xs font-medium">Password *</Label>
+                                <Input id="signup-password" type="password" placeholder="Min 6 characters" value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" className="h-9" />
+                            </div>
 
-                    <button type="button"
-                        className="google-btn"
-                        onClick={async () => {
-                            try {
-                                await loginWithGoogle()
-                            } catch (err) {
-                                setCharState('error')
-                                setError(err instanceof Error ? err.message : 'Google sign-up failed.')
-                            }
-                        }}
-                    >
-                        <svg width="16" height="16" viewBox="0 0 48 48">
-                            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
-                            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
-                            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
-                            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
-                        </svg>
-                        Sign up with Google
-                    </button>
+                            <Button type="submit" className="w-full h-9" disabled={loading}>
+                                {loading ? (
+                                    <><Loader2 className="size-4 animate-spin" /> Creating account...</>
+                                ) : 'Create Free Account'}
+                            </Button>
+                        </form>
 
-                    <div style={{ marginTop: 12, fontSize: 12, color: '#9E9A94', textAlign: 'center', lineHeight: 1.5 }}>
-                        By signing up, you agree to our <Link to="/terms" style={{ color: 'var(--blue)', textDecoration: 'underline' }}>Terms of Service</Link> & <Link to="/privacy" style={{ color: 'var(--blue)', textDecoration: 'underline' }}>Privacy Policy</Link>.<br />
-                        Your resume data never leaves your device. 🔒
-                    </div>
+                        <div className="relative flex items-center gap-2">
+                            <div className="flex-1 border-t border-border" />
+                            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">or</span>
+                            <div className="flex-1 border-t border-border" />
+                        </div>
 
-                    <div className="auth-v2__footer" style={{ marginTop: 16 }}>
-                        Already have an account? <Link to="/login">Sign in</Link>
-                    </div>
-                    <Link to="/" className="auth-v2__back">← Back to homepage</Link>
-                </div>
-            </div>
+                        <Button type="button" variant="outline" className="w-full h-9 gap-2.5" onClick={async () => {
+                            try { await loginWithGoogle() }
+                            catch (err) { setError(err instanceof Error ? err.message : 'Google sign-up failed.') }
+                        }}>
+                            <svg width="14" height="14" viewBox="0 0 48 48">
+                                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+                            </svg>
+                            Sign up with Google
+                        </Button>
+
+                        <div className="text-center text-[11px] leading-relaxed text-muted-foreground">
+                            By signing up, you agree to our{' '}
+                            <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>
+                            {' '}&{' '}
+                            <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
+                        </div>
+
+                        <div className="text-center text-sm text-muted-foreground">
+                            Already have an account?{' '}
+                            <Link to="/login" className="font-medium text-primary hover:underline">Sign in</Link>
+                        </div>
+
+                        <div className="text-center">
+                            <Link to="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                                ← Back to homepage
+                            </Link>
+                        </div>
+                    </CardContent>
+                </Card>
+            </motion.div>
         </div>
     )
 }

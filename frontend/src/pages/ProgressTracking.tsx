@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useResume } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
@@ -6,11 +6,17 @@ import { loadHistory } from '../utils/history'
 import {
     Star, Award, Zap, Trophy, TrendingUp, Target,
     ChevronRight, BookOpen, Flame, Shield, Cpu,
-    BarChart2, Lock, Sparkles, CheckCircle, Brain,
+    BarChart2, Lock, CheckCircle, Brain, Sparkles,
 } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
+import { Separator } from '@/components/ui/separator'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { motion, AnimatePresence } from 'framer-motion'
 import StudyHub from '../components/StudyHub'
 
-/* ── Skill → category resolution (same source-of-truth as scoring) ────── */
 const CATEGORY_MAP: Record<string, { label: string; color: string; icon: React.ComponentType<any> }> = {
     lang:   { label: 'Languages',      color: '#3b82f6', icon: Cpu },
     frame:  { label: 'Frameworks',     color: '#22d3ee', icon: Sparkles },
@@ -36,33 +42,25 @@ function resolveCategory(skill: string): string {
     return 'other'
 }
 
-/* ── XP constants - each action has a clear, documented XP value ──────── */
-const XP_PER_SKILL_MASTERED = 50   // 50 XP for each skill mastered via study
-const XP_FOR_RESUME_UPLOAD  = 100  // 100 XP for uploading and analyzing a resume
-const XP_PER_HISTORY_ENTRY  = 20   // 20 XP for each re-analysis (shows iteration)
-const XP_PER_COMPLETED_TASK = 10   // 10 XP for each improvement plan task completed
+const XP_PER_SKILL_MASTERED = 50
+const XP_FOR_RESUME_UPLOAD  = 100
+const XP_PER_HISTORY_ENTRY  = 20
+const XP_PER_COMPLETED_TASK = 10
+const XP_PER_LEVEL = 150
 
-const XP_PER_LEVEL = 150           // fixed XP per level (level 1 = 0-149, level 2 = 150-299, etc.)
-
-/* ── Milestone definitions - thresholds based on scoring.json readiness ── */
 const MILESTONE_DEFS = [
-    { icon: Star,   label: 'Resume Insight',   test: (s: number, a: boolean) => a,        sub: 'Profile analyzed' },
-    { icon: Award,  label: 'Growing Talent',    test: (s: number) => s >= 50,              sub: '50% readiness' },
-    { icon: Zap,    label: 'Placement Ready',   test: (s: number) => s >= 75,              sub: '75% readiness' },
-    { icon: Trophy, label: 'Industry Elite',    test: (s: number) => s >= 90,              sub: '90% readiness' },
+    { icon: Star,   label: 'Resume Insight',   test: (_s: number, a: boolean) => a, sub: 'Profile analyzed' },
+    { icon: Award,  label: 'Growing Talent',    test: (s: number) => s >= 50,       sub: '50% readiness' },
+    { icon: Zap,    label: 'Placement Ready',   test: (s: number) => s >= 75,       sub: '75% readiness' },
+    { icon: Trophy, label: 'Industry Elite',    test: (s: number) => s >= 90,       sub: '90% readiness' },
 ]
 
-/* ── Streak calculation from actual history dates ─────────────────────── */
 function computeStreak(hist: { label: string }[]): number {
-    if (hist.length === 0) return 0
-    // labels are like "Mar 1", "Feb 28" - we count how many unique dates exist
-    // from the end that are sequential. Since the exact date parse can be fragile,
-    // just count consecutive entries from the tail (each entry = 1 day max).
-    // History already de-duplicates same-day entries, so length = # distinct days with activity.
     return hist.length
 }
 
-/* ════════════════════════════════════════════════════════════════════ */
+const fadeUp = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } }
+
 export default function ProgressTracking() {
     const navigate = useNavigate()
     const { analysis, masteredSkills, markSkillMastered, completedTasks } = useResume()
@@ -73,14 +71,11 @@ export default function ProgressTracking() {
     const score = analysis?.final_score ?? 0
     const hist = loadHistory(user?.email)
 
-    /* ── Build the FULL skill universe from the user's actual analysis ── */
-    // All skills the user's role cares about = detected + missing core + missing optional
     const roleSkills = useMemo(() => {
         if (!analysis) return { all: [] as string[], detected: new Set<string>(), mastered: new Set<string>() }
         const detected = new Set((analysis.detected_skills ?? []).map(s => s.toLowerCase()))
         const mastered = new Set(masteredSkills.map(s => s.toLowerCase()))
         const allSet = new Set<string>()
-        // Add everything the analysis mentions
         for (const s of analysis.detected_skills ?? []) allSet.add(s.toLowerCase())
         for (const s of analysis.missing_core_skills ?? []) allSet.add(s.toLowerCase())
         for (const s of analysis.missing_optional_skills ?? []) allSet.add(s.toLowerCase())
@@ -88,13 +83,11 @@ export default function ProgressTracking() {
         return { all: [...allSet], detected, mastered }
     }, [analysis, masteredSkills])
 
-    /* Is a skill "verified"? = detected on resume OR mastered via study */
     const isVerified = useCallback((skill: string) => {
         const s = skill.toLowerCase()
         return roleSkills.detected.has(s) || roleSkills.mastered.has(s)
     }, [roleSkills])
 
-    /* ── Dynamic categories from actual user skills ──────────────────── */
     const catStats = useMemo(() => {
         const buckets: Record<string, { skills: { name: string; verified: boolean }[] }> = {}
         for (const skill of roleSkills.all) {
@@ -102,30 +95,26 @@ export default function ProgressTracking() {
             if (!buckets[catKey]) buckets[catKey] = { skills: [] }
             buckets[catKey].skills.push({ name: skill, verified: isVerified(skill) })
         }
-        // Convert to array, sorted by category order, skip empty
         const order = ['lang', 'cs', 'frame', 'infra', 'ai', 'other']
-        return order
-            .filter(k => buckets[k] && buckets[k].skills.length > 0)
-            .map(k => {
-                const meta = CATEGORY_MAP[k]
-                const skills = buckets[k].skills
-                const verifiedCount = skills.filter(s => s.verified).length
-                const pct = Math.round((verifiedCount / skills.length) * 100)
-                return { code: k, label: meta.label, color: meta.color, icon: meta.icon, skills, verifiedCount, pct }
-            })
+        return order.filter(k => buckets[k]?.skills.length > 0).map(k => {
+            const meta = CATEGORY_MAP[k]
+            const skills = buckets[k].skills
+            const verifiedCount = skills.filter(s => s.verified).length
+            const pct = Math.round((verifiedCount / skills.length) * 100)
+            return { code: k, label: meta.label, color: meta.color, icon: meta.icon, skills, verifiedCount, pct }
+        })
     }, [roleSkills, isVerified])
 
     const totalVerified = catStats.reduce((a, c) => a + c.verifiedCount, 0)
     const totalSkills   = catStats.reduce((a, c) => a + c.skills.length, 0)
     const overallPct    = totalSkills > 0 ? Math.round((totalVerified / totalSkills) * 100) : 0
 
-    /* ── XP - derived from real, trackable actions ───────────────────── */
     const totalXp = useMemo(() => {
         let xp = 0
-        if (analysis) xp += XP_FOR_RESUME_UPLOAD                            // uploaded resume
-        xp += masteredSkills.length * XP_PER_SKILL_MASTERED                  // each skill mastered
-        xp += (completedTasks?.length ?? 0) * XP_PER_COMPLETED_TASK         // improvement plan tasks
-        xp += Math.max(0, hist.length - 1) * XP_PER_HISTORY_ENTRY           // re-analyses (exclude first)
+        if (analysis) xp += XP_FOR_RESUME_UPLOAD
+        xp += masteredSkills.length * XP_PER_SKILL_MASTERED
+        xp += (completedTasks?.length ?? 0) * XP_PER_COMPLETED_TASK
+        xp += Math.max(0, hist.length - 1) * XP_PER_HISTORY_ENTRY
         return xp
     }, [analysis, masteredSkills, completedTasks, hist])
 
@@ -133,273 +122,274 @@ export default function ProgressTracking() {
     const xpInLevel = totalXp % XP_PER_LEVEL
     const xpPct     = Math.round((xpInLevel / XP_PER_LEVEL) * 100)
 
-    /* ── Milestones ──────────────────────────────────────────────────── */
-    const milestones = MILESTONE_DEFS.map((m, i) => ({
-        ...m,
-        done: m.test(score, !!analysis),
-    }))
+    const milestones = MILESTONE_DEFS.map(m => ({ ...m, done: m.test(score, !!analysis) }))
     const milestonePct = milestones.filter(m => m.done).length / milestones.length
 
-    /* ── Velocity (score change first → last history entry) ──────────── */
     const velocity = hist.length >= 2 ? hist[hist.length - 1].value - hist[0].value : null
-
-    /* ── Streak ──────────────────────────────────────────────────────── */
     const streak = computeStreak(hist)
 
-    /* ── Next skill to learn - first missing core, then optional ──────── */
     const nextSkill = useMemo(() => {
         const masLower = new Set(masteredSkills.map(s => s.toLowerCase()))
         const detLower = new Set((analysis?.detected_skills ?? []).map(s => s.toLowerCase()))
-        // Core first
         for (const s of analysis?.missing_core_skills ?? []) {
             if (!masLower.has(s.toLowerCase()) && !detLower.has(s.toLowerCase())) return s
         }
-        // Then optional
         for (const s of analysis?.missing_optional_skills ?? []) {
             if (!masLower.has(s.toLowerCase()) && !detLower.has(s.toLowerCase())) return s
         }
         return null
     }, [analysis, masteredSkills])
 
-    /* ── Locked state ────────────────────────────────────────────────── */
+    const verifiedAll = roleSkills.all.filter(s => isVerified(s))
+
     if (!analysis) {
         return (
-            <div className="page-content">
-                <div className="pt-locked">
-                    <div className="pt-locked__icon"><Lock size={48} strokeWidth={1.2} /></div>
-                    <h1 className="pt-locked__title">Growth Tracking Locked</h1>
-                    <p className="pt-locked__sub">Upload your resume to unlock real-time growth analytics, XP leveling,
-                    skill density mapping, and career milestones.</p>
-                    <button type="button" className="btn btn--primary" onClick={() => navigate('/resume-analyzer')} style={{ marginTop: 24 }}>
-                        <Sparkles size={16} /> Analyze Your Resume
-                    </button>
-                    <div className="pt-locked__features">
+            <div className="mx-auto max-w-xl py-20 text-center">
+                <motion.div {...fadeUp}>
+                    <div className="mx-auto mb-6 flex size-20 items-center justify-center rounded-2xl bg-muted">
+                        <Lock className="size-10 text-muted-foreground" />
+                    </div>
+                    <h1 className="font-heading text-2xl font-bold tracking-tight">Growth Tracking Locked</h1>
+                    <p className="mt-2 text-sm text-muted-foreground">Upload your resume to unlock real-time growth analytics, XP leveling, skill density mapping, and career milestones.</p>
+                    <Button className="mt-6 gap-2" onClick={() => navigate('/resume-analyzer')}>
+                        <Sparkles className="size-4" /> Analyze Your Resume
+                    </Button>
+                    <div className="mt-10 grid gap-4 sm:grid-cols-3">
                         {[
-                            { icon: BarChart2, title: 'Skill Radar', desc: 'Interactive skill coverage map across all relevant domains' },
-                            { icon: Trophy,    title: 'XP Leveling',  desc: 'Earn XP for mastering skills, completing tasks, and iterating' },
-                            { icon: Flame,     title: 'Velocity Tracking', desc: 'See how your readiness score changes over time' },
+                            { icon: BarChart2, title: 'Skill Radar', desc: 'Interactive skill coverage map across all domains' },
+                            { icon: Trophy,    title: 'XP Leveling',  desc: 'Earn XP for mastering skills and completing tasks' },
+                            { icon: Flame,     title: 'Velocity',     desc: 'See how your readiness score changes over time' },
                         ].map(f => (
-                            <div key={f.title} className="pt-locked__feat-card">
-                                <f.icon size={20} />
-                                <h4>{f.title}</h4>
-                                <p>{f.desc}</p>
-                            </div>
+                            <Card key={f.title} className="text-center">
+                                <CardContent className="pt-6">
+                                    <f.icon className="mx-auto mb-2 size-5 text-muted-foreground" />
+                                    <p className="text-sm font-semibold">{f.title}</p>
+                                    <p className="mt-1 text-xs text-muted-foreground">{f.desc}</p>
+                                </CardContent>
+                            </Card>
                         ))}
                     </div>
-                </div>
+                </motion.div>
             </div>
         )
     }
 
-    /* ═══════════════════════════════════════════════════════════════════ */
     return (
-        <div className="page-content">
-
-            {/* ── XP Bar + Level ───────────────────────────────────────── */}
-            <div className="pt-xp-bar">
-                <div className="pt-xp-bar__left">
-                    <div className="pt-xp-bar__level">LVL {level}</div>
-                    <div className="pt-xp-bar__track">
-                        <div className="pt-xp-bar__fill" style={{ width: `${xpPct}%` }} />
-                    </div>
-                    <div className="pt-xp-bar__label">{xpInLevel} / {XP_PER_LEVEL} XP</div>
-                </div>
-                <div className="pt-xp-bar__right">
-                    <div className="pt-xp-bar__stat" title={`${streak} analysis session${streak !== 1 ? 's' : ''} recorded`}>
-                        <Flame size={14} color="#f59e0b" />
-                        <span>{streak} session{streak !== 1 ? 's' : ''}</span>
-                    </div>
-                    <div className="pt-xp-bar__stat" title={velocity !== null ? `Score changed ${velocity > 0 ? '+' : ''}${velocity} pts from first to latest analysis` : 'Need at least 2 analyses to show velocity'}>
-                        <TrendingUp size={14} color={velocity !== null && velocity > 0 ? 'var(--green)' : 'var(--text-muted)'} />
-                        <span>{velocity !== null ? `${velocity > 0 ? '+' : ''}${velocity} pts` : '-'}</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* ── XP Breakdown tooltip row ─────────────────────────────── */}
-            <div className="pt-xp-breakdown">
-                <span className="pt-xp-tag" title="100 XP for uploading your resume">Resume +{XP_FOR_RESUME_UPLOAD}</span>
-                <span className="pt-xp-tag" title={`${XP_PER_SKILL_MASTERED} XP × ${masteredSkills.length} skills mastered`}>Skills +{masteredSkills.length * XP_PER_SKILL_MASTERED}</span>
-                <span className="pt-xp-tag" title={`${XP_PER_COMPLETED_TASK} XP × ${completedTasks?.length ?? 0} tasks completed`}>Tasks +{(completedTasks?.length ?? 0) * XP_PER_COMPLETED_TASK}</span>
-                {hist.length > 1 && <span className="pt-xp-tag" title={`${XP_PER_HISTORY_ENTRY} XP × ${hist.length - 1} re-analyses`}>Iterations +{(hist.length - 1) * XP_PER_HISTORY_ENTRY}</span>}
-                <span className="pt-xp-total">= {totalXp} XP Total</span>
-            </div>
-
-            {/* ── Hero Stats Row ───────────────────────────────────────── */}
-            <div className="pt-hero-row">
-                {/* Overall Ring */}
-                <div className="pt-ring-card">
-                    <svg viewBox="0 0 120 120" className="pt-ring-svg">
-                        <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="10" />
-                        <circle cx="60" cy="60" r="52" fill="none"
-                            stroke="url(#ptGrad)" strokeWidth="10" strokeLinecap="round"
-                            strokeDasharray={`${(overallPct / 100) * 327} 327`}
-                            transform="rotate(-90 60 60)"
-                            style={{ transition: 'stroke-dasharray 1.5s ease' }}
-                        />
-                        <defs>
-                            <linearGradient id="ptGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stopColor="var(--cyan)" />
-                                <stop offset="100%" stopColor="var(--blue)" />
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                    <div className="pt-ring-text">
-                        <span className="pt-ring-num">{overallPct}%</span>
-                        <span className="pt-ring-label">Coverage</span>
-                    </div>
-                </div>
-
-                {/* Quick stat chips - all dynamic */}
-                <div className="pt-quick-stats">
-                    <div className="pt-qstat">
-                        <div className="pt-qstat__num">{totalVerified}<span>/{totalSkills}</span></div>
-                        <div className="pt-qstat__label">Skills Verified</div>
-                    </div>
-                    <div className="pt-qstat">
-                        <div className="pt-qstat__num">{score}<span>/100</span></div>
-                        <div className="pt-qstat__label">Readiness Score</div>
-                    </div>
-                    <div className="pt-qstat">
-                        <div className="pt-qstat__num">{analysis.role?.split(' ')[0]}</div>
-                        <div className="pt-qstat__label">Best-Fit Role</div>
-                    </div>
-                    <div className="pt-qstat pt-qstat--cta" onClick={() => nextSkill && setSelectedSkill(nextSkill)} style={{ cursor: nextSkill ? 'pointer' : 'default' }}>
-                        <Target size={18} color="var(--blue)" />
-                        <div className="pt-qstat__label" style={{ marginTop: 4 }}>Next Target</div>
-                        <div className="pt-qstat__next">{nextSkill ?? 'All caught up!'}</div>
-                    </div>
-                </div>
-            </div>
-
-            {/* ── Skill Radar - Dynamic Category Cards ─────────────────── */}
-            <div className="pt-section-header">
-                <BarChart2 size={18} />
-                <div>
-                    <div className="pt-section-title">Skill Radar</div>
-                    <div className="pt-section-sub">
-                        {catStats.length} categories from your {analysis.role} profile. Click a missing skill to learn it.
-                    </div>
-                </div>
-            </div>
-
-            <div className="pt-cat-grid">
-                {catStats.map(cat => {
-                    const Icon = cat.icon
-                    const isOpen = expandedCat === cat.code
-                    return (
-                        <div key={cat.code} className={`pt-cat-card ${isOpen ? 'pt-cat-card--open' : ''}`}>
-                            <button type="button" className="pt-cat-card__head" onClick={() => setExpandedCat(isOpen ? null : cat.code)}>
-                                <div className="pt-cat-card__icon" style={{ color: cat.color, background: `${cat.color}15` }}>
-                                    <Icon size={18} />
-                                </div>
-                                <div className="pt-cat-card__info">
-                                    <div className="pt-cat-card__name">{cat.label}</div>
-                                    <div className="pt-cat-card__count" style={{ color: cat.color }}>
-                                        {cat.verifiedCount}/{cat.skills.length}
-                                    </div>
-                                </div>
-                                <div className="pt-cat-card__ring-mini">
-                                    <svg viewBox="0 0 36 36">
-                                        <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
-                                        <circle cx="18" cy="18" r="14" fill="none"
-                                            stroke={cat.color} strokeWidth="3" strokeLinecap="round"
-                                            strokeDasharray={`${(cat.pct / 100) * 88} 88`}
-                                            transform="rotate(-90 18 18)"
-                                        />
-                                    </svg>
-                                    <span style={{ color: cat.color }}>{cat.pct}%</span>
-                                </div>
-                                <ChevronRight size={16} className={`pt-cat-card__chevron ${isOpen ? 'rotated' : ''}`} />
-                            </button>
-
-                            {isOpen && (
-                                <div className="pt-cat-card__body fade-in">
-                                    <div className="pt-cat-heatstrip">
-                                        {cat.skills.map((s, i) => (
-                                            <div
-                                                key={i}
-                                                className={`pt-heat-cell ${s.verified ? 'mastered' : 'missing'}`}
-                                                style={{ '--cat-color': cat.color } as React.CSSProperties}
-                                                title={s.name}
-                                            />
-                                        ))}
-                                    </div>
-                                    <div className="pt-cat-skills">
-                                        {cat.skills.map(s => (
-                                            <button type="button"
-                                                key={s.name}
-                                                className={`pt-skill-chip ${s.verified ? 'pt-skill-chip--done' : 'pt-skill-chip--missing'}`}
-                                                style={{ '--cat-color': cat.color } as React.CSSProperties}
-                                                onClick={() => !s.verified && setSelectedSkill(s.name)}
-                                                title={s.verified ? `${s.name} - Verified ✓` : `Click to learn ${s.name}`}
-                                            >
-                                                {s.verified && <CheckCircle size={12} />}
-                                                {s.name}
-                                                {!s.verified && <BookOpen size={11} />}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )
-                })}
-            </div>
-
-            {/* ── Milestones Timeline ─────────────────────────────────── */}
-            <div className="pt-section-header" style={{ marginTop: 32 }}>
-                <Trophy size={18} />
-                <div>
-                    <div className="pt-section-title">Career Milestones</div>
-                    <div className="pt-section-sub">{milestones.filter(m => m.done).length} of {milestones.length} unlocked</div>
-                </div>
-            </div>
-
-            <div className="pt-milestone-track">
-                <div className="pt-milestone-rail">
-                    <div className="pt-milestone-rail__fill" style={{ width: `${milestonePct * 100}%` }} />
-                </div>
-                <div className="pt-milestone-nodes">
-                    {milestones.map((m, i) => {
-                        const Icon = m.icon
-                        const isNext = !m.done && (i === 0 || milestones[i - 1].done)
-                        return (
-                            <div key={i} className={`pt-milestone-node ${m.done ? 'done' : ''} ${isNext ? 'next' : ''}`}>
-                                <div className="pt-milestone-dot">
-                                    <Icon size={16} />
-                                </div>
-                                <div className="pt-milestone-label">{m.label}</div>
-                                <div className="pt-milestone-sub">
-                                    {m.done ? <><CheckCircle size={10} /> Done</> : m.sub}
-                                </div>
+        <div className="mx-auto max-w-5xl space-y-6">
+            {/* XP Bar */}
+            <motion.div {...fadeUp}>
+                <Card className="bg-gradient-to-r from-amber-500/5 to-primary/5">
+                    <CardContent className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-4">
+                            <Badge variant="outline" className="border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+                                LVL {level}
+                            </Badge>
+                            <div className="min-w-0 flex-1">
+                                <Progress value={xpPct} className="h-2" />
+                                <p className="mt-1 text-xs text-muted-foreground">{xpInLevel} / {XP_PER_LEVEL} XP</p>
                             </div>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1"><Flame className="size-3.5 text-amber-500" /> {streak} session{streak !== 1 && 's'}</span>
+                            <span className="flex items-center gap-1">
+                                <TrendingUp className={`size-3.5 ${velocity !== null && velocity > 0 ? 'text-success' : 'text-muted-foreground'}`} />
+                                {velocity !== null ? `${velocity > 0 ? '+' : ''}${velocity} pts` : '-'}
+                            </span>
+                        </div>
+                    </CardContent>
+                </Card>
+            </motion.div>
+
+            {/* XP Breakdown */}
+            <motion.div {...fadeUp} transition={{ delay: 0.05 }}>
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <Badge variant="secondary">Resume +{XP_FOR_RESUME_UPLOAD}</Badge>
+                    <Badge variant="secondary">Skills +{masteredSkills.length * XP_PER_SKILL_MASTERED}</Badge>
+                    <Badge variant="secondary">Tasks +{(completedTasks?.length ?? 0) * XP_PER_COMPLETED_TASK}</Badge>
+                    {hist.length > 1 && <Badge variant="secondary">Iterations +{(hist.length - 1) * XP_PER_HISTORY_ENTRY}</Badge>}
+                    <span className="font-mono text-xs font-semibold text-muted-foreground">= {totalXp} XP Total</span>
+                </div>
+            </motion.div>
+
+            {/* Hero Stats */}
+            <motion.div {...fadeUp} transition={{ delay: 0.1 }}>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {/* Coverage Ring */}
+                    <Card className="col-span-1 flex flex-col items-center justify-center py-6">
+                        <div className="relative size-24">
+                            <svg viewBox="0 0 120 120" className="size-full -rotate-90">
+                                <circle cx="60" cy="60" r="52" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
+                                <circle cx="60" cy="60" r="52" fill="none" stroke="url(#ptGrad)" strokeWidth="8" strokeLinecap="round"
+                                    strokeDasharray={`${(overallPct / 100) * 327} 327`}
+                                    className="transition-[stroke-dasharray] duration-1000 ease-out"
+                                />
+                                <defs>
+                                    <linearGradient id="ptGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="hsl(var(--primary))" />
+                                        <stop offset="100%" stopColor="#9B51E0" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <span className="font-heading text-2xl font-bold">{overallPct}%</span>
+                                <span className="text-[10px] text-muted-foreground">Coverage</span>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card className="flex flex-col items-center justify-center py-6 text-center">
+                        <p className="font-heading text-3xl font-bold">{totalVerified}<span className="text-lg text-muted-foreground">/{totalSkills}</span></p>
+                        <p className="text-xs text-muted-foreground">Skills Verified</p>
+                    </Card>
+                    <Card className="flex flex-col items-center justify-center py-6 text-center">
+                        <p className="font-heading text-3xl font-bold">{score}<span className="text-lg text-muted-foreground">/100</span></p>
+                        <p className="text-xs text-muted-foreground">Readiness Score</p>
+                    </Card>
+                    <Card
+                        className={`flex flex-col items-center justify-center py-6 text-center ${nextSkill ? 'cursor-pointer border-primary/20 hover:border-primary/40' : ''}`}
+                        onClick={() => nextSkill && setSelectedSkill(nextSkill)}
+                    >
+                        <Target className="mb-1 size-5 text-primary" />
+                        <p className="text-xs text-muted-foreground">Next Target</p>
+                        <p className="mt-1 text-sm font-semibold text-primary">{nextSkill ?? 'All caught up!'}</p>
+                    </Card>
+                </div>
+            </motion.div>
+
+            {/* Skill Radar */}
+            <motion.div {...fadeUp} transition={{ delay: 0.15 }}>
+                <div className="mb-3 flex items-center gap-2">
+                    <BarChart2 className="size-4 text-muted-foreground" />
+                    <h2 className="font-heading text-lg font-semibold">Skill Radar</h2>
+                    <span className="text-xs text-muted-foreground">{catStats.length} categories from your {analysis.role} profile</span>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {catStats.map(cat => {
+                        const Icon = cat.icon
+                        const isOpen = expandedCat === cat.code
+                        return (
+                            <Card key={cat.code} className={`transition-all ${isOpen ? 'border-primary/20' : ''}`}>
+                                <button
+                                    type="button"
+                                    className="flex w-full items-center gap-3 p-4 text-left"
+                                    onClick={() => setExpandedCat(isOpen ? null : cat.code)}
+                                >
+                                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg" style={{ color: cat.color, background: `${cat.color}15` }}>
+                                        <Icon className="size-4" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-semibold">{cat.label}</p>
+                                        <p className="text-xs font-medium" style={{ color: cat.color }}>{cat.verifiedCount}/{cat.skills.length}</p>
+                                    </div>
+                                    {/* Mini ring */}
+                                    <div className="relative size-9 shrink-0">
+                                        <svg viewBox="0 0 36 36" className="size-full -rotate-90">
+                                            <circle cx="18" cy="18" r="14" fill="none" stroke="hsl(var(--muted))" strokeWidth="3" />
+                                            <circle cx="18" cy="18" r="14" fill="none" stroke={cat.color} strokeWidth="3" strokeLinecap="round"
+                                                strokeDasharray={`${(cat.pct / 100) * 88} 88`}
+                                            />
+                                        </svg>
+                                        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold" style={{ color: cat.color }}>{cat.pct}%</span>
+                                    </div>
+                                    <ChevronRight className={`size-4 shrink-0 text-muted-foreground transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+                                </button>
+                                <AnimatePresence>
+                                    {isOpen && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="overflow-hidden"
+                                        >
+                                            <Separator />
+                                            <div className="flex flex-wrap gap-1.5 p-4">
+                                                {cat.skills.map(s => (
+                                                    <button
+                                                        type="button"
+                                                        key={s.name}
+                                                        className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+                                                            s.verified
+                                                                ? 'bg-success/10 text-success'
+                                                                : 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary'
+                                                        }`}
+                                                        onClick={() => !s.verified && setSelectedSkill(s.name)}
+                                                        title={s.verified ? `${s.name} - Verified` : `Click to learn ${s.name}`}
+                                                    >
+                                                        {s.verified ? <CheckCircle className="size-3" /> : <BookOpen className="size-3" />}
+                                                        {s.name}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </Card>
                         )
                     })}
                 </div>
-            </div>
+            </motion.div>
 
-            {/* ── Verified Skills Strip ───────────────────────────────── */}
-            {roleSkills.all.filter(s => isVerified(s)).length > 0 && (
-                <div className="pt-verified-strip">
-                    <div className="pt-verified-strip__head">
-                        <Zap size={12} color="var(--cyan)" />
-                        <span>Verified mastery from resume & study ({roleSkills.all.filter(s => isVerified(s)).length} skills)</span>
-                    </div>
-                    <div className="pt-verified-strip__tags">
-                        {roleSkills.all.filter(s => isVerified(s)).slice(0, 12).map(s => (
-                            <span key={s} className="pt-verified-tag">{s}</span>
-                        ))}
-                        {roleSkills.all.filter(s => isVerified(s)).length > 12 && (
-                            <span className="pt-verified-tag pt-verified-tag--more">
-                                +{roleSkills.all.filter(s => isVerified(s)).length - 12}
-                            </span>
-                        )}
-                    </div>
+            {/* Milestones */}
+            <motion.div {...fadeUp} transition={{ delay: 0.2 }}>
+                <div className="mb-3 flex items-center gap-2">
+                    <Trophy className="size-4 text-muted-foreground" />
+                    <h2 className="font-heading text-lg font-semibold">Career Milestones</h2>
+                    <span className="text-xs text-muted-foreground">{milestones.filter(m => m.done).length} of {milestones.length} unlocked</span>
                 </div>
+                <Card>
+                    <CardContent className="pt-6">
+                        {/* Rail */}
+                        <div className="relative mb-8">
+                            <div className="absolute left-0 right-0 top-4 h-0.5 bg-muted" />
+                            <div className="absolute left-0 top-4 h-0.5 bg-primary transition-all duration-500" style={{ width: `${milestonePct * 100}%` }} />
+                            <div className="relative flex justify-between">
+                                {milestones.map((m, i) => {
+                                    const Icon = m.icon
+                                    const isNext = !m.done && (i === 0 || milestones[i - 1].done)
+                                    return (
+                                        <div key={i} className="flex flex-col items-center">
+                                            <div className={`flex size-8 items-center justify-center rounded-full border-2 transition-colors ${
+                                                m.done ? 'border-primary bg-primary/10 text-primary'
+                                                    : isNext ? 'border-primary/40 bg-background text-primary/60'
+                                                    : 'border-muted bg-background text-muted-foreground'
+                                            }`}>
+                                                <Icon className="size-3.5" />
+                                            </div>
+                                            <p className="mt-2 text-center text-[11px] font-semibold">{m.label}</p>
+                                            <p className="text-[10px] text-muted-foreground">{m.done ? 'Done' : m.sub}</p>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </motion.div>
+
+            {/* Verified Strip */}
+            {verifiedAll.length > 0 && (
+                <motion.div {...fadeUp} transition={{ delay: 0.25 }}>
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+                                <Zap className="size-3 text-primary" />
+                                Verified mastery from resume & study ({verifiedAll.length} skills)
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                                {verifiedAll.slice(0, 12).map(s => (
+                                    <Badge key={s} variant="secondary" className="text-[11px]">{s}</Badge>
+                                ))}
+                                {verifiedAll.length > 12 && (
+                                    <Badge variant="outline" className="text-[11px]">+{verifiedAll.length - 12}</Badge>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </motion.div>
             )}
 
-            {/* ── Study Hub modal ─────────────────────────────────────── */}
+            {/* Study Hub */}
             {selectedSkill && (
                 <StudyHub
                     skill={selectedSkill}

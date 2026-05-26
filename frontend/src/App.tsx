@@ -1,9 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { ResumeProvider, useResume } from './context/ResumeContext'
+import { ResumeProvider } from './context/ResumeContext'
 import { ToastProvider } from './context/ToastContext'
+import { PrivacyProvider } from './context/PrivacyContext'
 import Layout from './components/Layout'
 import ErrorBoundary from './components/ErrorBoundary'
+import { Toaster } from './components/ui/sonner'
 import React, { Suspense, lazy } from 'react'
 
 // ── Lazy-loaded pages (each becomes its own chunk) ──────────────
@@ -30,81 +32,59 @@ const Terms = lazy(() => import('./pages/Terms'))
 /** Global page loading spinner for lazy chunks */
 function PageLoader() {
     return (
-        <div className="page-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-            <div className="spinner" />
+        <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-accent" />
         </div>
     )
 }
 
-function PrivateRoute({ children }: { children: React.ReactNode }) {
-    const { user, loading } = useAuth()
-    if (loading) return <div className="page-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}><div className="spinner" /></div>
-    return user ? <>{children}</> : <Navigate to="/login" replace />
-}
-
-function AdminRoute({ children }: { children: React.ReactNode }) {
+/** Guard: redirect unauthenticated users to login */
+function RequireAuth({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth()
     if (loading) return <PageLoader />
     if (!user) return <Navigate to="/login" replace />
-    if (!user.isAdmin) return <Navigate to="/dashboard" replace />
     return <>{children}</>
 }
 
-function DashboardRedirect() {
-    const { user } = useAuth()
-    const { analysis, loading } = useResume()
-
-    if (loading) return null
-
-    if (user && !analysis) {
-        return <Navigate to="/resume-analyzer" replace />
-    }
-
-    return <Dashboard />
-}
-
-/** Wrap a page component in its own error boundary so one page crash doesn't kill the app */
-function Safe({ children }: { children: React.ReactNode }) {
-    return <ErrorBoundary>{children}</ErrorBoundary>
+/** Guard: redirect authenticated users to dashboard */
+function GuestOnly({ children }: { children: React.ReactNode }) {
+    const { user, loading } = useAuth()
+    if (loading) return <PageLoader />
+    if (user) return <Navigate to="/dashboard" replace />
+    return <>{children}</>
 }
 
 function AppRoutes() {
-    const { user } = useAuth()
     return (
         <Suspense fallback={<PageLoader />}>
-        <Routes>
-            {/* Landing - always accessible */}
-            <Route path="/" element={<Landing />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/docs" element={<Docs />} />
-            <Route path="/terms" element={<Terms />} />
+            <Routes>
+                {/* Public */}
+                <Route path="/" element={<Landing />} />
+                <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
+                <Route path="/signup" element={<GuestOnly><Signup /></GuestOnly>} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/docs" element={<Docs />} />
 
-            {/* Auth routes */}
-            <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
-            <Route path="/signup" element={user ? <Navigate to="/dashboard" replace /> : <Signup />} />
+                {/* Authenticated — wrapped in Layout */}
+                <Route element={<RequireAuth><Layout /></RequireAuth>}>
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/resume-analyzer" element={<ResumeAnalyzer />} />
+                    <Route path="/readiness-score" element={<ReadinessScore />} />
+                    <Route path="/skill-gap" element={<SkillGap />} />
+                    <Route path="/improvement-plan" element={<ImprovementPlan />} />
+                    <Route path="/interview-readiness" element={<InterviewReadiness />} />
+                    <Route path="/progress-tracking" element={<ProgressTracking />} />
+                    <Route path="/resume-comparison" element={<ResumeComparison />} />
+                    <Route path="/industry-alignment" element={<IndustryAlignment />} />
+                    <Route path="/my-projects" element={<MyProjects />} />
+                    <Route path="/admin" element={<AdminDashboard />} />
+                    <Route path="/settings" element={<Settings />} />
+                </Route>
 
-            {/* Protected dashboard routes */}
-            <Route path="/app" element={<PrivateRoute><Layout /></PrivateRoute>}>
-                <Route index element={<Navigate to="/dashboard" replace />} />
-            </Route>
-
-            <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
-                <Route path="dashboard" element={<Safe><DashboardRedirect /></Safe>} />
-                <Route path="resume-analyzer" element={<Safe><ResumeAnalyzer /></Safe>} />
-                <Route path="readiness-score" element={<Safe><ReadinessScore /></Safe>} />
-                <Route path="skill-gap" element={<Safe><SkillGap /></Safe>} />
-                <Route path="improvement-plan" element={<Safe><ImprovementPlan /></Safe>} />
-                <Route path="interview-readiness" element={<Safe><InterviewReadiness /></Safe>} />
-                <Route path="progress-tracking" element={<Safe><ProgressTracking /></Safe>} />
-                <Route path="resume-comparison" element={<Safe><ResumeComparison /></Safe>} />
-                <Route path="industry-alignment" element={<Safe><IndustryAlignment /></Safe>} />
-                <Route path="my-projects" element={<Safe><MyProjects /></Safe>} />
-                <Route path="admin" element={<Safe><AdminRoute><AdminDashboard /></AdminRoute></Safe>} />
-                <Route path="settings" element={<Safe><Settings /></Safe>} />
-            </Route>
-
-            <Route path="*" element={<NotFound />} />
-        </Routes>
+                {/* 404 */}
+                <Route path="*" element={<NotFound />} />
+            </Routes>
         </Suspense>
     )
 }
@@ -112,15 +92,18 @@ function AppRoutes() {
 export default function App() {
     return (
         <ErrorBoundary>
-            <AuthProvider>
-                <ResumeProvider>
-                    <ToastProvider>
-                        <BrowserRouter>
-                            <AppRoutes />
-                        </BrowserRouter>
-                    </ToastProvider>
-                </ResumeProvider>
-            </AuthProvider>
+            <BrowserRouter>
+                <AuthProvider>
+                    <PrivacyProvider>
+                        <ResumeProvider>
+                            <ToastProvider>
+                                <AppRoutes />
+                                <Toaster />
+                            </ToastProvider>
+                        </ResumeProvider>
+                    </PrivacyProvider>
+                </AuthProvider>
+            </BrowserRouter>
         </ErrorBoundary>
     )
 }

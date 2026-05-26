@@ -9,6 +9,18 @@ import {
     Flame, Lightbulb,
 } from 'lucide-react'
 import { BASE } from '../api/client'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { Separator } from '@/components/ui/separator'
+import { motion, AnimatePresence } from 'framer-motion'
+
+const fadeUp = {
+    initial: { opacity: 0, y: 12 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as const },
+}
 
 /* ── Types ──────────────────────────────────────────────── */
 interface Question {
@@ -38,7 +50,7 @@ interface SessionRecord {
     questionPreview: string
 }
 
-/* ── localStorage helpers for interview history ─────────── */
+/* ── localStorage helpers ─────────────────────────────── */
 const LS_INTERVIEW_LOG = 'cse_interview_log'
 
 function loadInterviewLog(email?: string): SessionRecord[] {
@@ -107,7 +119,7 @@ export default function InterviewReadiness() {
 
     useEffect(() => { setLog(loadInterviewLog(user?.email)) }, [user?.email])
 
-    /* ── Stats derived from log ─────────────────────────── */
+    /* Stats */
     const stats = useMemo(() => {
         const total = log.length
         const avgScore = total > 0 ? Math.round(log.reduce((a, s) => a + s.score, 0) / total) : 0
@@ -120,7 +132,7 @@ export default function InterviewReadiness() {
         return { total, avgScore, bestScore, winRate, conceptsCovered: allCovered, conceptsMissed: allMissed }
     }, [log])
 
-    /* ── Practice targets - missing skills not yet practiced ── */
+    /* Practice targets */
     const targets = useMemo(() => {
         const coreGaps = analysis?.missing_core_skills ?? []
         const optGaps = analysis?.missing_optional_skills ?? []
@@ -130,7 +142,7 @@ export default function InterviewReadiness() {
         return { core, optional }
     }, [analysis, stats])
 
-    /* ── Actions ────────────────────────────────────────── */
+    /* Actions */
     const fetchQuestion = async () => {
         setLoading(true); setResult(null); setTranscript(''); setFetchError(null)
         try {
@@ -181,283 +193,342 @@ export default function InterviewReadiness() {
     const reset = () => { setQuestion(null); setResult(null); setTranscript(''); setPhase('idle') }
 
     const readinessLabel = readiness >= 80 ? 'Interview Ready' : readiness >= 60 ? 'Placement Ready' : readiness >= 40 ? 'Developing' : 'Getting Started'
+    const readinessColor = readiness >= 75 ? '#05FFC5' : readiness >= 50 ? '#F59E0B' : '#FF3F6C'
 
     /* ── Locked state ──────────────────────────────────── */
     if (!analysis) {
         return (
-            <div className="page-content">
-                <div className="ir-locked">
-                    <div className="ir-locked__icon"><Lock size={48} strokeWidth={1.2} /></div>
-                    <h1 className="ir-locked__title">Interview Arena Locked</h1>
-                    <p className="ir-locked__sub">Upload your resume to unlock AI-powered mock interviews tailored to your role, skill gaps, and career level.</p>
-                    <button type="button" className="btn btn--primary" onClick={() => navigate('/resume-analyzer')} style={{ marginTop: 24 }}>
-                        <Sparkles size={16} /> Analyze Your Resume
-                    </button>
-                    <div className="ir-locked__features">
+            <div className="mx-auto max-w-xl py-20 text-center">
+                <motion.div {...fadeUp}>
+                    <div className="mx-auto mb-6 flex size-20 items-center justify-center rounded-2xl bg-muted">
+                        <Lock className="size-10 text-muted-foreground" />
+                    </div>
+                    <h1 className="font-heading text-2xl font-bold tracking-tight">Interview Arena Locked</h1>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        Upload your resume to unlock AI-powered mock interviews tailored to your role, skill gaps, and career level.
+                    </p>
+                    <Button className="mt-6 gap-2" onClick={() => navigate('/resume-analyzer')}>
+                        <Sparkles className="size-4" /> Analyze Your Resume
+                    </Button>
+                    <div className="mt-10 grid gap-4 sm:grid-cols-3">
                         {[
                             { icon: MessageSquare, title: 'Voice & Text', desc: 'Answer via speech recognition or typing' },
                             { icon: Brain, title: 'AI Evaluation', desc: 'Concept coverage scoring with feedback' },
                             { icon: TrendingUp, title: 'Progress Tracking', desc: 'Track scores, win rate & concept mastery' },
                         ].map(f => (
-                            <div key={f.title} className="ir-locked__feat">
-                                <f.icon size={20} />
-                                <h4>{f.title}</h4>
-                                <p>{f.desc}</p>
-                            </div>
+                            <Card key={f.title}>
+                                <CardContent className="flex flex-col items-center pt-6 text-center">
+                                    <f.icon className="mb-2 size-5 text-muted-foreground" />
+                                    <p className="text-sm font-semibold">{f.title}</p>
+                                    <p className="mt-1 text-xs text-muted-foreground">{f.desc}</p>
+                                </CardContent>
+                            </Card>
                         ))}
                     </div>
-                </div>
+                </motion.div>
             </div>
         )
     }
 
     /* ═══════════════════════════════════════════════════════ */
     return (
-        <div className="page-content">
+        <div className="mx-auto max-w-4xl space-y-6">
 
-            {/* ── Hero Bar ──────────────────────────────────── */}
-            <div className="ir-hero">
-                <div className="ir-hero__left">
-                    <div className="ir-hero__badge">{role}</div>
-                    <h1 className="ir-hero__title">Interview Arena</h1>
-                    <p className="ir-hero__sub">
-                        Practice role-specific questions. AI evaluates concept coverage in real time.
-                    </p>
-                </div>
-                <div className="ir-hero__ring">
-                    <svg viewBox="0 0 80 80">
-                        <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="6" />
-                        <circle cx="40" cy="40" r="34" fill="none"
-                            stroke={readiness >= 75 ? 'var(--green)' : readiness >= 50 ? 'var(--orange)' : 'var(--red)'}
-                            strokeWidth="6" strokeLinecap="round"
-                            strokeDasharray={`${(readiness / 100) * 214} 214`}
-                            transform="rotate(-90 40 40)"
-                        />
-                    </svg>
-                    <div className="ir-hero__ring-text">
-                        <span className="ir-hero__ring-num">{readiness}</span>
-                        <span className="ir-hero__ring-label">{readinessLabel}</span>
-                    </div>
-                </div>
-            </div>
+            {/* Hero */}
+            <motion.div {...fadeUp}>
+                <Card className="bg-gradient-to-r from-primary/5 to-violet/5 border-primary/10">
+                    <CardContent className="flex flex-col items-center gap-6 pt-6 sm:flex-row">
+                        <div className="flex-1">
+                            <Badge variant="outline" className="mb-2 border-primary/30 text-primary">{role}</Badge>
+                            <h1 className="font-heading text-2xl font-bold tracking-tight">Interview Arena</h1>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                Practice role-specific questions. AI evaluates concept coverage in real time.
+                            </p>
+                        </div>
+                        <div className="relative size-20 shrink-0">
+                            <svg viewBox="0 0 80 80" className="size-full">
+                                <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="6" />
+                                <circle cx="40" cy="40" r="34" fill="none" stroke={readinessColor} strokeWidth="6" strokeLinecap="round"
+                                    strokeDasharray={`${(readiness / 100) * 214} 214`} transform="rotate(-90 40 40)"
+                                />
+                            </svg>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <span className="font-heading text-xl font-bold">{readiness}</span>
+                                <span className="text-[10px] text-muted-foreground">{readinessLabel}</span>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </motion.div>
 
-            {/* ── Battle Stats Strip ─────────────────────────── */}
-            <div className="ir-stats-strip">
-                <div className="ir-stat">
-                    <Trophy size={14} color="#f59e0b" />
-                    <span className="ir-stat__num">{stats.total}</span>
-                    <span className="ir-stat__label">Sessions</span>
-                </div>
-                <div className="ir-stat">
-                    <Target size={14} color="var(--cyan)" />
-                    <span className="ir-stat__num">{stats.avgScore}%</span>
-                    <span className="ir-stat__label">Avg Score</span>
-                </div>
-                <div className="ir-stat">
-                    <Zap size={14} color="var(--green)" />
-                    <span className="ir-stat__num">{stats.bestScore}%</span>
-                    <span className="ir-stat__label">Best</span>
-                </div>
-                <div className="ir-stat">
-                    <Flame size={14} color="#ef4444" />
-                    <span className="ir-stat__num">{stats.winRate}%</span>
-                    <span className="ir-stat__label">Win Rate</span>
-                </div>
-                <div className="ir-stat">
-                    <Brain size={14} color="#a78bfa" />
-                    <span className="ir-stat__num">{stats.conceptsCovered.size}</span>
-                    <span className="ir-stat__label">Concepts</span>
-                </div>
-            </div>
+            {/* Stats Strip */}
+            <motion.div {...fadeUp} className="grid grid-cols-5 gap-3">
+                {[
+                    { icon: <Trophy className="size-4 text-amber" />, num: stats.total, label: 'Sessions' },
+                    { icon: <Target className="size-4 text-primary" />, num: `${stats.avgScore}%`, label: 'Avg Score' },
+                    { icon: <Zap className="size-4 text-mint" />, num: `${stats.bestScore}%`, label: 'Best' },
+                    { icon: <Flame className="size-4 text-crimson" />, num: `${stats.winRate}%`, label: 'Win Rate' },
+                    { icon: <Brain className="size-4 text-violet" />, num: stats.conceptsCovered.size, label: 'Concepts' },
+                ].map(s => (
+                    <Card key={s.label}>
+                        <CardContent className="flex flex-col items-center gap-1 pt-4">
+                            {s.icon}
+                            <span className="font-heading text-lg font-bold">{s.num}</span>
+                            <span className="text-[10px] text-muted-foreground">{s.label}</span>
+                        </CardContent>
+                    </Card>
+                ))}
+            </motion.div>
 
-            {/* ── Concept Confidence Map ──────────────────────── */}
+            {/* Concept Confidence Map */}
             {(stats.conceptsCovered.size > 0 || stats.conceptsMissed.size > 0) && (
-                <div className="ir-concepts-card">
-                    <div className="ir-concepts__head">
-                        <BarChart2 size={14} />
-                        <span>Concept Confidence Map</span>
-                        <span className="ir-concepts__summary">
-                            {stats.conceptsCovered.size} mastered · {stats.conceptsMissed.size} to review
-                        </span>
-                    </div>
-                    <div className="ir-concepts__cloud">
-                        {[...stats.conceptsCovered].slice(0, 20).map(c => (
-                            <span key={c} className="ir-concept ir-concept--ok">{c}</span>
-                        ))}
-                        {[...stats.conceptsMissed].slice(0, 15).map(c => (
-                            <span key={c} className="ir-concept ir-concept--miss">{c}</span>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* ── Practice Targets ───────────────────────────── */}
-            {(targets.core.length > 0 || targets.optional.length > 0) && (
-                <div className="ir-targets-card">
-                    <div className="ir-targets__head">
-                        <Lightbulb size={14} color="#f59e0b" />
-                        <span>Recommended Focus Areas</span>
-                    </div>
-                    <div className="ir-targets__list">
-                        {targets.core.map(s => (
-                            <span key={s} className="ir-target ir-target--core" title="Core skill gap">{s}</span>
-                        ))}
-                        {targets.optional.map(s => (
-                            <span key={s} className="ir-target ir-target--opt" title="Optional skill gap">{s}</span>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* ── Q&A Arena Panel ────────────────────────────── */}
-            <div className="ir-arena-card">
-                <div className="ir-arena__head">
-                    <MessageSquare size={16} />
-                    <span>Live Interview Practice</span>
-                    {phase !== 'idle' && (
-                        <button type="button" className="btn btn--ghost btn--sm" onClick={reset} style={{ marginLeft: 'auto' }}>
-                            <RefreshCw size={12} /> New Question
-                        </button>
-                    )}
-                </div>
-
-                {/* IDLE */}
-                {phase === 'idle' && (
-                    <div className="ir-arena__idle">
-                        <div className="ir-arena__idle-icon"><Target size={28} /></div>
-                        <p>Get a role-specific question for <strong>{role}</strong>. Answer by voice or typing.</p>
-                        <button type="button" className="btn btn--primary" onClick={fetchQuestion} disabled={loading}>
-                            {loading ? <><Clock size={14} /> Loading…</> : <><ChevronRight size={14} /> Start Question</>}
-                        </button>
-                        {fetchError && <div className="ir-arena__error"><AlertCircle size={14} /> {fetchError}</div>}
-                    </div>
-                )}
-
-                {/* QUESTIONING */}
-                {phase === 'questioning' && question && (
-                    <div className="ir-arena__question fade-in">
-                        <div className="ir-q-card">
-                            <div className="ir-q-card__top">
-                                <span className={`ir-q-difficulty ir-q-difficulty--${question.difficulty === 'Beginner' ? 'easy' : question.difficulty === 'Advanced' ? 'hard' : 'mid'}`}>
-                                    {question.difficulty}
+                <motion.div {...fadeUp}>
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="mb-3 flex items-center gap-2">
+                                <BarChart2 className="size-4 text-muted-foreground" />
+                                <span className="text-sm font-semibold">Concept Confidence Map</span>
+                                <span className="text-xs text-muted-foreground">
+                                    {stats.conceptsCovered.size} mastered · {stats.conceptsMissed.size} to review
                                 </span>
-                                <span className="ir-q-id">{question.id}</span>
                             </div>
-                            <p className="ir-q-text">{question.question}</p>
-                        </div>
+                            <div className="flex flex-wrap gap-1.5">
+                                {[...stats.conceptsCovered].slice(0, 20).map(c => (
+                                    <Badge key={c} className="bg-mint/10 text-mint text-[11px]">{c}</Badge>
+                                ))}
+                                {[...stats.conceptsMissed].slice(0, 15).map(c => (
+                                    <Badge key={c} variant="destructive" className="text-[11px]">{c}</Badge>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </motion.div>
+            )}
 
-                        <div className="ir-input-area">
-                            {supported && (
-                                <div className="ir-voice-row">
-                                    <button type="button"
-                                        className={`ir-voice-btn ${listening ? 'ir-voice-btn--rec' : ''}`}
-                                        onClick={listening ? stop : start}
-                                    >
-                                        {listening ? <><MicOff size={16} /> Stop</> : <><Mic size={16} /> Record</>}
-                                    </button>
-                                    {listening && <span className="ir-rec-indicator">● Recording</span>}
-                                </div>
-                            )}
-                            <textarea
-                                value={transcript}
-                                onChange={e => setTranscript(e.target.value)}
-                                placeholder="Type or speak your answer..."
-                                className="ir-textarea"
-                            />
-                            <div className="ir-input-footer">
-                                <span className="ir-word-count">{transcript.split(/\s+/).filter(Boolean).length} words</span>
-                                <button type="button" className="btn btn--primary" onClick={evalAnswer} disabled={!transcript.trim() || evalLoading}>
-                                    {evalLoading ? 'Evaluating...' : 'Submit Answer'}
-                                </button>
+            {/* Practice Targets */}
+            {(targets.core.length > 0 || targets.optional.length > 0) && (
+                <motion.div {...fadeUp}>
+                    <Card className="border-amber/15 bg-amber/3">
+                        <CardContent className="pt-6">
+                            <div className="mb-3 flex items-center gap-2">
+                                <Lightbulb className="size-4 text-amber" />
+                                <span className="text-sm font-semibold">Recommended Focus Areas</span>
                             </div>
-                        </div>
-                    </div>
-                )}
+                            <div className="flex flex-wrap gap-1.5">
+                                {targets.core.map(s => (
+                                    <Badge key={s} className="bg-crimson/10 text-crimson text-[11px]">{s}</Badge>
+                                ))}
+                                {targets.optional.map(s => (
+                                    <Badge key={s} variant="secondary" className="text-[11px]">{s}</Badge>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </motion.div>
+            )}
 
-                {/* RESULT */}
-                {phase === 'done' && result && (
-                    <div className="ir-arena__result fade-in">
-                        <div className="ir-score-hero">
-                            <div className={`ir-score-ring ${result.score >= 70 ? 'ir-score-ring--good' : result.score >= 40 ? 'ir-score-ring--mid' : 'ir-score-ring--low'}`}>
-                                <span className="ir-score-num">{result.score}%</span>
-                                <span className="ir-score-grade">{result.grade}</span>
-                            </div>
-                            <div className="ir-score-meta">
-                                {result.detected_concepts.length}/{result.total_concepts} concepts covered
-                            </div>
-                        </div>
-
-                        <div className="ir-result-concepts">
-                            <div className="ir-result-col">
-                                <div className="ir-result-col__head ir-result-col__head--ok">
-                                    <CheckCircle size={12} /> Covered
+            {/* Q&A Arena */}
+            <motion.div {...fadeUp}>
+                <Card>
+                    <CardHeader className="flex-row items-center gap-3 space-y-0">
+                        <MessageSquare className="size-4 text-primary" />
+                        <CardTitle className="text-sm font-semibold">Live Interview Practice</CardTitle>
+                        {phase !== 'idle' && (
+                            <Button variant="ghost" size="sm" className="ml-auto gap-2 text-xs" onClick={reset}>
+                                <RefreshCw className="size-3" /> New Question
+                            </Button>
+                        )}
+                    </CardHeader>
+                    <CardContent>
+                        {/* IDLE */}
+                        {phase === 'idle' && (
+                            <div className="flex flex-col items-center gap-4 py-8 text-center">
+                                <div className="flex size-14 items-center justify-center rounded-2xl bg-muted">
+                                    <Target className="size-7 text-muted-foreground" />
                                 </div>
-                                <div className="ir-result-tags">
-                                    {result.detected_concepts.length
-                                        ? result.detected_concepts.map(c => <span key={c} className="ir-tag ir-tag--ok">{c}</span>)
-                                        : <span className="ir-tag ir-tag--none">None detected</span>}
-                                </div>
-                            </div>
-                            <div className="ir-result-col">
-                                <div className="ir-result-col__head ir-result-col__head--miss">
-                                    <AlertCircle size={12} /> Missing
-                                </div>
-                                <div className="ir-result-tags">
-                                    {result.missing_concepts.length
-                                        ? result.missing_concepts.map(c => <span key={c} className="ir-tag ir-tag--miss">{c}</span>)
-                                        : <span className="ir-tag ir-tag--none">All covered!</span>}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="ir-feedback-box">
-                            <div className="ir-feedback-label">AI Feedback</div>
-                            <p>{result.feedback}</p>
-                        </div>
-                        {result.tip && (
-                            <div className="ir-tip-box">
-                                <Lightbulb size={14} />
-                                <p>{result.tip}</p>
+                                <p className="text-sm text-muted-foreground">
+                                    Get a role-specific question for <strong className="text-foreground">{role}</strong>. Answer by voice or typing.
+                                </p>
+                                <Button className="gap-2" onClick={fetchQuestion} disabled={loading}>
+                                    {loading ? <><Clock className="size-4 animate-spin" /> Loading…</> : <><ChevronRight className="size-4" /> Start Question</>}
+                                </Button>
+                                {fetchError && (
+                                    <div className="flex items-center gap-2 rounded-lg border border-crimson/20 bg-crimson/5 px-4 py-2 text-xs text-crimson">
+                                        <AlertCircle className="size-3.5" /> {fetchError}
+                                    </div>
+                                )}
                             </div>
                         )}
 
-                        <button type="button" className="btn btn--primary" onClick={reset} style={{ marginTop: 12 }}>
-                            <ChevronRight size={14} /> Next Question
-                        </button>
-                    </div>
-                )}
-            </div>
-
-            {/* ── Session History ─────────────────────────────── */}
-            {log.length > 0 && (
-                <div className="ir-history-card">
-                    <button type="button" className="ir-history__toggle" onClick={() => setShowHistory(!showHistory)}>
-                        <Clock size={14} />
-                        <span>Session History ({log.length})</span>
-                        <ChevronDown size={14} className={showHistory ? 'rotated' : ''} />
-                    </button>
-                    {showHistory && (
-                        <div className="ir-history__list fade-in">
-                            {[...log].reverse().slice(0, 15).map(s => (
-                                <div key={s.id} className="ir-history-item">
-                                    <div className={`ir-history-score ${s.score >= 70 ? 'good' : s.score >= 40 ? 'mid' : 'low'}`}>
-                                        {s.score}%
-                                    </div>
-                                    <div className="ir-history-info">
-                                        <div className="ir-history-q">{s.questionPreview}...</div>
-                                        <div className="ir-history-meta">
-                                            {new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {s.difficulty} · {s.grade}
+                        {/* QUESTIONING */}
+                        {phase === 'questioning' && question && (
+                            <motion.div {...fadeUp} className="space-y-4">
+                                <Card className="bg-surface-elevated border-border/50">
+                                    <CardContent className="pt-5">
+                                        <div className="mb-3 flex items-center gap-2">
+                                            <Badge variant={
+                                                question.difficulty === 'Beginner' ? 'default' :
+                                                question.difficulty === 'Advanced' ? 'destructive' : 'secondary'
+                                            } className="text-[10px]">{question.difficulty}</Badge>
+                                            <span className="font-mono text-[10px] text-muted-foreground">{question.id}</span>
                                         </div>
-                                    </div>
-                                    <div className="ir-history-concepts">
-                                        <span className="ir-hc ir-hc--ok">{s.conceptsCovered.length} covered</span>
-                                        {s.conceptsMissed.length > 0 && <span className="ir-hc ir-hc--miss">{s.conceptsMissed.length} missed</span>}
+                                        <p className="text-sm leading-relaxed">{question.question}</p>
+                                    </CardContent>
+                                </Card>
+
+                                <div className="space-y-3">
+                                    {supported && (
+                                        <div className="flex items-center gap-3">
+                                            <Button
+                                                variant={listening ? 'destructive' : 'outline'}
+                                                size="sm"
+                                                className="gap-2"
+                                                onClick={listening ? stop : start}
+                                            >
+                                                {listening ? <><MicOff className="size-4" /> Stop</> : <><Mic className="size-4" /> Record</>}
+                                            </Button>
+                                            {listening && (
+                                                <span className="flex items-center gap-1.5 text-xs text-crimson">
+                                                    <span className="size-1.5 animate-pulse rounded-full bg-crimson" /> Recording
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+                                    <Textarea
+                                        value={transcript}
+                                        onChange={e => setTranscript(e.target.value)}
+                                        placeholder="Type or speak your answer..."
+                                        className="min-h-[120px] resize-y"
+                                    />
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-muted-foreground">{transcript.split(/\s+/).filter(Boolean).length} words</span>
+                                        <Button className="gap-2" onClick={evalAnswer} disabled={!transcript.trim() || evalLoading}>
+                                            {evalLoading ? 'Evaluating...' : 'Submit Answer'}
+                                        </Button>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                            </motion.div>
+                        )}
+
+                        {/* RESULT */}
+                        {phase === 'done' && result && (
+                            <motion.div {...fadeUp} className="space-y-4">
+                                <div className="flex flex-col items-center gap-3 py-4">
+                                    <div className={`flex size-20 flex-col items-center justify-center rounded-full border-4 ${
+                                        result.score >= 70 ? 'border-mint bg-mint/10' :
+                                        result.score >= 40 ? 'border-amber bg-amber/10' : 'border-crimson bg-crimson/10'
+                                    }`}>
+                                        <span className="font-heading text-2xl font-bold">{result.score}%</span>
+                                        <span className="text-[10px] font-semibold text-muted-foreground">{result.grade}</span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        {result.detected_concepts.length}/{result.total_concepts} concepts covered
+                                    </p>
+                                </div>
+
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <Card>
+                                        <CardContent className="pt-4">
+                                            <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-mint">
+                                                <CheckCircle className="size-3" /> Covered
+                                            </div>
+                                            <div className="flex flex-wrap gap-1">
+                                                {result.detected_concepts.length > 0
+                                                    ? result.detected_concepts.map(c => <Badge key={c} className="bg-mint/10 text-mint text-[10px]">{c}</Badge>)
+                                                    : <span className="text-xs text-muted-foreground">None detected</span>}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardContent className="pt-4">
+                                            <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-crimson">
+                                                <AlertCircle className="size-3" /> Missing
+                                            </div>
+                                            <div className="flex flex-wrap gap-1">
+                                                {result.missing_concepts.length > 0
+                                                    ? result.missing_concepts.map(c => <Badge key={c} variant="destructive" className="text-[10px]">{c}</Badge>)
+                                                    : <span className="text-xs text-muted-foreground">All covered!</span>}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+
+                                <Card className="bg-surface-elevated border-border/50">
+                                    <CardContent className="pt-5">
+                                        <p className="mb-1 text-xs font-bold uppercase tracking-wider text-primary">AI Feedback</p>
+                                        <p className="text-sm leading-relaxed">{result.feedback}</p>
+                                    </CardContent>
+                                </Card>
+
+                                {result.tip && (
+                                    <Card className="border-amber/15 bg-amber/3">
+                                        <CardContent className="flex gap-3 pt-5">
+                                            <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber" />
+                                            <p className="text-sm">{result.tip}</p>
+                                        </CardContent>
+                                    </Card>
+                                )}
+
+                                <Button className="w-full gap-2" onClick={reset}>
+                                    <ChevronRight className="size-4" /> Next Question
+                                </Button>
+                            </motion.div>
+                        )}
+                    </CardContent>
+                </Card>
+            </motion.div>
+
+            {/* Session History */}
+            {log.length > 0 && (
+                <motion.div {...fadeUp}>
+                    <Card>
+                        <button
+                            type="button"
+                            className="flex w-full items-center gap-3 px-6 py-4 text-left"
+                            onClick={() => setShowHistory(!showHistory)}
+                        >
+                            <Clock className="size-4 text-muted-foreground" />
+                            <span className="text-sm font-semibold">Session History ({log.length})</span>
+                            <ChevronDown className={`ml-auto size-4 text-muted-foreground transition-transform ${showHistory ? 'rotate-180' : ''}`} />
+                        </button>
+                        <AnimatePresence>
+                            {showHistory && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden"
+                                >
+                                    <Separator />
+                                    <CardContent className="space-y-2 pt-4">
+                                        {[...log].reverse().slice(0, 15).map(s => (
+                                            <div key={s.id} className="flex items-center gap-4 rounded-lg bg-surface-elevated px-4 py-3">
+                                                <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg font-mono text-sm font-bold ${
+                                                    s.score >= 70 ? 'bg-mint/10 text-mint' :
+                                                    s.score >= 40 ? 'bg-amber/10 text-amber' : 'bg-crimson/10 text-crimson'
+                                                }`}>
+                                                    {s.score}%
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="truncate text-sm">{s.questionPreview}…</p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {s.difficulty} · {s.grade}
+                                                    </p>
+                                                </div>
+                                                <div className="flex shrink-0 gap-1.5">
+                                                    <Badge className="bg-mint/10 text-mint text-[10px]">{s.conceptsCovered.length} covered</Badge>
+                                                    {s.conceptsMissed.length > 0 && (
+                                                        <Badge variant="destructive" className="text-[10px]">{s.conceptsMissed.length} missed</Badge>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </CardContent>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </Card>
+                </motion.div>
             )}
         </div>
     )

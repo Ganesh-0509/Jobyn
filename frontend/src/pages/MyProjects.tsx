@@ -18,7 +18,7 @@ import {
 import ProjectVerifier from '../components/ProjectVerifier'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 const STATUS_META: Record<ProjectStatus, { label: string; color: string; bg: string; Icon: typeof Bookmark }> = {
@@ -58,7 +58,7 @@ export default function MyProjects() {
     return true
   })
 
-  const counts = {
+  const counts: Record<string, number> = {
     all: projects.length,
     saved: projects.filter(p => p.status === 'saved').length,
     'in-progress': projects.filter(p => p.status === 'in-progress').length,
@@ -90,7 +90,7 @@ export default function MyProjects() {
           <button type="button" key={key} onClick={() => setFilterStatus(key)}
             className={`rounded-lg border p-3 text-center transition-all ${bg} ${filterStatus === key ? `border-${color.replace('text-', '')}/50 ring-1 ring-${color.replace('text-', '')}/20` : 'border-border'}`}
           >
-            <div className={`text-2xl font-bold ${color}`}>{counts[key]}</div>
+            <div className={`text-2xl font-bold ${color}`}>{counts[key as keyof typeof counts] ?? 0}</div>
             <div className="text-[10px] text-muted-foreground">{label}</div>
           </button>
         ))}
@@ -192,11 +192,9 @@ export default function MyProjects() {
                           {(p.status === 'verified' || p.status === 'partial' || p.status === 'insufficient') && (
                             <div className="flex items-center gap-2">
                               {p.githubUrl && (
-                                <Button variant="outline" size="sm" asChild>
-                                  <a href={p.githubUrl} target="_blank" rel="noopener noreferrer" className="gap-1.5">
+                                <a href={p.githubUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-medium hover:bg-muted">
                                     <Github className="size-3.5" /> View Repo
                                   </a>
-                                </Button>
                               )}
                               <Button variant="outline" size="sm" onClick={() => setVerifyOpen(isVerifyOpen ? null : p.id)} className="gap-1.5">
                                 <ShieldCheck className="size-3.5" /> {isVerifyOpen ? 'Hide Report' : 'View Report'}

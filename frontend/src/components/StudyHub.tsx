@@ -77,7 +77,7 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
     // Saved state
     const [isPinned, setIsPinned] = useState(false)
     // Theme & Notes state
-    const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+    const [theme, setTheme] = useState<'dark' | 'light'>('light')
     const [personalNotes, setPersonalNotes] = useState(() => localStorage.getItem(`notes_${skill}`) || '')
 
     useEffect(() => {
@@ -300,13 +300,6 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                     <div className="sidebar-brand">
                         <Sparkles size={20} className="glow-icon" />
                         <span>Focus Mode</span>
-                        <button type="button"
-                            className="theme-toggle-btn"
-                            onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-                            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-                        >
-                            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-                        </button>
                     </div>
 
                     {loadError && (

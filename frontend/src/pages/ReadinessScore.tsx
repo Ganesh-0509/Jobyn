@@ -1,206 +1,212 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { useResume, getReadinessClass } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
-import { EmptyState } from '../components/StateDisplay'
 import { uploadResume, predictResume } from '../api/client'
 import CircularProgress from '../components/CircularProgress'
-import { Cpu, Cloud, Zap, ArrowRight, TrendingUp, AlertCircle, Shield } from 'lucide-react'
+import { Cpu, Cloud, Zap, TrendingUp, AlertCircle, Shield, ArrowRight } from 'lucide-react'
 import { usePrivacy } from '../context/PrivacyContext'
 import { predictOnDevice, isOnDeviceReady } from '../utils/onDevicePredictor'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { Skeleton } from '@/components/ui/skeleton'
 
 const CLASSES = [
-    { label: 'Beginner', range: '0–40%', min: 0, max: 40 },
-    { label: 'Developing', range: '41–60%', min: 41, max: 60 },
-    { label: 'Placement Ready', range: '61–80%', min: 61, max: 80 },
-    { label: 'Interview Ready', range: '81–100%', min: 81, max: 100 },
+  { label: 'Beginner', range: '0–40%', min: 0, max: 40 },
+  { label: 'Developing', range: '41–60%', min: 41, max: 60 },
+  { label: 'Placement Ready', range: '61–80%', min: 61, max: 80 },
+  { label: 'Interview Ready', range: '81–100%', min: 81, max: 100 },
 ]
 
+const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } }
+const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as const } } }
+
 export default function ReadinessScore() {
-    const { analysis, prediction, bestFit, setAnalysis, setPrediction, currentFile } = useResume()
-    const { privacy } = usePrivacy()
-    const { user } = useAuth()
-    const navigate = useNavigate()
-    const [switching, setSwitching] = useState(false)
-    const [switchError, setSwitchError] = useState<string | null>(null)
+  const { analysis, prediction, bestFit, setAnalysis, setPrediction, currentFile } = useResume()
+  const { privacy } = usePrivacy()
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const [switching, setSwitching] = useState(false)
+  const [switchError, setSwitchError] = useState<string | null>(null)
 
-    if (!analysis) {
-        return (
-            <div className="page-content">
-                <EmptyState
-                    icon="📊"
-                    title="No Analysis Available"
-                    subtitle="Upload and analyze your resume to see your readiness score breakdown."
-                    action={{ label: 'Upload Resume', onClick: () => navigate('/resume-analyzer') }}
-                />
-            </div>
-        )
-    }
-
-    const score = analysis?.final_score ?? 0
-    const current = getReadinessClass(score)
-
-
-    const corePct = analysis?.core_coverage_percent ?? 0
-    const projectPct = analysis?.project_score_percent ?? 0
-    const atsPct = analysis?.ats_score_percent ?? 0
-    const structPct = analysis?.structure_score_percent ?? 0
-    const optPct = analysis?.optional_coverage_percent ?? 0
-
-    const BREAKDOWN = [
-        { label: 'Core Skill Coverage', pct: corePct, weight: 35, cls: 'blue' },
-        { label: 'Projects & Experience', pct: projectPct, weight: 25, cls: 'cyan' },
-        { label: 'ATS Compatibility', pct: atsPct, weight: 20, cls: 'green' },
-        { label: 'Resume Structure', pct: structPct, weight: 10, cls: 'purple' },
-        { label: 'Optional Skills', pct: optPct, weight: 10, cls: 'orange' },
-    ]
-
+  if (!analysis) {
     return (
-        <div className="page-content">
-            <div className="page-header">
-                <div className="page-title">Readiness Score</div>
-                <div className="page-subtitle">Detailed scoring breakdown • All values from your resume analysis</div>
-            </div>
-
-            <div className="grid-2 mb-16">
-                <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 220, gap: 16 }}>
-                    <CircularProgress pct={score} size={160} stroke={14} color="var(--blue)" label="Overall" />
-                    <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{current}</div>
-                        {analysis?.role && <div className="text-muted">for {analysis.role}</div>}
-                    </div>
-
-                    {prediction && (
-                        <>
-                            <div style={{
-                                marginTop: 4, display: 'flex', alignItems: 'center', gap: 6,
-                                padding: '4px 10px', borderRadius: 20,
-                                background: prediction.model_version.includes('onnx') ? 'rgba(var(--green-rgb),0.1)' : 'rgba(var(--blue-rgb),0.1)',
-                                border: `1px solid ${prediction.model_version.includes('onnx') ? 'rgba(var(--green-rgb),0.2)' : 'rgba(var(--blue-rgb),0.2)'}`,
-                                fontSize: 12, color: prediction.model_version.includes('onnx') ? 'var(--green)' : 'var(--blue)',
-                                fontWeight: 600
-                            }}>
-                                {prediction.model_version.includes('onnx') ? <Shield size={12} /> : <Cloud size={12} />}
-                                {prediction.model_version.includes('onnx') ? 'Verified AI Engine' : 'Cloud Intelligence'}
-                                {prediction.inference_time_ms != null && prediction.inference_time_ms > 0 && (
-                                    <span style={{ opacity: 0.6, fontWeight: 400 }}>• Latency {prediction.inference_time_ms.toFixed(1)}ms</span>
-                                )}
-                            </div>
-
-                            <div style={{
-                                marginTop: 18, padding: '16px 20px', borderRadius: 12,
-                                background: score < 50
-                                    ? 'linear-gradient(135deg, rgba(var(--orange-rgb),0.12) 0%, rgba(var(--red-rgb),0.12) 100%)'
-                                    : 'linear-gradient(135deg, rgba(var(--blue-rgb),0.08) 0%, rgba(var(--green-rgb),0.08) 100%)',
-                                border: score < 50
-                                    ? '1px solid rgba(var(--orange-rgb),0.3)'
-                                    : '1px solid rgba(var(--blue-rgb),0.15)',
-                                textAlign: 'left',
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                                    <div style={{
-                                        background: score < 50 ? 'var(--orange)' : 'var(--blue)',
-                                        color: 'white', padding: 4, borderRadius: 6
-                                    }}>
-                                        {score < 50 ? <AlertCircle size={14} /> : <TrendingUp size={14} />}
-                                    </div>
-                                    <div style={{
-                                        fontSize: 12, textTransform: 'uppercase',
-                                        color: score < 50 ? 'var(--orange)' : 'var(--blue)',
-                                        fontWeight: 800, letterSpacing: 0.5
-                                    }}>
-                                        {score < 50 ? 'Skill Gap Alert' : 'Path Intelligence'}
-                                    </div>
-                                </div>
-
-                                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
-                                    {score < 50
-                                        ? `Developing for ${analysis?.role}`
-                                        : (prediction.predicted_role === analysis?.role && score > 70
-                                            ? `High Match for ${prediction.predicted_role}`
-                                            : `Potential Path: ${bestFit?.predicted_role || prediction.predicted_role}`)
-                                    }
-                                </div>
-
-                                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, lineHeight: 1.5 }}>
-                                    {score < 50
-                                        ? `Your readiness for ${analysis?.role} is currently introductory (${score}%). We recommend focusing on the missing core skills in your Improvement Plan.`
-                                        : (bestFit?.reasoning || prediction.explanation || `Your profile shows strong semantic alignment with the ${prediction.predicted_role} career path.`)
-                                    }
-                                </div>
-
-                                {bestFit && bestFit.predicted_role !== analysis?.role && (
-                                    <>
-                                    <button type="button"
-                                        className="btn btn--primary btn--sm"
-                                        onClick={async () => {
-                                            if (!currentFile || !bestFit.predicted_role) return
-                                            setSwitching(true)
-                                            setSwitchError(null)
-                                            try {
-                                                const result = await uploadResume(currentFile, bestFit.predicted_role, privacy, user?.email)
-                                                setAnalysis(result)
-                                            } catch (err: unknown) {
-                                                setSwitchError(err instanceof Error ? err.message : 'Failed to switch role. Please try again.')
-                                            } finally {
-                                                setSwitching(false)
-                                            }
-                                        }}
-                                        disabled={switching || !currentFile}
-                                        style={{
-                                            marginTop: 12, width: '100%', justifyContent: 'center', gap: 8, fontSize: 12,
-                                            background: score < 50 ? 'var(--orange)' : 'var(--blue)',
-                                            opacity: !currentFile ? 0.6 : 1
-                                        }}
-                                    >
-                                        {switching ? <div className="spinner spinner--sm" /> : <><Zap size={14} /> {score < 50 ? 'Switch to Highest Match Role' : 'Apply Suggested Path'}</>}
-                                    </button>
-                                    {switchError && (
-                                        <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(var(--red-rgb),0.1)', border: '1px solid rgba(var(--red-rgb),0.2)', borderRadius: 8, fontSize: 12, color: 'var(--red)' }}>
-                                            {switchError}
-                                        </div>
-                                    )}
-                                    </>
-                                )}
-                            </div>
-                        </>
-                    )}
-                </div>
-
-                <div className="card">
-                    <div className="card-title mb-16">Weighted Breakdown</div>
-                    {BREAKDOWN.map(b => (
-                        <div className="progress-row" key={b.label}>
-                            <div className="progress-label">
-                                <span>{b.label}</span>
-                                <span style={{ color: 'var(--text-muted)' }}>
-                                    {Math.round(b.pct)}%
-                                    <span style={{ fontSize: 12, marginLeft: 4 }}>(×{b.weight}%)</span>
-                                </span>
-                            </div>
-                            <div className="progress-track">
-                                <div className={`progress-fill progress-fill--${b.cls}`} style={{ width: `${Math.min(100, Math.round(b.pct))}%` }} />
-                            </div>
-                        </div>
-                    ))}
-
-                    <div style={{ marginTop: 14, padding: '10px 12px', background: 'var(--bg-input)', borderRadius: 8, fontSize: 12, color: 'var(--text-muted)' }}>
-                        Final Score = ({corePct}×0.35) + ({projectPct}×0.25) + ({atsPct}×0.20) + ({structPct}×0.10) + ({optPct}×0.10) = <strong style={{ color: 'var(--blue)' }}>{score}</strong>
-                    </div>
-                </div>
-            </div>
-
-            <div className="card">
-                <div className="card-title mb-16">Readiness Classification</div>
-                <div className="readiness-classes">
-                    {CLASSES.map((c, i) => (
-                        <div key={i} className={`readiness-class${c.label === current ? ' current' : ''}`}>
-                            <div className="readiness-class__label">{c.label}</div>
-                            <div className="readiness-class__range">{c.range}</div>
-                        </div>
-                    ))}
-                </div>
-            </div>
+      <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
+        <div className="rounded-2xl bg-muted p-4">
+          <TrendingUp className="size-10 text-muted-foreground" />
         </div>
+        <h2 className="font-heading text-xl font-bold text-foreground">No Analysis Available</h2>
+        <p className="max-w-md text-sm text-muted-foreground">Upload and analyze your resume to see your readiness score breakdown.</p>
+        <Button onClick={() => navigate('/resume-analyzer')} className="gap-2">
+          <ArrowRight className="size-4" /> Upload Resume
+        </Button>
+      </div>
     )
+  }
+
+  const score = analysis?.final_score ?? 0
+  const current = getReadinessClass(score)
+  const corePct = analysis?.core_coverage_percent ?? 0
+  const projectPct = analysis?.project_score_percent ?? 0
+  const atsPct = analysis?.ats_score_percent ?? 0
+  const structPct = analysis?.structure_score_percent ?? 0
+  const optPct = analysis?.optional_coverage_percent ?? 0
+
+  const BREAKDOWN = [
+    { label: 'Core Skill Coverage', pct: corePct, weight: 35, color: 'bg-primary' },
+    { label: 'Projects & Experience', pct: projectPct, weight: 25, color: 'bg-cyan' },
+    { label: 'ATS Compatibility', pct: atsPct, weight: 20, color: 'bg-success' },
+    { label: 'Resume Structure', pct: structPct, weight: 10, color: 'bg-violet' },
+    { label: 'Optional Skills', pct: optPct, weight: 10, color: 'bg-warning' },
+  ]
+
+  return (
+    <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
+      <motion.div variants={item} className="space-y-1">
+        <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">Readiness Score</h1>
+        <p className="text-sm text-muted-foreground">Detailed scoring breakdown &middot; All values from your resume analysis</p>
+      </motion.div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* Score + Prediction Card */}
+        <motion.div variants={item}>
+          <Card className="flex h-full flex-col items-center justify-center">
+            <CardContent className="flex flex-col items-center gap-4 py-8">
+              <CircularProgress pct={score} size={160} stroke={14} color="hsl(var(--primary))" label="Overall" />
+              <div className="text-center">
+                <div className="font-heading text-lg font-bold text-foreground">{current}</div>
+                {analysis?.role && <div className="text-xs text-muted-foreground">for {analysis.role}</div>}
+              </div>
+
+              {prediction && (
+                <>
+                  <Badge variant="outline" className={`gap-1.5 ${prediction.model_version.includes('onnx') ? 'border-success/30 text-success' : 'border-primary/30 text-primary'}`}>
+                    {prediction.model_version.includes('onnx') ? <Shield className="size-3" /> : <Cloud className="size-3" />}
+                    {prediction.model_version.includes('onnx') ? 'Verified AI Engine' : 'Cloud Intelligence'}
+                    {prediction.inference_time_ms != null && prediction.inference_time_ms > 0 && (
+                      <span className="opacity-60">&middot; {prediction.inference_time_ms.toFixed(1)}ms</span>
+                    )}
+                  </Badge>
+
+                  <div className={`w-full rounded-xl border p-4 ${score < 50 ? 'border-warning/30 bg-warning/5' : 'border-primary/15 bg-primary/5'}`}>
+                    <div className="flex items-center gap-2.5">
+                      <div className={`rounded-md p-1.5 ${score < 50 ? 'bg-warning/20 text-warning' : 'bg-primary/15 text-primary'}`}>
+                        {score < 50 ? <AlertCircle className="size-3.5" /> : <TrendingUp className="size-3.5" />}
+                      </div>
+                      <span className={`text-[11px] font-bold uppercase tracking-wider ${score < 50 ? 'text-warning' : 'text-primary'}`}>
+                        {score < 50 ? 'Skill Gap Alert' : 'Path Intelligence'}
+                      </span>
+                    </div>
+                    <div className="mt-2 text-sm font-bold text-foreground">
+                      {score < 50
+                        ? `Developing for ${analysis?.role}`
+                        : (prediction.predicted_role === analysis?.role && score > 70
+                          ? `High Match for ${prediction.predicted_role}`
+                          : `Potential Path: ${bestFit?.predicted_role || prediction.predicted_role}`)
+                      }
+                    </div>
+                    <div className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                      {score < 50
+                        ? `Your readiness for ${analysis?.role} is currently introductory (${score}%). We recommend focusing on the missing core skills in your Improvement Plan.`
+                        : (bestFit?.reasoning || prediction.explanation || `Your profile shows strong semantic alignment with the ${prediction.predicted_role} career path.`)
+                      }
+                    </div>
+
+                    {bestFit && bestFit.predicted_role !== analysis?.role && (
+                      <>
+                        <Button
+                          size="sm"
+                          className="mt-3 w-full gap-2"
+                          disabled={switching || !currentFile}
+                          onClick={async () => {
+                            if (!currentFile || !bestFit.predicted_role) return
+                            setSwitching(true); setSwitchError(null)
+                            try {
+                              const result = await uploadResume(currentFile, bestFit.predicted_role, privacy, user?.email)
+                              setAnalysis(result)
+                            } catch (err: unknown) {
+                              setSwitchError(err instanceof Error ? err.message : 'Failed to switch role. Please try again.')
+                            } finally { setSwitching(false) }
+                          }}
+                        >
+                          {switching
+                            ? <><span className="mr-2 size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" /> Switching&hellip;</>
+                            : <><Zap className="size-3.5" /> {score < 50 ? 'Switch to Highest Match Role' : 'Apply Suggested Path'}</>
+                          }
+                        </Button>
+                        {switchError && (
+                          <div className="mt-2 flex items-center gap-2 rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+                            <AlertCircle className="size-3" /> {switchError}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Weighted Breakdown */}
+        <motion.div variants={item}>
+          <Card className="h-full">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Weighted Breakdown</CardTitle>
+              <CardDescription>How each metric contributes to your final score</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {BREAKDOWN.map(b => (
+                <div key={b.label} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-foreground">{b.label}</span>
+                    <span className="tabular-nums text-muted-foreground">
+                      {Math.round(b.pct)}% <span className="text-[10px] opacity-60">(&times;{b.weight}%)</span>
+                    </span>
+                  </div>
+                  <Progress value={Math.min(100, Math.round(b.pct))} className="h-2" />
+                </div>
+              ))}
+              <div className="mt-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-2.5 text-xs text-muted-foreground">
+                Final Score = ({corePct}&times;0.35) + ({projectPct}&times;0.25) + ({atsPct}&times;0.20) + ({structPct}&times;0.10) + ({optPct}&times;0.10) ={' '}
+                <strong className="text-primary">{score}</strong>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+
+      {/* Readiness Classification */}
+      <motion.div variants={item}>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Readiness Classification</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {CLASSES.map((c) => (
+                <div
+                  key={c.label}
+                  className={`rounded-xl border p-3 text-center transition-all ${
+                    c.label === current
+                      ? 'border-primary bg-primary/5 shadow-glow'
+                      : 'border-border/50 bg-muted/20'
+                  }`}
+                >
+                  <div className={`text-sm font-bold ${c.label === current ? 'text-primary' : 'text-foreground'}`}>{c.label}</div>
+                  <div className="text-xs text-muted-foreground">{c.range}</div>
+                  {c.label === current && (
+                    <Badge className="mt-1.5 text-[10px]">Current</Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
+  )
 }

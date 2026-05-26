@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Ghost } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 
 export default function NotFound() {
   return (
@@ -27,12 +27,10 @@ export default function NotFound() {
         </p>
       </div>
 
-      <Button asChild>
-        <Link to="/dashboard" className="gap-2">
-          <ArrowLeft className="size-4" />
-          Back to Dashboard
-        </Link>
-      </Button>
+      <Link to="/dashboard" className={buttonVariants({ variant: "default" }) + " gap-2"}>
+        <ArrowLeft className="size-4" />
+        Back to Dashboard
+      </Link>
     </motion.div>
   )
 }

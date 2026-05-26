@@ -1,204 +1,186 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
     LayoutDashboard, FileText, BarChart2, ZapOff,
     CheckSquare, MessageSquare, TrendingUp, GitCompare,
-    Building2, Blocks, Settings, Sun, Moon, Shield, Cpu, Menu, X as XIcon, LogOut
+    Building2, Blocks, Settings, Shield, Menu, LogOut, Eye, EyeOff
 } from 'lucide-react'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import LogoMark from './LogoMark'
 import { useAuth } from '../context/AuthContext'
-import { PrivacyContext } from '../context/PrivacyContext'
-import { isOnDeviceReady } from '../utils/onDevicePredictor'
+import { Button } from './ui/button'
+import { ScrollArea } from './ui/scroll-area'
+import { Separator } from './ui/separator'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from './ui/tooltip'
+import { Avatar, AvatarFallback } from './ui/avatar'
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from './ui/sheet'
 
 const NAV_ITEMS = [
-    { to: '/dashboard', label: 'Dashboard Overview', Icon: LayoutDashboard },
+    { to: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
     { to: '/resume-analyzer', label: 'Resume Analyzer', Icon: FileText },
     { to: '/readiness-score', label: 'Readiness Score', Icon: BarChart2 },
-    { to: '/skill-gap', label: 'Skill Gap Analysis', Icon: ZapOff },
+    { to: '/skill-gap', label: 'Skill Gap', Icon: ZapOff },
     { to: '/improvement-plan', label: 'Improvement Plan', Icon: CheckSquare },
-    { to: '/interview-readiness', label: 'Interview Readiness', Icon: MessageSquare },
-    { to: '/progress-tracking', label: 'Progress Tracking', Icon: TrendingUp },
-    { to: '/resume-comparison', label: 'Resume Comparison', Icon: GitCompare },
-    { to: '/industry-alignment', label: 'Industry Alignment', Icon: Building2 },
-    { to: '/my-projects', label: 'My Projects', Icon: Blocks },
-    { to: '/admin', label: 'Admin Portal', Icon: Shield },
+    { to: '/interview-readiness', label: 'Interview Prep', Icon: MessageSquare },
+    { to: '/progress-tracking', label: 'Progress', Icon: TrendingUp },
+    { to: '/resume-comparison', label: 'Comparison', Icon: GitCompare },
+    { to: '/industry-alignment', label: 'Industry', Icon: Building2 },
+    { to: '/my-projects', label: 'Projects', Icon: Blocks },
+    { to: '/admin', label: 'Admin', Icon: Shield },
     { to: '/settings', label: 'Settings', Icon: Settings },
 ]
 
-export default function Layout() {
+function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
     const { user, logout } = useAuth()
     const [privacy, setPrivacy] = useState(() => localStorage.getItem('cse_privacy') === 'true')
-    const [theme, setTheme] = useState(() => localStorage.getItem('cse_theme') || 'light')
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
     useEffect(() => { localStorage.setItem('cse_privacy', String(privacy)) }, [privacy])
 
-    useEffect(() => {
-        // The new theme is the default, so we only need to toggle a class for a potential 'dark-mode'
-        // For now, we remove the old 'light-mode' class to avoid conflicts.
-        document.documentElement.classList.remove('light-mode');
-        
-        // If you decide to implement a dark theme later, you could do:
-        // if (theme === 'dark') {
-        //   document.documentElement.classList.add('dark-mode');
-        // } else {
-        //   document.documentElement.classList.remove('dark-mode');
-        // }
-
-        localStorage.setItem('cse_theme', theme)
-    }, [theme])
-
-    const privacyValue = useMemo(() => ({ privacy, setPrivacy }), [privacy])
-
     return (
-        <PrivacyContext.Provider value={privacyValue}>
-            <div className="app-shell">
-                {/* ── Mobile overlay ── */}
-                {mobileMenuOpen && (
-                    <div className="mobile-overlay" onClick={() => setMobileMenuOpen(false)} />
-                )}
-
-                {/* ── Sidebar ── */}
-                <aside className={`sidebar ${mobileMenuOpen ? 'sidebar--mobile-open' : ''}`}>
-                    <div className="sidebar__logo">
-                        <div className="sidebar__logo-icon"><LogoMark size={28} /></div>
-                        <div className="sidebar__logo-name">CampusSync</div>
-                        <div className="sidebar__logo-sub">Edge AI</div>
-                        <button type="button"
-                            className="mobile-close-btn"
-                            onClick={() => setMobileMenuOpen(false)}
-                            aria-label="Close navigation menu"
-                        >
-                            <XIcon size={20} />
-                        </button>
-                    </div>
-
-                    {/* Privacy Mode indicator in sidebar */}
-                    {privacy && (
-                        <div style={{
-                            margin: '8px 12px', padding: '8px 10px',
-                            background: 'rgba(34,197,94,0.08)',
-                            border: '1px solid rgba(34,197,94,0.2)',
-                            borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6,
-                        }}>
-                            <Shield size={11} color="var(--green)" />
-                            <span style={{ fontSize: 12, color: 'var(--green)', fontWeight: 600, lineHeight: 1.2 }}>
-                                Privacy Mode<br />
-                                <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>Local only</span>
-                            </span>
-                        </div>
-                    )}
-
-                    <nav className="sidebar__nav" aria-label="Main navigation">
-                        {NAV_ITEMS.filter(({ to }) => to !== '/admin' || user?.isAdmin).map(({ to, label, Icon }) => (
-                            <NavLink
-                                key={to}
-                                to={to}
-                                className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-                                onClick={() => setMobileMenuOpen(false)}
-                            >
-                                <Icon className="nav-item__icon" size={16} />
-                                {label}
-                            </NavLink>
-                        ))}
-                    </nav>
-
-                    <div className="sidebar__footer">
-                        <button type="button" className="nav-item nav-item--logout" onClick={logout}>
-                            <LogOut className="nav-item__icon" size={16} />
-                            Logout
-                        </button>
-                    </div>
-                </aside>
-
-                {/* ── Main ── */}
-                <div className="main-area">
-                    <Navbar privacy={privacy} setPrivacy={setPrivacy} theme={theme} setTheme={setTheme} onMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)} />
-                    <main>
-                        <Outlet />
-                    </main>
+        <div className="flex h-full flex-col">
+            {/* Logo */}
+            <div className="flex items-center gap-3 px-4 py-5">
+                <LogoMark size={28} />
+                <div>
+                    <div className="text-sm font-semibold tracking-tight text-foreground">CampusSync</div>
+                    <div className="text-[10px] font-medium uppercase tracking-widest text-cyan">Edge AI</div>
                 </div>
             </div>
-        </PrivacyContext.Provider>
+
+            <Separator className="bg-border/50" />
+
+            {/* Navigation */}
+            <ScrollArea className="flex-1 px-2 py-3">
+                <nav className="flex flex-col gap-0.5">
+                    {NAV_ITEMS.map(({ to, label, Icon }) => (
+                        <NavLink
+                            key={to}
+                            to={to}
+                            onClick={onNavClick}
+                            className={({ isActive }) =>
+                                `group flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 ${
+                                    isActive
+                                        ? 'bg-accent/10 text-accent shadow-[inset_0_0_0_1px_rgba(79,70,229,0.12)]'
+                                        : 'text-muted-foreground hover:bg-black/[0.04] hover:text-foreground'
+                                }`
+                            }
+                        >
+                            <Icon className="h-4 w-4 shrink-0 opacity-70 group-hover:opacity-100" />
+                            {label}
+                        </NavLink>
+                    ))}
+                </nav>
+            </ScrollArea>
+
+            <Separator className="bg-border/50" />
+
+            {/* Footer */}
+            <div className="p-3 space-y-2">
+                {/* Privacy toggle */}
+                <Tooltip>
+                    <TooltipTrigger
+                        className="w-full"
+                        render={
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-start gap-3 text-[13px] text-muted-foreground hover:text-foreground"
+                                onClick={() => setPrivacy(p => !p)}
+                            />
+                        }
+                    >
+                        {privacy ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {privacy ? 'Privacy On' : 'Privacy Off'}
+                    </TooltipTrigger>
+                    <TooltipContent side="right">Toggle on-device processing</TooltipContent>
+                </Tooltip>
+
+                {/* User info + logout */}
+                {user && (
+                    <div className="flex items-center gap-3 rounded-lg border border-slate-200/60 bg-slate-50 px-3 py-2">
+                        <Avatar size="sm">
+                            <AvatarFallback className="bg-accent/15 text-accent text-xs font-semibold">
+                                {user.name?.[0]?.toUpperCase() || 'U'}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                            <div className="text-xs font-medium text-foreground truncate">{user.name}</div>
+                            <div className="text-[10px] text-muted-foreground truncate">{user.email}</div>
+                        </div>
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <Button
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        className="text-muted-foreground hover:text-crimson"
+                                        onClick={logout}
+                                    />
+                                }
+                            >
+                                <LogOut className="h-3.5 w-3.5" />
+                            </TooltipTrigger>
+                            <TooltipContent>Sign out</TooltipContent>
+                        </Tooltip>
+                    </div>
+                )}
+            </div>
+        </div>
     )
 }
 
-/* ── Navbar ─────────────────────────────────────────── */
-function Navbar({ privacy, setPrivacy, theme, setTheme, onMenuToggle }: { privacy: boolean; setPrivacy: (v: boolean) => void; theme: string; setTheme: (v: string) => void; onMenuToggle: () => void }) {
-    const { user, logout } = useAuth()
-    const [onDevice, setOnDevice] = useState(false)
-    const initials = user?.name
-        ? user.name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)
-        : 'U'
+export default function Layout() {
+    const [mobileOpen, setMobileOpen] = useState(false)
+    const location = useLocation()
 
-    useEffect(() => {
-        // Check if ONNX models loaded (non-blocking)
-        const check = setInterval(() => {
-            if (isOnDeviceReady()) { setOnDevice(true); clearInterval(check) }
-        }, 2000)
-        return () => clearInterval(check)
-    }, [])
+    // Close mobile nav on route change
+    useEffect(() => { setMobileOpen(false) }, [location.pathname])
 
     return (
-        <header className="navbar">
-            {/* Hamburger button for mobile */}
-            <button type="button"
-                className="navbar__btn mobile-menu-btn"
-                onClick={onMenuToggle}
-                aria-label="Open navigation menu"
-            >
-                <Menu size={20} />
-            </button>
+        <TooltipProvider delay={200}>
+            <div className="flex min-h-screen bg-background">
+                {/* Desktop Sidebar */}
+                <aside className="hidden lg:flex lg:w-[240px] lg:shrink-0 lg:flex-col lg:fixed lg:inset-y-0 lg:border-r lg:border-border/50 lg:bg-sidebar">
+                    <SidebarContent />
+                </aside>
 
-            {/* Search placeholder removed – can be added later if needed */}
-
-            <div className="navbar__actions">
-                {/* On-Device badge */}
-                {onDevice && (
-                    <div style={{
-                        display: 'flex', alignItems: 'center', gap: 5,
-                        padding: '4px 10px', borderRadius: 20,
-                        background: 'rgba(34,197,94,0.10)',
-                        border: '1px solid rgba(34,197,94,0.25)',
-                        fontSize: 12, color: 'var(--green)', fontWeight: 600,
-                    }}>
-                        <Cpu size={10} /> On-Device
+                {/* Mobile Header + Sidebar */}
+                <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-border/50 bg-background/80 backdrop-blur-xl px-4 py-3">
+                    <div className="flex items-center gap-3">
+                        <LogoMark size={24} />
+                        <span className="text-sm font-semibold tracking-tight">CampusSync</span>
                     </div>
-                )}
-
-                {/* Privacy Mode toggle */}
-                <button type="button"
-                    className="navbar__btn"
-                    title={privacy ? 'Privacy Mode ON - click to disable' : 'Enable Privacy Mode (local-only)'}
-                    onClick={() => setPrivacy(!privacy)}
-                    style={{ color: privacy ? 'var(--green)' : undefined }}
-                >
-                    <Shield size={15} />
-                </button>
-
-                {/* Theme toggle */}
-                <button type="button"
-                    className="navbar__btn"
-                    title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-                    aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                >
-                    {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-                </button>
-
-                <div className="navbar__avatar" title={user?.name ?? 'Profile'}>
-                    {initials}
+                    <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                        <SheetTrigger
+                            render={<Button variant="ghost" size="icon-sm" />}
+                        >
+                            <Menu className="h-5 w-5" />
+                        </SheetTrigger>
+                        <SheetContent side="left" className="w-[260px] p-0 bg-sidebar border-r-border/50">
+                            <SheetTitle className="sr-only">Navigation</SheetTitle>
+                            <SidebarContent onNavClick={() => setMobileOpen(false)} />
+                        </SheetContent>
+                    </Sheet>
                 </div>
 
-                <button type="button"
-                    className="navbar__btn navbar__logout"
-                    title="Logout"
-                    aria-label="Logout"
-                    onClick={logout}
-                >
-                    <LogOut size={15} />
-                </button>
+                {/* Main Content */}
+                <main className="flex-1 lg:pl-[240px]">
+                    <div className="pt-[57px] lg:pt-0">
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={location.pathname}
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                                className="p-4 md:p-6 lg:p-8 max-w-[1200px] mx-auto"
+                            >
+                                <Outlet />
+                            </motion.div>
+                        </AnimatePresence>
+                    </div>
+                </main>
             </div>
-        </header>
+        </TooltipProvider>
     )
 }

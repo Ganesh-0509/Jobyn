@@ -1,44 +1,26 @@
-import { useId } from 'react'
-
-type LogoMarkProps = {
-    size?: number
-    className?: string
-}
-
-export default function LogoMark({ size = 36, className }: LogoMarkProps) {
-    const gradientId = useId()
-
+export default function LogoMark({ size = 28 }: { size?: number }) {
     return (
         <svg
-            className={className}
             width={size}
             height={size}
-            viewBox="0 0 64 64"
+            viewBox="0 0 32 32"
             fill="none"
-            role="img"
-            aria-label="CampusSync logo"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
         >
+            {/* Outer ring */}
+            <circle cx="16" cy="16" r="14" stroke="url(#logoGrad)" strokeWidth="2.5" fill="none" />
+            {/* Inner pulse */}
+            <circle cx="16" cy="16" r="5" fill="url(#logoGrad)" />
+            {/* Signal arcs */}
+            <path d="M8 16a8 8 0 0 1 8-8" stroke="#00F2FE" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
+            <path d="M24 16a8 8 0 0 1-8 8" stroke="#9B51E0" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
             <defs>
-                <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="#2d6a4f" />
-                    <stop offset="55%" stopColor="#3d8b6a" />
-                    <stop offset="100%" stopColor="#d4a017" />
+                <linearGradient id="logoGrad" x1="0" y1="0" x2="32" y2="32">
+                    <stop stopColor="#00F2FE" />
+                    <stop offset="1" stopColor="#9B51E0" />
                 </linearGradient>
-                <radialGradient id={`${gradientId}-glow`} cx="0.3" cy="0.2" r="0.9">
-                    <stop offset="0%" stopColor="rgba(255,255,255,0.35)" />
-                    <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-                </radialGradient>
             </defs>
-            <circle cx="32" cy="32" r="30" fill={`url(#${gradientId})`} />
-            <circle cx="32" cy="32" r="30" fill={`url(#${gradientId}-glow)`} />
-            <path
-                d="M36 10L18 34H30L26 54L46 28H34L36 10Z"
-                fill="#1b3a2a"
-                stroke="#f4f7f2"
-                strokeWidth="1.5"
-                strokeLinejoin="round"
-            />
-            <circle cx="48" cy="18" r="4" fill="#d4a017" opacity="0.9" />
         </svg>
     )
 }

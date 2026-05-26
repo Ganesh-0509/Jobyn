@@ -506,7 +506,7 @@ class IngestCourseRequest(BaseModel):
 
 @router.post("/admin/ingest-course")
 @heavy_limit
-async def ingest_course(req: IngestCourseRequest, admin=Depends(get_admin_user)):
+async def ingest_course(request: Request, req: IngestCourseRequest, admin=Depends(get_admin_user)):
     """
     Ingests an authority resource URL.
     - Pathway A (use_rag=True): Scrapes, chunks, embeds (using gemini-embedding-001), and logs to PGVector.
