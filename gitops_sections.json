@@ -1,0 +1,102 @@
+[
+  {
+    "subheading": "GitOps Principles",
+    "explanation": "GitOps uses Git as the single source of truth for infrastructure and application state. Desired state is declared in Git; a controller reconciles actual state with desired state. Changes happen through PRs, not manual commands.\n\nFour principles: declarative, versioned/immutable (Git), automatically applied (pulled), continuously reconciled (drift detection).",
+    "example": "```yaml\n# k8s/deployment.yaml\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: my-app\n  namespace: production\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: my-app\n  template:\n    metadata:\n      labels:\n        app: my-app\n    spec:\n      containers:\n      - name: my-app\n        image: myregistry.io/my-app:v1.2.3\n        ports:\n        - containerPort: 8080\n        resources:\n          requests:\n            cpu: 100m\n            memory: 128Mi\n          limits:\n            cpu: 500m\n            memory: 256Mi\n```\n\n```bash\n# GitOps workflow:\n# 1. Dev pushes code -> CI builds image with new tag\n# 2. CI updates image tag in k8s config Git repo\n# 3. ArgoCD detects change in Git\n# 4. ArgoCD applies change to cluster\n\n# Update image tag in CI\nsed -i 's|myregistry.io/my-app:.*|myregistry.io/my-app:v1.2.4|' production/deployment.yaml\ngit commit -am 'chore: update my-app to v1.2.4'\ngit push\n```",
+    "key_takeaway": "Git is the single source of truth. Changes through PRs, not kubectl. Controller continuously reconciles actual with desired state.",
+    "try_it": "Create a Git repo with K8s manifests. Make a change via PR and verify it gets applied."
+  },
+  {
+    "subheading": "ArgoCD Architecture",
+    "explanation": "ArgoCD is a declarative GitOps controller for Kubernetes. It watches Git repos and syncs to clusters. Applications map Git repos to cluster namespaces. The UI shows sync status, health, and history.",
+    "example": "```bash\n# Install ArgoCD\nkubectl create namespace argocd\nkubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml\n\n# Get initial password\nargocd admin initial-password -n argocd\n\n# Port forward and login\nkubectl port-forward svc/argocd-server -n argocd 8080:443\nargocd login localhost:8080\n\n# Register cluster\nargocd cluster add my-cluster\n```\n\n```yaml\n# ArgoCD Application\napiVersion: argoproj.io/v1alpha1\nkind: Application\nmetadata:\n  name: my-app\n  namespace: argocd\nspec:\n  project: default\n  source:\n    repoURL: https://github.com/org/k8s-configs.git\n    targetRevision: main\n    path: production\n  destination:\n    server: https://kubernetes.default.svc\n    namespace: production\n  syncPolicy:\n    automated:\n      prune: true\n      selfHeal: true\n    syncOptions:\n      - CreateNamespace=true\n    retry:\n      limit: 5\n      backoff:\n        duration: 5s\n        factor: 2\n        maxDuration: 3m\n```\n\n```bash\n# CLI\nargocd app create my-app \\\n  --repo https://github.com/org/k8s-configs.git \\\n  --path production \\\n  --dest-server https://kubernetes.default.svc \\\n  --dest-namespace production \\\n  --sync-policy automated --auto-prune --self-heal\n\nargocd app sync my-app\nargocd app get my-app\nargocd app history my-app\n```",
+    "key_takeaway": "ArgoCD watches Git and syncs to clusters. Use automated sync with prune and selfHeal. Register clusters and create applications.",
+    "try_it": "Install ArgoCD, register your cluster, create an application, verify automatic sync."
+  },
+  {
+    "subheading": "Application Sync & Health",
+    "explanation": "Sync status shows if Git matches cluster. Health status shows if resources are healthy. Automated sync applies changes automatically. Manual sync gives control. Rollback reverts to previous revision.",
+    "example": "```bash\n# Check status\nargocd app get my-app\n# Sync Status: Synced\n# Health Status: Healthy\n\n# View diff\nargocd app diff my-app\n\n# Sync history\nargocd app history my-app\n\n# Rollback\nargocd app rollback my-app 1\n\n# Refresh from Git\nargocd app get my-app --refresh\n```\n\n```yaml\n# Ignore HPA-controlled replicas\napiVersion: argoproj.io/v1alpha1\nkind: Application\nmetadata:\n  name: my-app\nspec:\n  ignoreDifferences:\n  - group: apps\n    kind: Deployment\n    jsonPointers:\n    - /spec/replicas\n```",
+    "key_takeaway": "Synced + Healthy = desired matches reality. Use diff to preview, rollback to revert, ignoreDifferences for HPA fields.",
+    "try_it": "Make a manual kubectl change, observe the drift, then sync to fix it."
+  },
+  {
+    "subheading": "Multi-Cluster Management",
+    "explanation": "ArgoCD manages apps across multiple clusters from one control plane. Register clusters, create projects for isolation, deploy to specific clusters. Enables multi-environment (dev/staging/prod) and multi-region.",
+    "example": "```bash\n# Register clusters\nargocd cluster add staging-context --name staging\nargocd cluster add prod-context --name production\nargocd cluster list\n\n# Create project\nargocd proj create my-project \\\n  --src https://github.com/org/k8s-configs.git \\\n  --dest https://staging-cluster,production \\\n  --dest https://prod-cluster,production\n```\n\n```yaml\n# Project with RBAC\napiVersion: argoproj.io/v1alpha1\nkind: AppProject\nmetadata:\n  name: my-project\n  namespace: argocd\nspec:\n  sourceRepos:\n  - 'https://github.com/org/k8s-configs.git'\n  destinations:\n  - server: https://staging-cluster\n    namespace: production\n  - server: https://prod-cluster\n    namespace: production\n  roles:\n  - name: developer\n    policies:\n    - p, proj:my-project:developer, applications, get, my-project/*, allow\n    - p, proj:my-project:developer, applications, sync, my-project/*, allow\n```\n\n```bash\n# Create app targeting specific cluster\nargocd app create staging-app \\\n  --repo https://github.com/org/k8s-configs.git \\\n  --path staging --dest-server https://staging-cluster --dest-namespace production\n\n# Promote\nargocd app set prod-app --revision main\nargocd app sync prod-app\n```",
+    "key_takeaway": "Register clusters, create projects for RBAC isolation, target specific clusters per app. Promote by updating target revision.",
+    "try_it": "Register two clusters, create a project, deploy the same app to both with different configs."
+  },
+  {
+    "subheading": "Drift Detection & Auto-Sync",
+    "explanation": "Drift detection finds differences between Git (desired) and cluster (actual). Auto-sync corrects drift automatically. Self-heal re-applies if someone manually changes the cluster. Notifications alert on failures.",
+    "example": "```yaml\napiVersion: argoproj.io/v1alpha1\nkind: Application\nmetadata:\n  name: my-app\n  namespace: argocd\nspec:\n  source:\n    repoURL: https://github.com/org/k8s-configs.git\n    targetRevision: main\n    path: production\n  destination:\n    server: https://kubernetes.default.svc\n    namespace: production\n  syncPolicy:\n    automated:\n      prune: true        # delete resources removed from Git\n      selfHeal: true      # revert manual changes\n    syncOptions:\n      - CreateNamespace=true\n      - PruneLast=true\n      - ApplyOutOfSyncOnly=true\n    retry:\n      limit: 5\n      backoff:\n        duration: 5s\n        factor: 2\n        maxDuration: 3m\n```\n\n```bash\n# Check drift\nargocd app diff my-app\n\n# View sync history\nargocd app get my-app --show-operation\n\n# Manual correction\nargocd app sync my-app\n```",
+    "key_takeaway": "Auto-sync with selfHeal prevents drift. Prune removes deleted resources. Notifications alert on sync failures.",
+    "try_it": "Enable auto-sync with selfHeal. Manually scale a deployment with kubectl. Verify ArgoCD reverts it."
+  },
+  {
+    "subheading": "Practice Problems",
+    "explanation": "GitOps problems revolve around declarative infrastructure management and continuous reconciliation. The key patterns are: defining desired state in Git, automating sync with ArgoCD or Flux, detecting and remediating drift, and managing multi-environment promotions.\n\nFocus on understanding the reconciliation loop: Git is the source of truth, the controller compares actual cluster state to desired state, and automatically corrects any drift. This eliminates manual kubectl apply and ensures every change is auditable through Git history.",
+    "example": "```yaml\n# ArgoCD Application manifest\napiVersion: argoproj.io/v1alpha1\nkind: Application\nmetadata:\n  name: my-app\n  namespace: argocd\nspec:\n  project: default\n  source:\n    repoURL: https://github.com/org/k8s-configs.git\n    targetRevision: main\n    path: overlays/production\n  destination:\n    server: https://kubernetes.default.svc\n    namespace: production\n  syncPolicy:\n    automated:\n      prune: true\n      selfHeal: true\n    syncOptions:\n      - CreateNamespace=true\n```",
+    "key_takeaway": "GitOps means Git is the single source of truth — every infrastructure change goes through a PR, and a controller continuously reconciles actual state with desired state.",
+    "try_it": "Set up an ArgoCD Application that watches a Git repo path and auto-syncs when the manifest changes.",
+    "complexity": "Varies by problem",
+    "practice_challenges": [
+      {
+        "title": "ArgoCD Application with Auto-Sync",
+        "number": 1,
+        "difficulty": "Easy",
+        "url": null,
+        "pattern": "Declarative Sync",
+        "hint": "Define an ArgoCD Application resource with syncPolicy.automated enabled.",
+        "description": "Create an ArgoCD Application manifest that watches a Git repo path and automatically deploys changes to a Kubernetes namespace.",
+        "example_input": "Git repo at github.com/org/k8s-configs, path: apps/nginx",
+        "example_output": "ArgoCD auto-syncs every commit to the cluster"
+      },
+      {
+        "title": "Multi-Environment Promotion Pipeline",
+        "number": 2,
+        "difficulty": "Easy",
+        "url": null,
+        "pattern": "Environment Promotion",
+        "hint": "Use Kustomize overlays for dev/staging/prod and promote by updating image tags or merging PRs.",
+        "description": "Set up dev, staging, and production overlays using Kustomize. Changes flow: dev (auto) -> staging (auto) -> prod (manual PR).",
+        "example_input": "New image tag v1.2.3 pushed to dev overlay",
+        "example_output": "v1.2.3 auto-deploys to dev, then staging, then waits for prod PR approval"
+      },
+      {
+        "title": "Drift Detection and Auto-Remediation",
+        "number": 3,
+        "difficulty": "Medium",
+        "url": null,
+        "pattern": "Drift Detection",
+        "hint": "Enable selfHeal in ArgoCD syncPolicy and use diff to detect manual changes.",
+        "description": "A team member manually scaled a deployment with kubectl scale. Configure ArgoCD to detect this drift and revert it automatically.",
+        "example_input": "kubectl scale deployment nginx --replicas=10 (Git says 3)",
+        "example_output": "ArgoCD detects drift, scales back to 3, logs the event"
+      },
+      {
+        "title": "Secret Management with Sealed Secrets",
+        "number": 4,
+        "difficulty": "Medium",
+        "url": null,
+        "pattern": "Sealed Secrets",
+        "hint": "Use kubeseal to encrypt secrets that can only be decrypted by the controllers key in the cluster.",
+        "description": "Store encrypted database credentials in Git using Sealed Secrets. The sealed secret is safe to commit; only the cluster can decrypt it.",
+        "example_input": "DB password: my-secret-password",
+        "example_output": "SealedSecret YAML safe to commit to Git, decrypted only in-cluster"
+      },
+      {
+        "title": "GitOps Canary Deployment with Argo Rollouts",
+        "number": 5,
+        "difficulty": "Hard",
+        "url": null,
+        "pattern": "Canary Deployment",
+        "hint": "Use Argo Rollouts CRD with canary strategy, steps for traffic shifting, and analysis templates for automated rollback.",
+        "description": "Implement a canary deployment that sends 10% traffic to the new version, monitors error rates, and auto-rolls back if errors exceed 5%.",
+        "example_input": "New version v2.0.0 ready to deploy alongside v1.x",
+        "example_output": "Traffic gradually shifted: 10% -> 25% -> 50% -> 100% with health checks at each step"
+      }
+    ]
+  }
+]

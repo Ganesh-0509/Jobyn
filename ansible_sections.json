@@ -43,49 +43,49 @@
     "complexity": "Varies by problem",
     "practice_challenges": [
       {
-        "title": "Multi-Server Nginx Deployment",
+        "title": "Deploy a LAMP Stack",
         "difficulty": "Easy",
-        "pattern": "Playbook & Module Usage",
-        "hint": "Use the apt, template, and service modules in a single playbook",
-        "description": "Write an Ansible playbook that installs Nginx on 3 web servers, deploys a custom index.html from a Jinja2 template, and ensures the Nginx service is running and enabled.",
-        "example_input": "Inventory: [web1, web2, web3] | Template: 'Welcome to {{ inventory_hostname }}'",
-        "example_output": "All 3 servers respond with their hostname in the HTML page"
+        "pattern": "Role-Based Playbook",
+        "hint": "Create separate roles for apache, mysql, and php. Use handlers to restart services when config changes.",
+        "description": "Write an Ansible playbook that deploys a full LAMP stack on 3 Ubuntu servers. Apache should serve a PHP page that connects to MySQL. Use roles to organize tasks and handlers to restart services only when configuration files change.",
+        "example_input": "inventory: 3 Ubuntu 22.04 hosts grouped as [webservers] and [dbservers]",
+        "example_output": "Playbook installs Apache+PHP on webservers, MySQL on dbservers, configures DB connection, and verifies with a curl test"
       },
       {
-        "title": "Role-Based LAMP Stack",
+        "title": "Dynamic Inventory from AWS EC2",
         "difficulty": "Easy",
-        "pattern": "Roles & Directory Structure",
-        "hint": "Create separate roles for apache, mysql, and php with tasks/main.yml in each",
-        "description": "Create a reusable Ansible role structure to deploy a complete LAMP stack. Each component (Apache, MySQL, PHP) should be its own role with proper handlers, templates, and variable defaults.",
-        "example_input": "Role names: apache, mysql, php | Variables: db_name, db_password",
-        "example_output": "Working LAMP stack deployed via 'ansible-playbook site.yml'"
+        "pattern": "Dynamic Inventory Plugin",
+        "hint": "Use the aws_ec2 inventory plugin with filters to select instances by tag. Set keyed_groups to group by tags automatically.",
+        "description": "Configure a dynamic inventory that automatically discovers all running EC2 instances tagged with Environment=production. Group them by their Role tag (web, api, db) and use the resulting inventory in a ping playbook.",
+        "example_input": "AWS account with EC2 instances tagged Environment=production, Role=web/api/db",
+        "example_output": "ansible-inventory --graph shows dynamic groups; ansible all -m ping reaches all production hosts"
       },
       {
-        "title": "Zero-Downtime Rolling Update",
+        "title": "Blue-Green Deployment with Tags and Rolling Update",
         "difficulty": "Medium",
-        "pattern": "Serial Execution & Handlers",
-        "hint": "Use serial: 1 to update one server at a time, with health checks between updates",
-        "description": "Implement a rolling update playbook that deploys a new application version to web servers one at a time. Each server must pass a health check before the next server is updated. If any server fails health checks, halt the deployment.",
-        "example_input": "5 web servers behind a load balancer | New app version: v2.1.0",
-        "example_output": "All servers updated to v2.1.0 with zero downtime, verified by health checks"
+        "pattern": "Rolling Update Strategy",
+        "hint": "Use serial: \"25%\" for rolling updates. Implement health checks with wait_for module. Use tags to control blue/green traffic switching.",
+        "description": "Create a playbook that performs a blue-green deployment: deploys new version to green servers, runs health checks, switches load balancer traffic from blue to green, then updates the old blue servers. If health checks fail, automatically roll back by switching traffic back.",
+        "example_input": "10 web servers behind an HAProxy load balancer, current version on blue group, new version to deploy",
+        "example_output": "Playbook deploys to green, health-checks, switches traffic, updates blue — all with automatic rollback on failure"
       },
       {
-        "title": "Dynamic Inventory from Cloud Provider",
+        "title": "Multi-Environment Configuration with Vault",
         "difficulty": "Medium",
-        "pattern": "Dynamic Inventory & Filters",
-        "hint": "Use the aws_ec2 or gcp_compute inventory plugin with keyed_groups",
-        "description": "Configure a dynamic inventory plugin that automatically discovers all EC2 instances tagged with Environment: production and groups them by their Role tag. Write a playbook that uses this dynamic inventory to configure each group differently.",
-        "example_input": "AWS account with 10 EC2 instances, tags: Environment=production, Role={web, api, db}",
-        "example_output": "3 groups auto-created: web (4 hosts), api (4 hosts), db (2 hosts)"
+        "pattern": "Ansible Vault + Environment Variables",
+        "hint": "Use group_vars/{env}/vault.yml for secrets encrypted with ansible-vault. Use --ask-vault-pass or vault_password_file in ansible.cfg.",
+        "description": "Set up a project that deploys to dev, staging, and production with different configurations. Database passwords, API keys, and TLS certificates must be encrypted with Ansible Vault. Write a playbook that targets a specific environment via extra-vars and loads the correct vault file automatically.",
+        "example_input": "ansible-playbook deploy.yml -e env=production",
+        "example_output": "Playbook loads production group_vars, decrypts vault secrets, configures production servers with correct DB credentials and TLS certs"
       },
       {
-        "title": "Custom Ansible Module & Vault Integration",
+        "title": "Custom Ansible Module for API Health Monitoring",
         "difficulty": "Hard",
-        "pattern": "Module Development & Secrets Management",
-        "hint": "Write a Python module in library/ and use ansible-vault for encrypted variables",
-        "description": "Create a custom Ansible module that validates SSL certificate expiry dates on remote servers. Integrate Ansible Vault to store database credentials securely. Write a playbook that uses both the custom module and vault-encrypted variables to perform a full application deployment with pre-flight SSL checks.",
-        "example_input": "Vault file with db_password | Custom module checks cert expiry > 30 days",
-        "example_output": "Deployment proceeds only if all SSL certs are valid; db credentials decrypted at runtime"
+        "pattern": "Custom Module Development",
+        "hint": "Write the module in Python using the AnsibleModule class. Use uri module patterns for HTTP checks. Return structured JSON with changed/failed/msg fields.",
+        "description": "Write a custom Ansible module (check_api_health.py) that takes a list of API endpoint URLs, performs HTTP health checks with configurable timeout and expected status codes, and returns a summary of healthy/unhealthy endpoints. Integrate it into a playbook that sends a Slack notification if any endpoint is down. The module should support check_mode and idempotent runs.",
+        "example_input": "endpoints: [{url: \"https://api.example.com/health\", expected_status: 200}, {url: \"https://api.example.com/db\", expected_status: 200}]",
+        "example_output": "Module returns {healthy: 2, unhealthy: 0, details: [...]} — playbook skips Slack notification when all healthy"
       }
     ]
   },

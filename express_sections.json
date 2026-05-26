@@ -46,46 +46,46 @@
         "title": "CRUD API with Express Router",
         "difficulty": "Easy",
         "pattern": "RESTful Resource Routing",
-        "hint": "Use express.Router() for /api/books, handle GET/POST/PUT/DELETE",
-        "description": "Build a RESTful API for a bookstore with Express Router. Implement all CRUD operations with proper status codes, error handling, and input validation using express-validator.",
-        "example_input": "POST /api/books {title: 1984, author: Orwell}",
-        "example_output": "201 Created with book object including generated ID"
+        "hint": "Use express.Router() to create modular route files. Map GET/POST/PUT/DELETE to controller functions. Use proper status codes: 201 for create, 204 for delete.",
+        "description": "Build a RESTful API for managing a todo list with Express Router. Implement routes in a separate router file: GET /todos (list with pagination), GET /todos/:id, POST /todos, PATCH /todos/:id, DELETE /todos/:id. Use an in-memory store. Add input validation with express-validator and proper error responses.",
+        "example_input": "POST /todos {\"title\": \"Buy groceries\", \"priority\": \"high\"}",
+        "example_output": "201 Created {\"id\": 1, \"title\": \"Buy groceries\", \"priority\": \"high\", \"completed\": false, \"createdAt\": \"...\"}"
       },
       {
         "title": "JWT Authentication Middleware",
         "difficulty": "Easy",
-        "pattern": "Middleware Chain",
-        "hint": "Create auth middleware that verifies JWT from Authorization header",
-        "description": "Implement JWT-based authentication with login, register, and protected routes. Include refresh token rotation and proper error responses for expired/invalid tokens.",
-        "example_input": "GET /api/profile with Authorization: Bearer <token>",
-        "example_output": "200 OK with user profile, or 401 Unauthorized for invalid token"
+        "pattern": "Token-Based Auth",
+        "hint": "Use jsonwebtoken for signing/verifying. Store refresh tokens in database. Implement access token (15min) + refresh token (7d) pattern.",
+        "description": "Implement JWT authentication: POST /auth/register (hash password with bcrypt), POST /auth/login (returns access + refresh tokens), POST /auth/refresh (get new access token), POST /auth/logout (invalidate refresh token). Protect routes with an auth middleware that verifies the Bearer token.",
+        "example_input": "POST /auth/login {\"email\": \"user@test.com\", \"password\": \"secret123\"}",
+        "example_output": "200 OK {\"accessToken\": \"eyJ...\", \"refreshToken\": \"abc...\", \"expiresIn\": 900}"
       },
       {
-        "title": "File Upload with Streaming",
+        "title": "File Upload with Streaming & Progress",
         "difficulty": "Medium",
-        "pattern": "Multer + Stream Processing",
-        "hint": "Use multer for multipart handling, fs.createWriteStream for large files",
-        "description": "Build a file upload endpoint that handles multipart uploads, validates file types and sizes, streams large files to disk (not memory), generates thumbnails for images, and stores metadata in a database.",
-        "example_input": "POST /api/upload with 50MB image file",
-        "example_output": "File saved to uploads/, thumbnail generated, metadata stored"
+        "pattern": "Stream Processing",
+        "hint": "Use multer for multipart handling. For large files, use busboy directly for streaming. Generate unique filenames with crypto.randomUUID(). Validate file type by magic bytes, not extension.",
+        "description": "Build a file upload service that handles multipart uploads up to 500MB. Support single and multiple file uploads. Validate file types using magic bytes (not just extensions). Generate thumbnails for images using sharp. Store files in a configurable directory with date-based organization. Return a download URL after upload.",
+        "example_input": "POST /upload with 3 image files (5MB, 12MB, 200MB)",
+        "example_output": "3 files uploaded, thumbnails generated for images, response: [{\"id\": \"...\", \"url\": \"/files/2026/05/26/abc.jpg\", \"thumbnail\": \"/files/2026/05/26/abc_thumb.jpg\"}]"
       },
       {
-        "title": "Real-Time Notification System",
+        "title": "Real-Time Chat with Socket.io Integration",
         "difficulty": "Medium",
-        "pattern": "Socket.io + Express Integration",
-        "hint": "Attach Socket.io to Express server, use rooms for user-specific messages",
-        "description": "Build a real-time notification system with Express and Socket.io. Support user-specific notifications via rooms, broadcast announcements, notification persistence in database, and unread count tracking.",
-        "example_input": "Admin sends broadcast: System maintenance at 3 AM",
-        "example_output": "All connected users receive notification, stored in DB for offline users"
+        "pattern": "WebSocket + Express Integration",
+        "hint": "Attach socket.io to the Express HTTP server. Use rooms for channels. Store message history in memory or database. Emit events for typing indicators and read receipts.",
+        "description": "Build a real-time chat backend: Express serves the REST API (user auth, message history, channel management) and Socket.io handles live messaging. Support: public channels, direct messages, typing indicators, read receipts, and message history pagination. Store messages in a database. Reconnection handling: when a user reconnects, deliver any missed messages.",
+        "example_input": "User \"alice\" joins #general and types \"hello\" — user \"bob\" is already in the channel",
+        "example_output": "Bob receives typing indicator, then the message in real-time. Alice gets delivery confirmation. Both can scroll up to see last 50 messages from history."
       },
       {
-        "title": "API Gateway with Proxy and Circuit Breaker",
+        "title": "API Gateway with Request Transformation",
         "difficulty": "Hard",
-        "pattern": "Reverse Proxy + Fault Tolerance",
-        "hint": "Use http-proxy-middleware for proxying, implement circuit breaker state machine",
-        "description": "Build an Express-based API gateway that proxies requests to multiple microservices, implements circuit breaker (open/half-open/closed states), request logging, rate limiting per client, and health check aggregation.",
-        "example_input": "Requests to /api/users -> user-service, /api/orders -> order-service",
-        "example_output": "Requests routed correctly, circuit opens after 5 failures, cached response served"
+        "pattern": "Proxy + Middleware Chain",
+        "hint": "Use http-proxy-micro or node-http-proxy for proxying. Implement request/response transformation middleware. Use circuit breaker pattern for downstream service failures.",
+        "description": "Build an API gateway that: authenticates requests (JWT), applies rate limiting per client, transforms incoming requests to match downstream service contracts, aggregates responses from multiple services into a single response (BFF pattern), implements circuit breaker for failing services, and logs all requests with correlation IDs for distributed tracing.",
+        "example_input": "GET /api/dashboard (needs data from user-service, analytics-service, notification-service)",
+        "example_output": "Gateway authenticates, calls 3 services in parallel with circuit breaker, aggregates into {user: {...}, analytics: {...}, notifications: [...]}, returns with X-Correlation-Id header"
       }
     ]
   },

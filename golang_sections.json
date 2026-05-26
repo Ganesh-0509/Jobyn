@@ -1,0 +1,181 @@
+[
+  {
+    "subheading": "Syntax & Type System",
+    "explanation": "Go is designed for simplicity — no classes, no inheritance, no generics until recently. It's like a well-organized toolbox where every tool has exactly one purpose. Variables are declared with `var` or short `:=`, types are explicit or inferred, and the compiler catches errors before runtime.\n\nGo's type system is structural, not nominal — if a type has the right methods, it satisfies an interface implicitly. There are no exceptions; functions return errors as values. The language is intentionally small: you can learn the entire spec in a weekend.",
+    "example": "```go\npackage main\n\nimport \"fmt\"\n\n// Struct (like a class without inheritance)\ntype User struct {\n    ID    int\n    Name  string\n    Email string\n    Age   int\n}\n\n// Method on struct (value receiver)\nfunc (u User) Greet() string {\n    return fmt.Sprintf(\"Hi, I'm %s (%d)\", u.Name, u.Age)\n}\n\n// Method with pointer receiver (can modify)\nfunc (u *User) Birthday() {\n    u.Age++\n}\n\n// Function with multiple return values\nfunc Divide(a, b float64) (float64, error) {\n    if b == 0 {\n        return 0, fmt.Errorf(\"division by zero\")\n    }\n    return a / b, nil\n}\n\n// Named return values\nfunc Swap(x, y int) (a int, b int) {\n    a = y\n    b = x\n    return // naked return\n}\n\nfunc main() {\n    // Variable declarations\n    var name string = \"Go\"\n    version := 1.22  // Short declaration (type inferred)\n    fmt.Printf(\"%s v%.1f\\n\", name, version)\n\n    // Struct initialization\n    user := User{ID: 1, Name: \"Alice\", Email: \"alice@example.com\", Age: 25}\n    fmt.Println(user.Greet())\n\n    user.Birthday()\n    fmt.Printf(\"Now %d years old\\n\", user.Age)\n\n    // Multiple return values\n    result, err := Divide(10, 3)\n    if err != nil {\n        fmt.Println(\"Error:\", err)\n    } else {\n        fmt.Printf(\"10 / 3 = %.2f\\n\", result)\n    }\n\n    // Zero values\n    var empty User  // {0, \"\", \"\", 0}\n    fmt.Printf(\"Zero user: %+v\\n\", empty)\n\n    // Maps\n    scores := map[string]int{\"Alice\": 95, \"Bob\": 87}\n    scores[\"Charlie\"] = 91\n    delete(scores, \"Bob\")\n    for name, score := range scores {\n        fmt.Printf(\"%s: %d\\n\", name, score)\n    }\n}\n```",
+    "key_takeaway": "Go's simplicity is its strength — structs hold data, methods attach behavior, and multiple return values replace exceptions.",
+    "try_it": "Add a `Validate()` method to `User` that returns an error if Name is empty or Age is negative. Test it with valid and invalid users."
+  },
+  {
+    "subheading": "Goroutines & Channels",
+    "explanation": "Goroutines are lightweight threads managed by the Go runtime — you can spawn thousands of them with minimal overhead. The `go` keyword starts a goroutine, like pressing 'send' on a message without waiting for a reply. Channels are the communication pipes between goroutines, following the principle: 'Don't communicate by sharing memory; share memory by communicating.'\n\nChannels can be buffered (limited capacity) or unbuffered (synchronous handoff). The `select` statement lets a goroutine wait on multiple channels simultaneously, like a receptionist answering whichever phone rings first. This CSP (Communicating Sequential Processes) model makes concurrent code readable and safe.",
+    "example": "```go\npackage main\n\nimport (\n    \"fmt\"\n    \"math/rand\"\n    \"sync\"\n    \"time\"\n)\n\n// Producer-consumer with channels\nfunc producer(id int, ch chan<- int, wg *sync.WaitGroup) {\n    defer wg.Done()\n    for i := 0; i < 5; i++ {\n        value := id*100 + i\n        ch <- value\n        fmt.Printf(\"Producer %d sent: %d\\n\", id, value)\n        time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)\n    }\n}\n\nfunc consumer(id int, ch <-chan int, done chan<- bool) {\n    for value := range ch {\n        fmt.Printf(\"Consumer %d received: %d\\n\", id, value)\n        time.Sleep(time.Duration(rand.Intn(300)) * time.Millisecond)\n    }\n    done <- true\n}\n\n// Fan-out, fan-in pattern\nfunc generateNumbers(count int) <-chan int {\n    ch := make(chan int)\n    go func() {\n        defer close(ch)\n        for i := 1; i <= count; i++ {\n            ch <- i\n        }\n    }()\n    return ch\n}\n\nfunc square(in <-chan int) <-chan int {\n    out := make(chan int)\n    go func() {\n        defer close(out)\n        for n := range in {\n            out <- n * n\n        }\n    }()\n    return out\n}\n\nfunc merge(channels ...<-chan int) <-chan int {\n    var wg sync.WaitGroup\n    merged := make(chan int)\n\n    for _, ch := range channels {\n        wg.Add(1)\n        go func(c <-chan int) {\n            defer wg.Done()\n            for val := range c {\n                merged <- val\n            }\n        }(ch)\n    }\n\n    go func() {\n        wg.Wait()\n        close(merged)\n    }()\n    return merged\n}\n\nfunc main() {\n    // Producer-consumer\n    ch := make(chan int, 10)  // Buffered channel\n    var wg sync.WaitGroup\n\n    for i := 1; i <= 3; i++ {\n        wg.Add(1)\n        go producer(i, ch, &wg)\n    }\n\n    done := make(chan bool, 2)\n    go consumer(1, ch, done)\n    go consumer(2, ch, done)\n\n    wg.Wait()\n    close(ch)\n    <-done\n    <-done\n\n    // Fan-out, fan-in\n    source := generateNumbers(10)\n    sq1 := square(source)\n    sq2 := square(source)\n\n    for result := range merge(sq1, sq2) {\n        fmt.Printf(\"Squared: %d\\n\", result)\n    }\n}\n```",
+    "key_takeaway": "Goroutines are cheap concurrent workers; channels are typed pipes between them — use `range` to consume and `close` when done.",
+    "try_it": "Add a timeout using `select` with `time.After(2*time.Second)`. If a goroutine takes too long, cancel the operation and print a timeout message."
+  },
+  {
+    "subheading": "Interfaces & Structs",
+    "explanation": "Go interfaces are implicit — a struct satisfies an interface simply by implementing its methods, no `implements` keyword needed. This is like duck typing: 'If it quacks like a duck, it's a duck.' This decouples your code because types don't need to know about the interfaces they implement.\n\nStructs are the primary data structure. Embedding (composition) replaces inheritance — embed a struct inside another to reuse its fields and methods. This favors 'has-a' relationships over 'is-a', keeping code flat and testable.",
+    "example": "```go\npackage main\n\nimport (\n    \"fmt\"\n    \"math\"\n)\n\n// Interfaces\ntype Shape interface {\n    Area() float64\n    Perimeter() float64\n    String() string\n}\n\ntype Scalable interface {\n    Scale(factor float64)\n}\n\n// Structs\ntype Circle struct {\n    Radius float64\n}\n\nfunc (c Circle) Area() float64      { return math.Pi * c.Radius * c.Radius }\nfunc (c Circle) Perimeter() float64  { return 2 * math.Pi * c.Radius }\nfunc (c Circle) String() string      { return fmt.Sprintf(\"Circle(r=%.1f)\", c.Radius) }\nfunc (c *Circle) Scale(factor float64) { c.Radius *= factor }\n\ntype Rectangle struct {\n    Width, Height float64\n}\n\nfunc (r Rectangle) Area() float64      { return r.Width * r.Height }\nfunc (r Rectangle) Perimeter() float64  { return 2 * (r.Width + r.Height) }\nfunc (r Rectangle) String() string      { return fmt.Sprintf(\"Rect(%.1fx%.1f)\", r.Width, r.Height) }\nfunc (r *Rectangle) Scale(factor float64) {\n    r.Width *= factor\n    r.Height *= factor\n}\n\n// Composition via embedding\ntype NamedShape struct {\n    Shape  // Embedded interface\n    Name   string\n    Color  string\n}\n\nfunc (ns NamedShape) Describe() string {\n    return fmt.Sprintf(\"%s %s (%s) - Area: %.2f\",\n        ns.Color, ns.Name, ns.Shape.String(), ns.Shape.Area())\n}\n\n// Function accepting interface\nfunc PrintShapeInfo(s Shape) {\n    fmt.Printf(\"%s -> Area: %.2f, Perimeter: %.2f\\n\",\n        s.String(), s.Area(), s.Perimeter())\n}\n\n// Type assertion\nfunc ScaleIfPossible(s Shape, factor float64) {\n    if scalable, ok := s.(Scalable); ok {\n        scalable.Scale(factor)\n        fmt.Printf(\"Scaled by %.1f: %s\\n\", factor, s.String())\n    } else {\n        fmt.Printf(\"%s cannot be scaled\\n\", s.String())\n    }\n}\n\nfunc main() {\n    shapes := []Shape{\n        Circle{Radius: 5},\n        Rectangle{Width: 4, Height: 6},\n        Circle{Radius: 3},\n    }\n\n    for _, s := range shapes {\n        PrintShapeInfo(s)\n    }\n\n    // Embedding\n    ns := NamedShape{\n        Shape: Circle{Radius: 10},\n        Name:  \"Big Circle\",\n        Color: \"Red\",\n    }\n    fmt.Println(ns.Describe())\n\n    // Type assertion\n    c := Circle{Radius: 5}\n    ScaleIfPossible(&c, 2.0)\n\n    // Type switch\n    for _, s := range shapes {\n        switch v := s.(type) {\n        case Circle:\n            fmt.Printf(\"Circle with radius %.1f\\n\", v.Radius)\n        case Rectangle:\n            fmt.Printf(\"Rectangle %0.1fx%.1f\\n\", v.Width, v.Height)\n        }\n    }\n}\n```",
+    "key_takeaway": "Go interfaces are satisfied implicitly — if a type has the right methods, it implements the interface. Embed structs for composition instead of inheritance.",
+    "try_it": "Add a `Triangle` struct with three sides. Implement the `Shape` interface and add a `Scalable` interface method. Test it with `ScaleIfPossible`."
+  },
+  {
+    "subheading": "Error Handling",
+    "explanation": "Go treats errors as values, not exceptions. Functions that can fail return an `error` as their last return value. The caller checks `if err != nil` and handles it immediately — no try/catch, no hidden control flow. This forces you to think about every failure point.\n\nCustom error types let you carry structured context (error codes, messages, wrapped errors). The `errors.Is` and `errors.As` functions check error chains. Sentinel errors (`var ErrNotFound = errors.New(...)`) represent known failure modes that callers can match against.",
+    "example": "```go\npackage main\n\nimport (\n    \"errors\"\n    \"fmt\"\n    \"strconv\"\n)\n\n// Sentinel errors\nvar (\n    ErrNotFound     = errors.New(\"not found\")\n    ErrUnauthorized = errors.New(\"unauthorized\")\n    ErrValidation   = errors.New(\"validation failed\")\n)\n\n// Custom error type\ntype ValidationError struct {\n    Field   string\n    Message string\n}\n\nfunc (e *ValidationError) Error() string {\n    return fmt.Sprintf(\"validation error: %s - %s\", e.Field, e.Message)\n}\n\n// Custom error with wrapping\ntype HTTPError struct {\n    StatusCode int\n    Message    string\n    Err        error\n}\n\nfunc (e *HTTPError) Error() string {\n    return fmt.Sprintf(\"HTTP %d: %s\", e.StatusCode, e.Message)\n}\n\nfunc (e *HTTPError) Unwrap() error {\n    return e.Err\n}\n\n// Function returning error\nfunc FindUser(id string) (*User, error) {\n    if id == \"\" {\n        return nil, &ValidationError{Field: \"id\", Message: \"cannot be empty\"}\n    }\n\n    numID, err := strconv.Atoi(id)\n    if err != nil {\n        return nil, fmt.Errorf(\"invalid user ID '%s': %w\", id, ErrValidation)\n    }\n\n    users := map[int]*User{\n        1: {ID: 1, Name: \"Alice\"},\n        2: {ID: 2, Name: \"Bob\"},\n    }\n\n    user, exists := users[numID]\n    if !exists {\n        return nil, fmt.Errorf(\"user %d: %w\", numID, ErrNotFound)\n    }\n    return user, nil\n}\n\n// Idiomatic error handling pattern\nfunc GetUserHandler(id string) {\n    user, err := FindUser(id)\n    if err != nil {\n        // errors.Is checks the error chain\n        if errors.Is(err, ErrNotFound) {\n            fmt.Println(\"User not found, show 404\")\n            return\n        }\n        if errors.Is(err, ErrValidation) {\n            // errors.As extracts typed error\n            var validationErr *ValidationError\n            if errors.As(err, &validationErr) {\n                fmt.Printf(\"Field '%s': %s\\n\", validationErr.Field, validationErr.Message)\n            }\n            return\n        }\n        fmt.Println(\"Unknown error:\", err)\n        return\n    }\n    fmt.Printf(\"Found user: %s\\n\", user.Name)\n}\n\ntype User struct {\n    ID   int\n    Name string\n}\n\nfunc main() {\n    GetUserHandler(\"1\")    // Found user: Alice\n    GetUserHandler(\"99\")   // User not found, show 404\n    GetUserHandler(\"abc\")  // validation error\n    GetUserHandler(\"\")     // Field 'id': cannot be empty\n}\n```",
+    "key_takeaway": "Go errors are values — check `err != nil` at every call site, use `errors.Is` to match error types, and `errors.As` to extract structured error details.",
+    "try_it": "Create a `WrapError` function that wraps an error with a timestamp and operation name. Use `errors.Is` to verify the original error is still accessible through the chain."
+  },
+  {
+    "subheading": "Standard Library (net/http)",
+    "explanation": "Go's `net/http` package is production-ready out of the box — no framework needed. You can build a web server with a few lines of code. The `http.Handler` interface (one method: `ServeHTTP`) is the foundation. `http.HandlerFunc` adapts regular functions to this interface.\n\nThe standard library provides multiplexing (`http.ServeMux`), middleware patterns (chaining handlers), and built-in support for HTTP/2, TLS, and graceful shutdown. For most APIs, you don't need Gin, Echo, or Fiber — the standard library handles routing, JSON encoding, and middleware.",
+    "example": "```go\npackage main\n\nimport (\n    \"encoding/json\"\n    \"fmt\"\n    \"log\"\n    \"net/http\"\n    \"strconv\"\n    \"strings\"\n    \"sync\"\n    \"time\"\n)\n\ntype User struct {\n    ID    int    `json:\"id\"`\n    Name  string `json:\"name\"`\n    Email string `json:\"email\"`\n}\n\ntype UserStore struct {\n    mu     sync.RWMutex\n    users  map[int]User\n    nextID int\n}\n\nfunc NewUserStore() *UserStore {\n    return &UserStore{\n        users: map[int]User{\n            1: {ID: 1, Name: \"Alice\", Email: \"alice@example.com\"},\n            2: {ID: 2, Name: \"Bob\", Email: \"bob@example.com\"},\n        },\n        nextID: 3,\n    }\n}\n\nfunc (s *UserStore) GetAll() []User {\n    s.mu.RLock()\n    defer s.mu.RUnlock()\n    users := make([]User, 0, len(s.users))\n    for _, u := range s.users {\n        users = append(users, u)\n    }\n    return users\n}\n\nfunc (s *UserStore) GetByID(id int) (User, bool) {\n    s.mu.RLock()\n    defer s.mu.RUnlock()\n    u, ok := s.users[id]\n    return u, ok\n}\n\nfunc (s *UserStore) Create(name, email string) User {\n    s.mu.Lock()\n    defer s.mu.Unlock()\n    user := User{ID: s.nextID, Name: name, Email: email}\n    s.users[user.ID] = user\n    s.nextID++\n    return user\n}\n\n// Middleware\nfunc LoggingMiddleware(next http.Handler) http.Handler {\n    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {\n        start := time.Now()\n        next.ServeHTTP(w, r)\n        log.Printf(\"%s %s %s\", r.Method, r.URL.Path, time.Since(start))\n    })\n}\n\nfunc JSONMiddleware(next http.Handler) http.Handler {\n    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {\n        w.Header().Set(\"Content-Type\", \"application/json\")\n        next.ServeHTTP(w, r)\n    })\n}\n\nfunc main() {\n    store := NewUserStore()\n    mux := http.NewServeMux()\n\n    // GET /users\n    mux.HandleFunc(\"GET /users\", func(w http.ResponseWriter, r *http.Request) {\n        json.NewEncoder(w).Encode(store.GetAll())\n    })\n\n    // GET /users/{id}\n    mux.HandleFunc(\"GET /users/{id}\", func(w http.ResponseWriter, r *http.Request) {\n        id, err := strconv.Atoi(r.PathValue(\"id\"))\n        if err != nil {\n            http.Error(w, `{\"error\":\"invalid id\"}`, http.StatusBadRequest)\n            return\n        }\n        user, found := store.GetByID(id)\n        if !found {\n            http.Error(w, `{\"error\":\"not found\"}`, http.StatusNotFound)\n            return\n        }\n        json.NewEncoder(w).Encode(user)\n    })\n\n    // POST /users\n    mux.HandleFunc(\"POST /users\", func(w http.ResponseWriter, r *http.Request) {\n        var req struct {\n            Name  string `json:\"name\"`\n            Email string `json:\"email\"`\n        }\n        if err := json.NewDecoder(r.Body).Decode(&req); err != nil {\n            http.Error(w, `{\"error\":\"invalid json\"}`, http.StatusBadRequest)\n            return\n        }\n        if req.Name == \"\" || req.Email == \"\" {\n            http.Error(w, `{\"error\":\"name and email required\"}`, http.StatusBadRequest)\n            return\n        }\n        user := store.Create(req.Name, req.Email)\n        w.WriteHeader(http.StatusCreated)\n        json.NewEncoder(w).Encode(user)\n    })\n\n    // Chain middleware\n    handler := LoggingMiddleware(JSONMiddleware(mux))\n\n    fmt.Println(\"Server running on :8080\")\n    log.Fatal(http.ListenAndServe(\":8080\", handler))\n}\n```",
+    "key_takeaway": "Go's `net/http` is production-ready — `http.ServeMux` for routing, middleware wraps handlers, and `http.ListenAndServe` starts the server.",
+    "try_it": "Add a `GET /users/search?q=alice` endpoint that filters users by name (case-insensitive) using `strings.Contains`."
+  },
+  {
+    "subheading": "Testing in Go",
+    "explanation": "Go has testing built into the language — no external frameworks needed. Create a file ending in `_test.go`, write functions starting with `Test`, and run `go test`. The `testing` package provides assertions, benchmarks, and subtests.\n\nTable-driven tests are idiomatic Go: define a slice of test cases (input + expected output), loop through them, and run each as a subtest. This pattern scales well and makes adding new test cases trivial. Benchmarks measure performance, and examples generate documentation.",
+    "example": "```go\n// mathutil.go\npackage mathutil\n\nimport \"errors\"\n\nvar ErrNegativeInput = errors.New(\"negative input not allowed\")\n\nfunc Fibonacci(n int) (int, error) {\n    if n < 0 {\n        return 0, ErrNegativeInput\n    }\n    if n <= 1 {\n        return n, nil\n    }\n    a, b := 0, 1\n    for i := 2; i <= n; i++ {\n        a, b = b, a+b\n    }\n    return b, nil\n}\n\nfunc IsPrime(n int) bool {\n    if n < 2 {\n        return false\n    }\n    for i := 2; i*i <= n; i++ {\n        if n%i == 0 {\n            return false\n        }\n    }\n    return true\n}\n```\n\n```go\n// mathutil_test.go\npackage mathutil\n\nimport (\n    \"testing\"\n)\n\nfunc TestFibonacci(t *testing.T) {\n    tests := []struct {\n        name     string\n        input    int\n        expected int\n        wantErr  bool\n    }{\n        {\"zero\", 0, 0, false},\n        {\"one\", 1, 1, false},\n        {\"five\", 5, 5, false},\n        {\"ten\", 10, 55, false},\n        {\"negative\", -1, 0, true},\n    }\n\n    for _, tt := range tests {\n        t.Run(tt.name, func(t *testing.T) {\n            got, err := Fibonacci(tt.input)\n            if (err != nil) != tt.wantErr {\n                t.Errorf(\"Fibonacci(%d) error = %v, wantErr %v\",\n                    tt.input, err, tt.wantErr)\n                return\n            }\n            if got != tt.expected {\n                t.Errorf(\"Fibonacci(%d) = %d, want %d\",\n                    tt.input, got, tt.expected)\n            }\n        })\n    }\n}\n\nfunc TestIsPrime(t *testing.T) {\n    primes := []int{2, 3, 5, 7, 11, 13, 17, 19, 23}\n    nonPrimes := []int{0, 1, 4, 6, 8, 9, 10, 12, 15}\n\n    for _, n := range primes {\n        if !IsPrime(n) {\n            t.Errorf(\"IsPrime(%d) = false, want true\", n)\n        }\n    }\n    for _, n := range nonPrimes {\n        if IsPrime(n) {\n            t.Errorf(\"IsPrime(%d) = true, want false\", n)\n        }\n    }\n}\n\nfunc BenchmarkFibonacci(b *testing.B) {\n    for i := 0; i < b.N; i++ {\n        Fibonacci(30)\n    }\n}\n\nfunc BenchmarkIsPrime(b *testing.B) {\n    for i := 0; i < b.N; i++ {\n        IsPrime(97)\n    }\n}\n```\n\n```bash\ngo test -v ./...                    # Run all tests verbosely\ngo test -run TestFibonacci/subtest   # Run specific subtest\ngo test -bench=. -benchmem          # Run benchmarks\ngo test -cover                      # Show coverage percentage\ngo test -coverprofile=cover.out     # Generate coverage report\n```",
+    "key_takeaway": "Table-driven tests with `t.Run` subtests are idiomatic Go — define test cases as a struct slice, loop through them, and add new cases by appending a row.",
+    "try_it": "Add a benchmark for `IsPrime` that tests with large primes (e.g., 104729). Compare performance with a naive implementation that checks all numbers up to n."
+  },
+  {
+    "subheading": "Concurrency Patterns",
+    "explanation": "Go's concurrency model (CSP) goes beyond basic goroutines and channels. Patterns like fan-out/fan-in, pipeline, worker pool, and context cancellation solve real production problems. Think of these as assembly lines — data flows through stages, each processing in parallel.\n\nThe `context` package carries deadlines, cancellation signals, and request-scoped values across goroutine boundaries. It's essential for HTTP handlers, database queries, and any operation that might need to be cancelled. `sync.WaitGroup` coordinates goroutine completion, and `sync.Mutex` protects shared state when channels aren't the right fit.",
+    "example": "```go\npackage main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"math/rand\"\n    \"sync\"\n    \"time\"\n)\n\n// Worker pool pattern\nfunc WorkerPool(jobs <-chan int, results chan<- int, numWorkers int) {\n    var wg sync.WaitGroup\n    for i := 0; i < numWorkers; i++ {\n        wg.Add(1)\n        go func(id int) {\n            defer wg.Done()\n            for job := range jobs {\n                // Simulate work\n                time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond)\n                results <- job * job\n            }\n        }(i)\n    }\n    go func() {\n        wg.Wait()\n        close(results)\n    }()\n}\n\n// Pipeline pattern\nfunc Generate(ctx context.Context, nums ...int) <-chan int {\n    out := make(chan int)\n    go func() {\n        defer close(out)\n        for _, n := range nums {\n            select {\n            case out <- n:\n            case <-ctx.Done():\n                return\n            }\n        }\n    }()\n    return out\n}\n\nfunc Multiply(ctx context.Context, in <-chan int, factor int) <-chan int {\n    out := make(chan int)\n    go func() {\n        defer close(out)\n        for n := range in {\n            select {\n            case out <- n * factor:\n            case <-ctx.Done():\n                return\n            }\n        }\n    }()\n    return out\n}\n\nfunc Filter(ctx context.Context, in <-chan int, predicate func(int) bool) <-chan int {\n    out := make(chan int)\n    go func() {\n        defer close(out)\n        for n := range in {\n            if predicate(n) {\n                select {\n                case out <- n:\n                case <-ctx.Done():\n                    return\n                }\n            }\n        }\n    }()\n    return out\n}\n\n// Context with timeout\nfunc FetchWithTimeout(ctx context.Context, url string) (string, error) {\n    ctx, cancel := context.WithTimeout(ctx, 3*time.Second)\n    defer cancel()\n\n    result := make(chan string, 1)\n    go func() {\n        // Simulate slow API call\n        time.Sleep(time.Duration(rand.Intn(5)) * time.Second)\n        result <- fmt.Sprintf(\"Data from %s\", url)\n    }()\n\n    select {\n    case data := <-result:\n        return data, nil\n    case <-ctx.Done():\n        return \"\", fmt.Errorf(\"request cancelled: %w\", ctx.Err())\n    }\n}\n\nfunc main() {\n    // Worker pool\n    jobs := make(chan int, 20)\n    results := make(chan int, 20)\n    WorkerPool(jobs, results, 3)\n\n    for i := 1; i <= 10; i++ {\n        jobs <- i\n    }\n    close(jobs)\n\n    for result := range results {\n        fmt.Printf(\"Worker pool result: %d\\n\", result)\n    }\n\n    // Pipeline\n    ctx := context.Background()\n    nums := Generate(ctx, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)\n    doubled := Multiply(ctx, nums, 2)\n    evens := Filter(ctx, doubled, func(n int) bool { return n%4 == 0 })\n\n    fmt.Print(\"Pipeline (doubled, keep multiples of 4): \")\n    for n := range evens {\n        fmt.Printf(\"%d \", n)\n    }\n    fmt.Println()\n\n    // Context cancellation\n    data, err := FetchWithTimeout(ctx, \"https://api.example.com/data\")\n    if err != nil {\n        fmt.Println(\"Error:\", err)\n    } else {\n        fmt.Println(\"Got:\", data)\n    }\n}\n```",
+    "key_takeaway": "Use worker pools for parallel tasks, pipelines for data transformation stages, and `context.WithTimeout` for cancellable operations — all coordinated through channels.",
+    "try_it": "Add a rate limiter to the worker pool using `time.Ticker` that limits jobs to 5 per second, regardless of how many workers are available."
+  },
+  {
+    "subheading": "Practice Problems",
+    "explanation": "Go interview problems focus on concurrency patterns, interface design, and efficient memory usage. The goroutine + channel model is Go's superpower — most problems reduce to orchestrating concurrent workers communicating through channels. Common patterns include fan-out/fan-in, pipeline, worker pool, and select-based timeouts.\n\nGo's explicit error handling (return error values, check immediately) is a frequent interview topic. Unlike exceptions in other languages, Go forces you to handle errors at each step. Combined with interfaces for polymorphism and goroutines for concurrency, Go problems test your ability to write clean, concurrent, fault-tolerant code.",
+    "example": "```go\n// Worker pool pattern — process N jobs with M workers\npackage main\n\nimport (\n    \"fmt\"\n    \"sync\"\n    \"time\"\n)\n\nfunc worker(id int, jobs <-chan int, results chan<- int, wg *sync.WaitGroup) {\n    defer wg.Done()\n    for job := range jobs {\n        fmt.Printf(\"Worker %d processing job %d\\n\", id, job)\n        time.Sleep(100 * time.Millisecond) // simulate work\n        results <- job * 2\n    }\n}\n\nfunc main() {\n    numJobs := 10\n    numWorkers := 3\n    jobs := make(chan int, numJobs)\n    results := make(chan int, numJobs)\n\n    var wg sync.WaitGroup\n    for w := 1; w <= numWorkers; w++ {\n        wg.Add(1)\n        go worker(w, jobs, results, &wg)\n    }\n\n    for j := 1; j <= numJobs; j++ {\n        jobs <- j\n    }\n    close(jobs)\n\n    go func() {\n        wg.Wait()\n        close(results)\n    }()\n\n    for r := range results {\n        fmt.Printf(\"Result: %d\\n\", r)\n    }\n}\n```",
+    "key_takeaway": "Go concurrency follows the mantra: dont communicate by sharing memory; share memory by communicating. Channels are the glue; goroutines are the workers.",
+    "try_it": "Implement a rate limiter using a buffered channel as a semaphore that limits concurrent API calls to 5.",
+    "complexity": "Varies by problem",
+    "practice_challenges": [
+      {
+        "title": "Two Sum",
+        "number": 1,
+        "difficulty": "Easy",
+        "url": "https://leetcode.com/problems/two-sum/",
+        "pattern": "Hash Map",
+        "hint": "Use a map[int]int to store seen values and their indices. Check if target - current exists in the map.",
+        "description": "Given an array of integers and a target, return indices of two numbers that add up to the target.",
+        "example_input": "nums = [2,7,11,15], target = 9",
+        "example_output": "[0,1]"
+      },
+      {
+        "title": "Valid Parentheses",
+        "number": 2,
+        "difficulty": "Easy",
+        "url": "https://leetcode.com/problems/valid-parentheses/",
+        "pattern": "Stack",
+        "hint": "Use a slice as a stack. Push opening brackets, pop and match closing brackets.",
+        "description": "Given a string containing only brackets, determine if the input is valid (properly opened and closed).",
+        "example_input": "s = \"()[]{}\"",
+        "example_output": "true"
+      },
+      {
+        "title": "Merge Intervals",
+        "number": 3,
+        "difficulty": "Medium",
+        "url": "https://leetcode.com/problems/merge-intervals/",
+        "pattern": "Sorting + Greedy",
+        "hint": "Sort by start time. If current interval overlaps with the previous, merge them by updating the end.",
+        "description": "Given an array of intervals, merge all overlapping intervals and return the non-overlapping result.",
+        "example_input": "intervals = [[1,3],[2,6],[8,10],[15,18]]",
+        "example_output": "[[1,6],[8,10],[15,18]]"
+      },
+      {
+        "title": "LRU Cache",
+        "number": 4,
+        "difficulty": "Medium",
+        "url": "https://leetcode.com/problems/lru-cache/",
+        "pattern": "Doubly Linked List + Hash Map",
+        "hint": "Use a map for O(1) lookup and a doubly linked list for O(1) move-to-front and eviction.",
+        "description": "Design a Least Recently Used cache that supports get and put operations in O(1) time.",
+        "example_input": "LRUCache(2); put(1,1); put(2,2); get(1); put(3,3); get(2)",
+        "example_output": "[null, null, null, 1, null, -1]"
+      },
+      {
+        "title": "Merge K Sorted Lists",
+        "number": 5,
+        "difficulty": "Hard",
+        "url": "https://leetcode.com/problems/merge-k-sorted-lists/",
+        "pattern": "Min Heap / Priority Queue",
+        "hint": "Push the head of each list into a min-heap. Pop the smallest, push its next node. Repeat until heap is empty.",
+        "description": "Merge k sorted linked lists into one sorted linked list and return it.",
+        "example_input": "lists = [[1,4,5],[1,3,4],[2,6]]",
+        "example_output": "[1,1,2,3,4,4,5,6]"
+      }
+    ]
+  },
+  {
+    "subheading": "Practice Problems",
+    "explanation": "Go interview problems test your ability to write idiomatic Go: clean interfaces, goroutine-based concurrency, and effective use of the standard library. The most common patterns involve hash maps with struct keys, slices for dynamic arrays, and channels for concurrent communication. Go's simplicity means solutions should be straightforward — no inheritance hierarchies or complex generics.\n\nBeyond algorithms, Go interviews focus heavily on concurrency patterns: worker pools, fan-out/fan-in, pipeline stages, and context cancellation. Understanding when to use channels vs mutexes, buffered vs unbuffered channels, and `select` for multiplexing is critical. The `sort` package, `container/heap`, and `sync` package cover most data structure needs.",
+    "example": "```go\npackage main\n\nimport \"fmt\"\n\n// Two Sum (LC #1) — map pattern in Go\nfunc twoSum(nums []int, target int) []int {\n    seen := make(map[int]int) // value -> index\n    for i, num := range nums {\n        complement := target - num\n        if j, ok := seen[complement]; ok {\n            return []int{j, i}\n        }\n        seen[num] = i\n    }\n    return nil\n}\n\nfunc main() {\n    fmt.Println(twoSum([]int{2, 7, 11, 15}, 9)) // [0, 1]\n    fmt.Println(twoSum([]int{3, 2, 4}, 6))       // [1, 2]\n}\n```",
+    "key_takeaway": "Go's `map` and `sort` package solve most interview problems — keep solutions simple and idiomatic, leveraging goroutines for concurrency challenges.",
+    "try_it": "Solve Two Sum with a map, then implement a concurrent version that splits the array across goroutines.",
+    "complexity": "Varies by problem",
+    "practice_challenges": [
+      {
+        "title": "Two Sum",
+        "number": 1,
+        "difficulty": "Easy",
+        "url": "https://leetcode.com/problems/two-sum/",
+        "pattern": "Hash Map",
+        "hint": "Use `map[int]int` to store seen values. Check `if j, ok := seen[complement]; ok` for the complement.",
+        "description": "Given an array of integers and a target, return indices of two numbers that add up to the target.",
+        "example_input": "nums = [2, 7, 11, 15], target = 9",
+        "example_output": "[0, 1]"
+      },
+      {
+        "title": "Valid Parentheses",
+        "number": 20,
+        "difficulty": "Easy",
+        "url": "https://leetcode.com/problems/valid-parentheses/",
+        "pattern": "Stack (Slice)",
+        "hint": "Use a `[]byte` as a stack. Push opening brackets, pop and compare on closing brackets.",
+        "description": "Given a string of brackets, determine if the input is valid.",
+        "example_input": "s = \"()[]{}\"",
+        "example_output": "true"
+      },
+      {
+        "title": "Longest Substring Without Repeating Characters",
+        "number": 3,
+        "difficulty": "Medium",
+        "url": "https://leetcode.com/problems/longest-substring-without-repeating-characters/",
+        "pattern": "Sliding Window",
+        "hint": "Use `map[byte]int` for character positions. Track window start. When duplicate found within window, jump start forward.",
+        "description": "Given a string, find the length of the longest substring without repeating characters.",
+        "example_input": "s = \"abcabcbb\"",
+        "example_output": "3"
+      },
+      {
+        "title": "Number of Islands",
+        "number": 200,
+        "difficulty": "Medium",
+        "url": "https://leetcode.com/problems/number-of-islands/",
+        "pattern": "BFS / DFS Grid",
+        "hint": "Iterate the grid. When you find '1', run BFS/DFS to mark all connected land as visited. Count each BFS/DFS call.",
+        "description": "Given a grid of '1's (land) and '0's (water), count the number of islands.",
+        "example_input": "grid = [[\"1\",\"1\",\"0\",\"0\"],[\"1\",\"1\",\"0\",\"0\"],[\"0\",\"0\",\"1\",\"0\"],[\"0\",\"0\",\"0\",\"1\"]]",
+        "example_output": "3"
+      },
+      {
+        "title": "Median of Two Sorted Arrays",
+        "number": 4,
+        "difficulty": "Hard",
+        "url": "https://leetcode.com/problems/median-of-two-sorted-arrays/",
+        "pattern": "Binary Search",
+        "hint": "Binary search on the partition of the shorter array. Ensure maxLeft <= minRight on both sides of the partition.",
+        "description": "Given two sorted arrays, find the median in O(log(min(m,n))) time.",
+        "example_input": "nums1 = [1, 3], nums2 = [2]",
+        "example_output": "2.0"
+      }
+    ]
+  }
+]

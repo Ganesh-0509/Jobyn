@@ -1,0 +1,102 @@
+[
+  {
+    "subheading": "Protocol Buffers",
+    "explanation": "Protocol Buffers (protobuf) is a binary serialization format — smaller and faster than JSON. You define message structures in `.proto` files, and the protoc compiler generates code for any language. Protobuf uses field numbers (not names) for encoding, making it compact and backward-compatible.",
+    "example": "```protobuf\n// user.proto\nsyntax = \"proto3\";\npackage users;\n\nservice UserService {\n  rpc GetUser (GetUserRequest) returns (User);\n  rpc ListUsers (ListUsersRequest) returns (stream User);\n  rpc CreateUser (CreateUserRequest) returns (User);\n}\n\nmessage User {\n  int32 id = 1;\n  string name = 2;\n  string email = 3;\n  repeated string roles = 4;\n  map<string, string> metadata = 5;\n}\n\nmessage GetUserRequest {\n  int32 id = 1;\n}\n\nmessage ListUsersRequest {\n  int32 page_size = 1;\n  string page_token = 2;\n}\n\nmessage CreateUserRequest {\n  string name = 1;\n  string email = 2;\n}\n```\n\n```bash\n# Generate Python code\npython -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. user.proto\n```",
+    "key_takeaway": "Protobuf defines service contracts in `.proto` files. Field numbers ensure backward compatibility — you can add fields without breaking existing clients.",
+    "try_it": "Define a proto file for an order service with CreateOrder, GetOrder, and ListOrders RPCs. Generate Python stubs and verify the generated code."
+  },
+  {
+    "subheading": "Unary & Streaming RPCs",
+    "explanation": "gRPC supports four communication patterns: unary (request-response like REST), server streaming (server sends multiple responses), client streaming (client sends multiple requests), and bidirectional streaming (both sides stream). Streaming is ideal for real-time data, large uploads, or long-running operations.",
+    "example": "```python\nimport grpc\nfrom concurrent import futures\nimport time\n\n# Server\nclass UserService(user_pb2_grpc.UserServiceServicer):\n    def GetUser(self, request, context):\n        # Unary — single request, single response\n        return user_pb2.User(id=request.id, name=\"Alice\", email=\"alice@ex.com\")\n\n    def ListUsers(self, request, context):\n        # Server streaming — one request, multiple responses\n        for i in range(10):\n            yield user_pb2.User(id=i, name=f\"User {i}\")\n            time.sleep(0.5)\n\n    def CreateUser(self, request_iterator, context):\n        # Client streaming — multiple requests, one response\n        users = []\n        for request in request_iterator:\n            users.append(request.name)\n        return user_pb2.CreateResponse(count=len(users))\n\n    def Chat(self, request_iterator, context):\n        # Bidirectional streaming\n        for msg in request_iterator:\n            yield user_pb2.ChatMessage(text=f\"Echo: {msg.text}\")\n\nserver = grpc.server(futures.ThreadPoolExecutor(max_workers=10))\nuser_pb2_grpc.add_UserServiceServicer_to_server(UserService(), server)\nserver.add_insecure_port('[::]:50051')\nserver.start()\n```",
+    "key_takeaway": "Unary for simple RPCs, server streaming for real-time feeds, client streaming for uploads, bidirectional streaming for chat/real-time collaboration.",
+    "try_it": "Implement a bidirectional streaming chat service where clients send messages and the server echoes them back with timestamps."
+  },
+  {
+    "subheading": "Error Handling & Deadlines",
+    "explanation": "gRPC uses status codes (OK, NOT_FOUND, PERMISSION_DENIED, etc.) for error handling — similar to HTTP status codes but more granular. Deadlines specify how long a client is willing to wait — if the deadline passes, the server can stop processing and the client gets a DEADLINE_EXCEEDED error.",
+    "example": "```python\nimport grpc\n\n# Server-side error handling\nclass UserService(user_pb2_grpc.UserServiceServicer):\n    def GetUser(self, request, context):\n        user = db.get_user(request.id)\n        if not user:\n            context.abort(grpc.StatusCode.NOT_FOUND, f\"User {request.id} not found\")\n        if not context.is_active():\n            return  # client disconnected\n        return user\n\n# Client-side error handling\nchannel = grpc.insecure_channel('localhost:50051')\nstub = user_pb2_grpc.UserServiceStub(channel)\n\ntry:\n    # Set deadline (2 seconds)\n    user = stub.GetUser(user_pb2.GetUserRequest(id=1), timeout=2.0)\nexcept grpc.RpcError as e:\n    if e.code() == grpc.StatusCode.NOT_FOUND:\n        print(f\"Not found: {e.details()}\")\n    elif e.code() == grpc.StatusCode.DEADLINE_EXCEEDED:\n        print(\"Request timed out\")\n    elif e.code() == grpc.StatusCode.UNAVAILABLE:\n        print(\"Server unavailable\")\n    else:\n        print(f\"Error: {e.code()} — {e.details()}\")\n\n# Metadata (like HTTP headers)\nmetadata = [('authorization', 'Bearer token123')]\nuser = stub.GetUser(request, metadata=metadata, timeout=5.0)\n```",
+    "key_takeaway": "Use gRPC status codes for error classification. Always set deadlines on client calls to prevent hanging. Server should check `context.is_active()` for long-running operations.",
+    "try_it": "Implement a service that returns DEADLINE_EXCEEDED for slow operations. Set a 1-second deadline on the client and verify the error is caught."
+  },
+  {
+    "subheading": "Load Balancing",
+    "explanation": "gRPC uses HTTP/2, which maintains persistent connections — traditional HTTP load balancers that route per-request don't work well. Client-side load balancing lets the client pick which server to call. Proxy-based load balancing (like Envoy or gRPC-LB) handles it transparently.",
+    "example": "```python\nimport grpc\n\n# Client-side load balancing\nchannel = grpc.insecure_channel(\n    'localhost:50051',\n    options=[\n        ('grpc.lb_policy_name', 'round_robin'),\n        ('grpc.enable_retries', 1),\n        ('grpc.service_config', '{\n            \"loadBalancingConfig\": [{\"round_robin\": {}}],\n            \"methodConfig\": [{\n                \"name\": [{\"service\": \"users.UserService\"}],\n                \"retryPolicy\": {\n                    \"maxAttempts\": 3,\n                    \"initialBackoff\": \"0.1s\",\n                    \"maxBackoff\": \"1s\",\n                    \"backoffMultiplier\": 2,\n                    \"retryableStatusCodes\": [\"UNAVAILABLE\"]\n                }\n            }]\n        }')\n    ]\n)\n\n# Health checking\nfrom grpc_health.v1 import health_pb2, health_pb2_grpc\n\nhealth_stub = health_pb2_grpc.HealthStub(channel)\nresponse = health_stub.Check(health_pb2.HealthCheckRequest(service=\"users.UserService\"))\nprint(response.status)  # SERVING, NOT_SERVING, UNKNOWN\n```",
+    "key_takeaway": "gRPC needs client-side or proxy-based load balancing (not per-request). Use round-robin with health checking. Envoy is the standard proxy for gRPC traffic.",
+    "try_it": "Set up two gRPC servers on different ports with client-side round-robin load balancing. Verify requests are distributed evenly."
+  },
+  {
+    "subheading": "gRPC-Web for Browsers",
+    "explanation": "Browsers can't make gRPC calls directly because gRPC relies on HTTP/2 features (trailing headers, binary framing) that browsers don't expose to JavaScript. gRPC-Web is a protocol that bridges this gap — it uses a proxy (Envoy) that translates between gRPC-Web (browser) and standard gRPC (server).",
+    "example": "```protobuf\n// Same .proto file works for both server and client\ntaxi.proto\nsyntax = \"proto3\";\nservice RideService {\n  rpc RequestRide (RideRequest) returns (RideResponse);\n  rpc TrackRide (TrackRequest) returns (stream Location);\n}\n```\n\n```javascript\n// Browser client (gRPC-Web)\nimport { RideServiceClient } from './generated/RideServiceClientPb';\nimport { RideRequest, TrackRequest } from './generated/ride_pb';\n\nconst client = new RideServiceClient('http://localhost:8080');\n\n// Unary call\nconst request = new RideRequest();\nrequest.setPickup('123 Main St');\nrequest.setDestination('456 Oak Ave');\n\nclient.requestRide(request, {}, (err, response) => {\n  if (err) {\n    console.error(err.message);\n    return;\n  }\n  console.log('Ride ID:', response.getRideId());\n});\n\n// Server streaming\nconst trackRequest = new TrackRequest();\ntrackRequest.setRideId('ride-123');\n\nconst stream = client.trackRide(trackRequest);\nstream.on('data', (location) => {\n  console.log(`Lat: ${location.getLat()}, Lng: ${location.getLng()}`);\n});\nstream.on('error', (err) => console.error(err));\nstream.on('end', () => console.log('Tracking ended'));\n```\n\n```yaml\n# Envoy proxy config (grpc-web filter)\nhttp_filters:\n- name: envoy.filters.http.grpc_web\n- name: envoy.filters.http.cors\n- name: envoy.filters.http.router\n```",
+    "key_takeaway": "gRPC-Web bridges browsers and gRPC via an Envoy proxy. Use the same `.proto` files for server and browser clients. Envoy handles protocol translation transparently.",
+    "try_it": "Set up a gRPC server, configure Envoy as a gRPC-Web proxy, and make calls from a browser using generated JavaScript stubs."
+  },
+  {
+    "subheading": "Practice Problems",
+    "explanation": "gRPC interview problems focus on Protocol Buffer schema design, streaming patterns, and error handling. The key patterns are: defining .proto files with proper message and service definitions, implementing unary and streaming RPCs, handling deadlines and cancellation, and intercepting requests for auth/logging.\n\nUnlike REST's JSON-over-HTTP, gRPC uses binary Protocol Buffers over HTTP/2, making it 2-10x faster for serialization. Streaming RPCs enable real-time bidirectional communication. Practice designing proto schemas that are backward-compatible using field numbers and optional fields.",
+    "example": "```protobuf\n// chat.proto\nsyntax = \"proto3\";\npackage chat;\n\nservice ChatService {\n    // Unary RPC\n    rpc SendMessage (MessageRequest) returns (MessageResponse);\n\n    // Server streaming\n    rpc StreamMessages (StreamRequest) returns (stream Message);\n\n    // Bidirectional streaming\n    rpc Chat (stream Message) returns (stream Message);\n}\n\nmessage Message {\n    string id = 1;\n    string user = 2;\n    string text = 3;\n    int64 timestamp = 4;\n}\n\nmessage MessageRequest {\n    string room_id = 1;\n    string text = 2;\n}\n\nmessage MessageResponse {\n    string message_id = 1;\n    bool success = 2;\n}\n\nmessage StreamRequest {\n    string room_id = 1;\n    int64 since_timestamp = 2;\n}\n```\n\n```python\n# Python server implementation\nimport grpc\nfrom concurrent import futures\nimport chat_pb2\nimport chat_pb2_grpc\n\nclass ChatService(chat_pb2_grpc.ChatServiceServicer):\n    def SendMessage(self, request, context):\n        # Store message and return response\n        msg_id = store_message(request)\n        return chat_pb2.MessageResponse(\n            message_id=msg_id, success=True\n        )\n\n    def StreamMessages(self, request, context):\n        # Server streaming: yield messages as they arrive\n        for message in get_messages_since(request.room_id, request.since_timestamp):\n            yield message\n\n    def Chat(self, request_iterator, context):\n        # Bidirectional: read and write simultaneously\n        for msg in request_iterator:\n            broadcast(msg)\n            yield msg\n```",
+    "key_takeaway": "gRPC uses Protocol Buffers for type-safe, binary-serialized RPC. Streaming RPCs enable real-time communication. Always use field numbers for backward compatibility.",
+    "try_it": "Define a .proto file for a bookstore service with unary RPCs for CRUD and a server-streaming RPC for browsing books.",
+    "complexity": "Varies by problem",
+    "practice_challenges": [
+      {
+        "title": "Define a CRUD Service in Proto",
+        "number": 1,
+        "difficulty": "Easy",
+        "url": null,
+        "pattern": "Proto Design",
+        "hint": "Define messages for Request/Response and a Service with four RPCs: Create, Read, Update, Delete.",
+        "description": "Design a .proto file for a TaskManager service with Create, Get, Update, and Delete RPCs for tasks.",
+        "example_input": "Requirements: tasks with title, description, status, and due date",
+        "example_output": "Complete .proto file with TaskManager service and all message types"
+      },
+      {
+        "title": "Implement Server Streaming RPC",
+        "number": 2,
+        "difficulty": "Easy",
+        "url": null,
+        "pattern": "Server Streaming",
+        "hint": "Use 'stream' keyword in the return type. The server yields multiple responses for a single request.",
+        "description": "Implement a server-streaming RPC that sends real-time stock price updates to a client for a given ticker symbol.",
+        "example_input": "rpc WatchPrice(TickerRequest) returns (stream PriceUpdate)",
+        "example_output": "Client receives continuous price updates until disconnect"
+      },
+      {
+        "title": "Bidirectional Streaming Chat",
+        "number": 3,
+        "difficulty": "Medium",
+        "url": null,
+        "pattern": "Bidirectional Streaming",
+        "hint": "Both request and response are streams. Use goroutines (Go) or asyncio (Python) to read and write concurrently.",
+        "description": "Implement a bidirectional streaming chat where clients send messages and receive all room messages in real-time.",
+        "example_input": "Client A and B connected to the same chat room",
+        "example_output": "Both clients see each others messages in real-time"
+      },
+      {
+        "title": "Deadline and Cancellation Handling",
+        "number": 4,
+        "difficulty": "Medium",
+        "url": null,
+        "pattern": "Deadlines & Cancellation",
+        "hint": "Set a deadline on the client side. The server should check context.is_cancelled() and clean up resources when the deadline expires.",
+        "description": "Implement an RPC that processes a large dataset. The client sets a 5-second deadline. If processing takes longer, the server stops and returns partial results.",
+        "example_input": "Process 1M records with 5-second deadline",
+        "example_output": "Returns 200K processed records + status indicating partial completion"
+      },
+      {
+        "title": "Interceptor for Auth and Logging",
+        "number": 5,
+        "difficulty": "Hard",
+        "url": null,
+        "pattern": "Interceptors",
+        "hint": "gRPC interceptors wrap RPC handlers. Use unary_server_interceptor for unary RPCs and stream_server_interceptor for streaming RPCs.",
+        "description": "Implement a server interceptor that validates JWT tokens on every RPC call, logs request duration, and returns UNAUTHENTICATED for invalid tokens.",
+        "example_input": "RPC call with metadata: authorization: Bearer <jwt>",
+        "example_output": "Valid token: request proceeds and logged. Invalid: UNAUTHENTICATED error"
+      }
+    ]
+  }
+]

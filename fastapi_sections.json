@@ -57,49 +57,49 @@
     "complexity": "Varies by problem",
     "practice_challenges": [
       {
-        "title": "Dependency Injection Chain",
+        "title": "Async CRUD with SQLAlchemy & Pydantic",
         "difficulty": "Easy",
-        "pattern": "FastAPI Dependencies",
-        "hint": "Use Depends() for database sessions, authentication, and pagination",
-        "description": "Build a FastAPI endpoint that uses chained dependencies: one for database session, one for current user extraction from JWT, and one for pagination parameters (offset, limit).",
-        "example_input": "GET /api/items?offset=10&limit=20 with valid JWT",
-        "example_output": "200 OK with paginated items for authenticated user"
+        "pattern": "Async Repository Pattern",
+        "hint": "Use AsyncSession from sqlalchemy.ext.asyncio. Create Pydantic schemas for request/response validation. Use Depends() for session injection.",
+        "description": "Build a fully async CRUD API for a blog: posts (create, read, update, delete) with authors. Use SQLAlchemy 2.0 async ORM, Pydantic v2 models for validation, and proper dependency injection. Include pagination (offset/limit), filtering by author, and soft delete (set deleted_at instead of removing).",
+        "example_input": "POST /posts {\"title\": \"Hello World\", \"content\": \"...\", \"author_id\": 1}",
+        "example_output": "201 Created {\"id\": 1, \"title\": \"Hello World\", \"author\": {\"id\": 1, \"name\": \"Alice\"}, \"created_at\": \"...\"}"
       },
       {
-        "title": "Pydantic Validation with Custom Validators",
+        "title": "OAuth2 Social Login Flow",
         "difficulty": "Easy",
-        "pattern": "Pydantic Models",
-        "hint": "Use @field_validator and @model_validator for cross-field validation",
-        "description": "Create a Pydantic model for a user registration endpoint that validates email format, password strength (8+ chars, mixed case, digit, special char), confirms password match, and normalizes the username to lowercase.",
-        "example_input": "email: USER@Example.COM, password: Abc123!@, confirm: Abc123!@",
-        "example_output": "Validated data with normalized email and username"
+        "pattern": "OAuth2 Authorization Code Flow",
+        "hint": "Use authlib or httpx for OAuth2. Store tokens securely. Implement state parameter for CSRF protection. Map social profile to local user model.",
+        "description": "Implement Google and GitHub OAuth2 login: redirect to provider, handle callback, exchange code for tokens, fetch user profile, create or link local account, and issue a JWT. Handle edge cases: user already linked to another provider, email not verified, and token refresh.",
+        "example_input": "GET /auth/google/callback?code=abc&state=xyz",
+        "example_output": "User created/linked, JWT issued: {\"access_token\": \"eyJ...\", \"user\": {\"email\": \"...\", \"provider\": \"google\"}}"
       },
       {
-        "title": "Background Tasks with Progress Tracking",
+        "title": "Background Task Queue with Celery",
         "difficulty": "Medium",
-        "pattern": "BackgroundTasks + SSE",
-        "hint": "Use BackgroundTasks for async work, SSE endpoint to stream progress updates",
-        "description": "Build an endpoint that accepts a CSV file upload, processes it in the background (validate rows, import to DB), and provides a Server-Sent Events endpoint that streams real-time progress updates to the client.",
-        "example_input": "POST /api/import with 10K row CSV file",
-        "example_output": "202 Accepted, SSE stream shows processed 5000/10000 rows (50%)"
+        "pattern": "Task Queue + Webhook",
+        "hint": "Use Celery with Redis as broker. Define tasks in a separate module. Use task.delay() for async dispatch. Implement webhooks for completion notification.",
+        "description": "Build an image processing API: user uploads images via POST, FastAPI saves them and dispatches Celery tasks for resize/thumbnail/watermark operations. Return a task ID immediately. Client polls GET /tasks/{id} or provides a webhook URL for completion notification. Support batch uploads (up to 20 images).",
+        "example_input": "POST /images/upload with 5 photos + webhook_url: \"https://client.app/hook\"",
+        "example_output": "202 Accepted {\"task_id\": \"abc-123\", \"status\": \"processing\", \"image_count\": 5}. Webhook fires on completion with results."
       },
       {
-        "title": "Multi-Database Transaction Manager",
+        "title": "GraphQL API with Strawberry",
         "difficulty": "Medium",
-        "pattern": "Async SQLAlchemy + Context Manager",
-        "hint": "Use async session with begin(), implement a context manager for transaction scope",
-        "description": "Implement a transaction manager that coordinates writes across two databases (PostgreSQL for users, MongoDB for logs) with saga pattern: if either fails, both roll back. Include retry logic.",
-        "example_input": "Create user + audit log in single transaction",
-        "example_output": "Both operations succeed atomically, or both roll back on failure"
+        "pattern": "Schema-First GraphQL",
+        "hint": "Use strawberry-graphql with FastAPI integration. Define types with @strawberry.type, mutations with @strawberry.mutation. Use DataLoader for N+1 prevention.",
+        "description": "Build a GraphQL API for an e-commerce catalog: products (with categories and reviews), categories (with nested subcategories), and user cart operations. Implement queries with filtering and sorting, mutations for cart operations (add/remove/update quantity), and use DataLoader to prevent N+1 queries when fetching related data.",
+        "example_input": "query { products(category: \"electronics\", sort: PRICE_ASC) { name, price, reviews { rating, author { name } } } }",
+        "example_output": "Returns electronics products sorted by price, each with reviews and author names — no N+1 queries due to DataLoader"
       },
       {
-        "title": "GraphQL plus REST Hybrid API",
+        "title": "Multi-Tenant SaaS API with Row-Level Security",
         "difficulty": "Hard",
-        "pattern": "Strawberry GraphQL + FastAPI",
-        "hint": "Mount GraphQL app alongside REST endpoints, share database session via dependency",
-        "description": "Build an API that exposes both REST and GraphQL endpoints. REST for simple CRUD, GraphQL for complex queries with nested relations, filtering, and pagination. Share the same database layer and authentication.",
-        "example_input": "GraphQL query: { user(id: 1) { name, posts { title, comments { body } } } }",
-        "example_output": "Nested user data with posts and comments in single query"
+        "pattern": "Tenant Isolation + RLS",
+        "hint": "Use PostgreSQL RLS policies. Set app.current_tenant per request via middleware. Use Depends() to inject tenant context. All queries automatically filtered by tenant.",
+        "description": "Build a multi-tenant SaaS API where each tenant (organization) has isolated data. Implement: tenant resolution from API key or subdomain, PostgreSQL Row-Level Security policies that automatically filter all queries by tenant_id, tenant-scoped dependencies, usage tracking (requests per tenant per month), and a super-admin API that can query across tenants. Ensure no tenant can ever access another tenant's data even with direct SQL injection.",
+        "example_input": "Request with X-Tenant-Key: \"org_abc\" to GET /projects",
+        "example_output": "Only returns projects where tenant_id = org_abc. Even if SQL is manipulated, RLS prevents cross-tenant access."
       }
     ]
   },

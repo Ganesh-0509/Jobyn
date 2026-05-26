@@ -38,47 +38,47 @@
       {
         "title": "Log File Analyzer",
         "difficulty": "Easy",
-        "pattern": "grep, awk, sort, uniq",
-        "hint": "Use grep to filter, awk to extract fields, sort | uniq -c for counting",
-        "description": "Write a bash script that parses an Apache access log and reports: top 10 IPs by request count, most requested URLs, and HTTP status code distribution.",
-        "example_input": "access.log with 100K lines",
-        "example_output": "Top IPs table, top URLs table, status code percentages"
+        "pattern": "Text Processing Pipeline",
+        "hint": "Use grep to filter, awk to extract fields, sort and uniq to count occurrences. Chain them with pipes.",
+        "description": "Write a bash script that takes a web server access log file as input and outputs: top 10 IP addresses by request count, top 10 most requested URLs, HTTP status code distribution, and total bandwidth used. Use standard Unix tools (awk, sort, uniq, grep).",
+        "example_input": "access.log with 100,000 lines in Apache combined log format",
+        "example_output": "Report showing: \"192.168.1.1: 2,345 requests\", \"/index.html: 5,678 hits\", \"200: 85%, 404: 10%, 500: 5%\", \"Total: 45.2 GB\""
       },
       {
-        "title": "Backup Rotation Script",
+        "title": "Automated Backup Script",
         "difficulty": "Easy",
-        "pattern": "find, date arithmetic, cron",
-        "hint": "Use find with -mtime to locate old files, date to generate timestamps",
-        "description": "Write a script that creates daily backups of a directory, keeps the last 7 daily backups, the last 4 weekly backups, and deletes everything older. Log actions to a file.",
-        "example_input": "Source: /var/www/data, Destination: /backups/",
-        "example_output": "backup_2026-05-26.tar.gz created, 2 old backups deleted, log updated"
+        "pattern": "Cron + Error Handling",
+        "hint": "Use tar for archiving, date for timestamps, find -mtime for cleanup. Add set -euo pipefail for strict error handling.",
+        "description": "Write a backup script that: compresses a specified directory into a timestamped tar.gz archive, stores it in a backup directory, maintains only the last 7 daily backups (deletes older ones), logs all operations to a log file, and sends an email notification on failure. Include dry-run mode.",
+        "example_input": "./backup.sh /var/www/html /backups --dry-run",
+        "example_output": "Would create: /backups/html_2026-05-26_14-30-00.tar.gz; would delete: html_2026-05-18_*.tar.gz (8 days old)"
       },
       {
-        "title": "Multi-Server Health Monitor",
+        "title": "Multi-Server SSH Command Executor",
         "difficulty": "Medium",
-        "pattern": "SSH + Parallel Execution",
-        "hint": "Use ssh with -o ConnectTimeout, run checks in background with & and wait",
-        "description": "Write a script that checks disk space, memory, and CPU load on 10 remote servers via SSH in parallel, generates a formatted report, and sends an email alert if any server exceeds thresholds.",
-        "example_input": "servers.txt with 10 hostnames, thresholds: disk 80%, memory 90%",
-        "example_output": "Formatted table with all server metrics, email sent for 2 servers over threshold"
+        "pattern": "Parallel Execution + SSH",
+        "hint": "Use GNU parallel or xargs -P for concurrent SSH. Use ssh -o BatchMode=yes -o ConnectTimeout=5 for non-interactive mode. Collect output with a temp file per host.",
+        "description": "Write a script that reads a list of hostnames from a file, SSHs into each one in parallel (max 10 concurrent), runs a specified command, and collects the output into a per-host log file. Include a summary showing how many hosts succeeded/failed. Support SSH key authentication and configurable timeout.",
+        "example_input": "./remote_exec.sh hosts.txt \"df -h /\" --timeout 10 --concurrent 5",
+        "example_output": "Runs df -h / on 50 hosts (5 at a time, 10s timeout each). Summary: 48 success, 2 timeout (host-23, host-47)"
       },
       {
-        "title": "Interactive Menu System with Dialog",
+        "title": "Interactive Menu System with Dialog/Whiptail",
         "difficulty": "Medium",
-        "pattern": "case statements + dialog/whiptail",
-        "hint": "Use dialog --menu for navigation, case for routing, functions for each screen",
-        "description": "Build an interactive TUI menu for system administration tasks: view system info, manage services, check logs, manage users. Each menu item calls a function with error handling.",
-        "example_input": "User selects Manage Services > Restart Nginx",
-        "example_output": "Nginx restarted, success message displayed, returns to menu"
+        "pattern": "TUI with State Management",
+        "hint": "Use whiptail or dialog for menus. Store selections in variables. Use a while loop with case/esac for navigation. Save state to a temp file.",
+        "description": "Build an interactive TUI (Text User Interface) installer script that guides a user through setting up a development environment. Menus should include: OS detection, package manager selection, language versions (Node/Python/Go), editor choice (vim/vscode), and Docker installation. Each choice affects subsequent menus. Show a final summary and ask for confirmation before executing.",
+        "example_input": "User selects: Ubuntu -> apt -> Node 20 + Python 3.12 -> VSCode -> Docker CE",
+        "example_output": "Script shows summary: \"Installing Node 20, Python 3.12, VSCode, Docker CE on Ubuntu via apt. Proceed? [Y/n]\" then executes all steps"
       },
       {
-        "title": "Automated Deployment Pipeline",
+        "title": "Container Health Monitor Dashboard",
         "difficulty": "Hard",
-        "pattern": "Pipeline + Error Recovery",
-        "hint": "Use trap for cleanup, functions for each stage, exit codes for flow control",
-        "description": "Write a deployment script that: pulls code from git, runs tests, builds artifacts, backs up current deployment, deploys new version, runs smoke tests, and rolls back automatically if any step fails. Include colored output and a deployment log.",
-        "example_input": "Deploy branch release/v2.1 to production server",
-        "example_output": "All 6 stages pass, deployment log written, Slack notification sent"
+        "pattern": "Continuous Monitoring + Terminal UI",
+        "hint": "Use tput for cursor positioning and colors. Poll docker stats and docker ps in a loop. Use trap for clean exit. Format output as a table with column alignment.",
+        "description": "Write a bash script that displays a live-updating terminal dashboard showing all running Docker containers with: name, CPU%, memory usage/limit, network I/O, block I/O, and uptime. Color-code containers by health (green=healthy, yellow=starting, red=unhealthy). Support filtering by name pattern and sorting by any column. Update every 2 seconds. Include a header with system-wide stats (total CPU, memory, disk).",
+        "example_input": "./docker_monitor.sh --filter \"web-*\" --sort cpu",
+        "example_output": "Live dashboard showing 5 web-* containers with colored status bars, system CPU at 45%, memory at 12.3/32GB"
       }
     ]
   },

@@ -1,0 +1,102 @@
+[
+  {
+    "subheading": "Init, Clone, Add & Commit",
+    "explanation": "Git tracks changes to your files like a time machine for your code. Every time you \"commit,\" Git saves a snapshot of your entire project — you can jump back to any snapshot at any time. This beats saving copies like \"project_v2_final_FINAL.zip.\"\n\nThe workflow is simple: `git init` creates a new repository, `git clone` copies an existing one. You edit files, `git add` stages the ones you want to save, and `git commit` locks in the snapshot with a message. The staging area is like a loading dock — you pick which boxes (files) go onto the truck (commit).",
+    "example": "```bash\n# Start a new repo\nmkdir my-project && cd my-project\ngit init\n\n# Create and track files\necho '# My Project' > README.md\ngit status                # see untracked files\ngit add README.md         # stage the file\ngit commit -m \"Initial commit\"\n\n# Check history\ngit log --oneline\ngit diff                  # see unstaged changes\n\n# Clone an existing repo\ngit clone https://github.com/user/repo.git\ncd repo\ngit log --oneline -5      # last 5 commits\n```",
+    "key_takeaway": "The three-step dance — edit, add, commit — is the foundation of every Git workflow.",
+    "try_it": "Create a file, commit it, modify it, then use `git diff` to see what changed before committing again."
+  },
+  {
+    "subheading": "Branching & Merging",
+    "explanation": "Branches are parallel universes for your code. When you create a branch, you fork reality — you can experiment freely without touching the main codebase. Think of it like drafting a letter: you write on a separate sheet, then merge it into the final copy when ready.\n\n`git branch feature` creates the branch, `git checkout feature` switches to it (or `git checkout -b feature` does both). When your work is done, `git merge feature` brings changes back into main. If two branches changed the same lines, Git flags a conflict — you must manually choose which version to keep.",
+    "example": "```bash\n# Create and switch to a new branch\ngit checkout -b feature-login\n\n# Make changes\necho 'def login(): pass' > auth.py\ngit add auth.py\ngit commit -m \"Add login function\"\n\n# Switch back and merge\ngit checkout main\ngit merge feature-login\n\n# Handle conflicts (when they happen)\ngit checkout -b feature-a\necho 'version A' > config.txt && git add . && git commit -m \"A\"\ngit checkout main\ngit checkout -b feature-b\necho 'version B' > config.txt && git add . && git commit -m \"B\"\ngit checkout main\ngit merge feature-a    # fast-forward, no conflict\ngit merge feature-b    # CONFLICT! Edit config.txt, then:\ngit add config.txt\ngit commit -m \"Merge feature-b, resolve conflict\"\n```",
+    "key_takeaway": "Branches let you work in isolation; merging brings changes together. Conflicts are normal — Git tells you where, you decide what.",
+    "try_it": "Create two branches, make conflicting changes to the same file in each, merge both into main, and resolve the conflict."
+  },
+  {
+    "subheading": "Remote Repositories",
+    "explanation": "A remote is a copy of your repo hosted elsewhere — typically on GitHub, GitLab, or Bitbucket. The default remote is called `origin`. `git push` sends your local commits to the remote; `git pull` fetches others' commits and merges them into your branch.\n\nThink of it like syncing your phone with the cloud. You can work offline, make commits, and push when you're ready. If someone else pushed while you were offline, `git pull` merges their work. If you diverged too far, Git asks you to resolve conflicts before pushing.",
+    "example": "```bash\n# Connect to a remote\ngit remote add origin https://github.com/user/repo.git\ngit push -u origin main    # -u sets upstream tracking\n\n# Pull latest changes\ngit pull origin main\n\n# View remotes\ngit remote -v\n\n# Fetch without merging (safer)\ngit fetch origin\ngit log main..origin/main   # see what's new\n\n# Push a branch\ngit checkout -b feature-search\ngit push -u origin feature-search\n\n# Delete remote branch\ngit push origin --delete feature-search\n```",
+    "key_takeaway": "`push` sends your work up, `pull` brings others' work down — `fetch` lets you peek before merging.",
+    "try_it": "Create a GitHub repo, push your local project to it, then clone it in a different directory and verify both copies match."
+  },
+  {
+    "subheading": "Rebasing & Cherry-Pick",
+    "explanation": "Rebasing rewrites history to make it cleaner. Instead of a messy merge commit showing where two branches diverged, `git rebase` replays your commits on top of the target branch — like retyping your notes neatly instead of attaching sticky corrections. The result is a straight, linear history.\n\nCherry-pick is surgical: it grabs one specific commit from another branch and applies it to your current branch. This is useful when a bugfix exists in a feature branch but you need it in main immediately, without merging the entire feature.",
+    "example": "```bash\n# Rebase: linearize history\ngit checkout feature-login\ngit rebase main            # replay feature commits on top of main\n\n# If conflicts during rebase:\n# 1. Fix the conflict files\n# 2. git add <resolved-files>\n# 3. git rebase --continue\n# Or abort: git rebase --abort\n\n# Cherry-pick: grab one commit\ngit log --oneline feature-bugfix   # find the commit hash\ngit checkout main\ngit cherry-pick abc1234            # apply that one commit\n\n# Interactive rebase (rewrite last 3 commits)\ngit rebase -i HEAD~3\n# In editor: pick, reword, squash, drop\n# squash = combine with previous commit\n# reword = change commit message\n```",
+    "key_takeaway": "Rebase creates clean linear history; cherry-pick surgically applies individual commits — both rewrite history, so never rebase published branches.",
+    "try_it": "Create a feature branch with 3 commits, then use interactive rebase to squash them into one clean commit."
+  },
+  {
+    "subheading": "Git Workflows: Gitflow & Trunk-Based",
+    "explanation": "A Git workflow is the team's agreement on how branches are used. Without one, developers collide on main and chaos ensues. Two popular models exist: Gitflow uses long-lived branches (main, develop, feature, release, hotfix) for structured releases, while trunk-based development keeps everyone on main with short-lived feature branches merged within a day.\n\nGitflow suits teams with scheduled releases (mobile apps, enterprise software). Trunk-based suits CI/CD-driven teams that deploy multiple times daily. Both use pull requests for code review. The key rule: never push directly to main in a team project.",
+    "example": "```bash\n# Gitflow example\ngit checkout -b develop main          # develop branch\ngit checkout -b feature/search develop # feature from develop\ngit commit -m \"Add search\"\ngit checkout develop\ngit merge feature/search\ngit checkout -b release/1.2 develop   # release candidate\ngit checkout main\ngit merge release/1.2\ngit tag v1.2\ngit checkout -b hotfix/1.2.1 main     # urgent fix\ngit checkout main && git merge hotfix/1.2.1\ngit tag v1.2.1\n\n# Trunk-based example\ngit checkout -b feature/search main   # short-lived branch\ngit commit -m \"Add search\"\ngit push origin feature/search\n# Create PR on GitHub, get review, merge\ngit checkout main && git pull\ngit branch -d feature/search\n\n# Pull request workflow\ngit checkout -b fix/typo\necho 'fix' > typo.txt && git add . && git commit -m \"Fix typo\"\ngit push origin fix/typo\n# Open PR on GitHub → review → merge → deploy\n```",
+    "key_takeaway": "Pick a workflow and enforce it — Gitflow for structured releases, trunk-based for continuous deployment. The branch strategy is the team contract.",
+    "try_it": "Simulate Gitflow: create main, develop, a feature branch, merge feature into develop, create a release branch, merge into main, and tag it."
+  },
+  {
+    "subheading": "Practice Problems",
+    "explanation": "Git mastery comes from muscle memory, not memorizing commands. The core patterns are: branching and merging for parallel development, rebasing for clean history, cherry-picking for surgical fixes, and workflow discipline for team coordination. Each problem below reinforces a different aspect of real-world Git usage.\n\nFocus on understanding *why* each command exists, not just *how* to type it. A merge commit preserves the true history of divergence and resolution; a rebase rewrites that history to look linear. Both are correct — the choice depends on your team's contract. Practice on throwaway repos until these decisions feel automatic.",
+    "example": "",
+    "key_takeaway": "Git workflows are team contracts — the commands are simple, the discipline to follow the workflow is the hard part.",
+    "try_it": "Practice on a throwaway repo: create a merge conflict, resolve it, then rebase a feature branch onto main and observe the difference in history.",
+    "complexity": "Varies by problem",
+    "practice_challenges": [
+      {
+        "title": "Revert a Commit Without Losing History",
+        "number": 1,
+        "difficulty": "Easy",
+        "url": null,
+        "pattern": "Revert",
+        "hint": "git revert creates a new commit that undoes the changes from a specific commit without rewriting history.",
+        "description": "You accidentally pushed a commit that breaks production. Revert that specific commit while preserving the rest of the history.",
+        "example_input": "Commit abc123 introduced a bug in production",
+        "example_output": "A new commit def456 that undoes abc123 changes"
+      },
+      {
+        "title": "Resolve a Merge Conflict",
+        "number": 2,
+        "difficulty": "Easy",
+        "url": null,
+        "pattern": "Merge Conflict Resolution",
+        "hint": "Look for <<<<<<< HEAD markers, edit the file to keep what you want, then git add and git commit.",
+        "description": "Two branches modified the same function. Merge them and resolve the conflict by combining both changes logically.",
+        "example_input": "Branch A has login() with email validation; Branch B has login() with rate limiting",
+        "example_output": "Merged login() with both email validation and rate limiting"
+      },
+      {
+        "title": "Interactive Rebase to Squash Commits",
+        "number": 3,
+        "difficulty": "Medium",
+        "url": null,
+        "pattern": "Interactive Rebase",
+        "hint": "Use git rebase -i HEAD~N to open an editor where you can squash, reword, or drop commits.",
+        "description": "You have 5 messy WIP commits on a feature branch. Squash them into a single clean commit before opening a pull request.",
+        "example_input": "5 commits: WIP, fix typo, WIP2, fix test, final",
+        "example_output": "1 commit: feat: implement user authentication"
+      },
+      {
+        "title": "Cherry-Pick a Hotfix Across Branches",
+        "number": 4,
+        "difficulty": "Medium",
+        "url": null,
+        "pattern": "Cherry-Pick",
+        "hint": "git cherry-pick <commit-hash> applies the diff from that single commit onto your current branch.",
+        "description": "A critical security fix was committed to the develop branch. Apply only that fix to the release branch without merging all of develop.",
+        "example_input": "Fix commit abc123 on develop; release/2.0 branch needs it",
+        "example_output": "release/2.0 now contains the security fix as a new commit"
+      },
+      {
+        "title": "Recover a Deleted Branch",
+        "number": 5,
+        "difficulty": "Hard",
+        "url": null,
+        "pattern": "Reflog Recovery",
+        "hint": "git reflog shows every HEAD movement. Find the commit hash where the branch pointed before deletion, then git checkout -b <branch> <hash>.",
+        "description": "A team member accidentally deleted a feature branch with 2 weeks of work. Use git reflog to find the last commit on that branch and restore it.",
+        "example_input": "Branch feature/payments was deleted; had 15 commits",
+        "example_output": "Branch feature/payments restored to its last commit"
+      }
+    ]
+  }
+]

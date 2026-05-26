@@ -1,0 +1,185 @@
+[
+  {
+    "subheading": "Infrastructure as Code Principles & Terraform Basics",
+    "explanation": "Imagine building a house from memory every time versus using a detailed blueprint. Infrastructure as Code (IaC) is that blueprint — you define servers, networks, and databases in version-controlled files instead of clicking through cloud consoles. This eliminates configuration drift, enables peer review, and makes infrastructure reproducible.\n\nTerraform by HashiCorp uses a declarative approach: you describe the desired end state, and Terraform figures out how to get there. The core workflow is simple — `terraform init` downloads providers, `terraform plan` previews changes, `terraform apply` executes them, and `terraform destroy` tears everything down. Unlike imperative tools, Terraform compares your desired state against real infrastructure stored in a state file.",
+    "example": "```hcl\n# Configure the AWS provider\nterraform {\n  required_providers {\n    aws = {\n      source  = \"hashicorp/aws\"\n      version = \"~> 5.0\"\n    }\n  }\n}\n\nprovider \"aws\" {\n  region = \"us-east-1\"\n}\n\n# Create an S3 bucket\nresource \"aws_s3_bucket\" \"my_bucket\" {\n  bucket = \"my-terraform-learning-bucket-2024\"\n\n  tags = {\n    Name        = \"MyBucket\"\n    Environment = \"Learning\"\n  }\n}\n\n# Output the bucket name\noutput \"bucket_name\" {\n  value = aws_s3_bucket.my_bucket.bucket\n}\n```",
+    "key_takeaway": "Terraform's declarative model means you define *what* you want, not *how* to build it — the plan step lets you review before any real changes happen.",
+    "try_it": "Add a second resource block to create an S3 bucket versioning configuration on the same bucket using `aws_s3_bucket_versioning`. Run `terraform plan` to see the preview."
+  },
+  {
+    "subheading": "HCL Syntax, Providers & Resource Dependencies",
+    "explanation": "HCL (HashiCorp Configuration Language) is Terraform's native syntax — think of it as a structured way to describe infrastructure that's more readable than JSON but more powerful than YAML. Every Terraform file consists of blocks: `resource`, `data`, `variable`, `output`, and `provider`, each with arguments that configure behavior.\n\nProviders are Terraform's plugin system — they translate HCL into API calls for AWS, Azure, GCP, Kubernetes, or any of thousands of services. Resources declare infrastructure components, and Terraform automatically determines the order to create them through implicit dependencies (when one resource references another's attributes) and explicit `depends_on` when you need to force ordering.",
+    "example": "```hcl\nprovider \"aws\" {\n  region = \"us-east-1\"\n}\n\n# Security group — must exist before the instance\nresource \"aws_security_group\" \"web_sg\" {\n  name        = \"web-server-sg\"\n  description = \"Allow HTTP and SSH\"\n\n  ingress {\n    from_port   = 80\n    to_port     = 80\n    protocol    = \"tcp\"\n    cidr_blocks = [\"0.0.0.0/0\"]\n  }\n\n  ingress {\n    from_port   = 22\n    to_port     = 22\n    protocol    = \"tcp\"\n    cidr_blocks = [\"0.0.0.0/0\"]\n  }\n\n  egress {\n    from_port   = 0\n    to_port     = 0\n    protocol    = \"-1\"\n    cidr_blocks = [\"0.0.0.0/0\"]\n  }\n}\n\n# Implicit dependency: Terraform sees aws_security_group.web_sg reference\nresource \"aws_instance\" \"web\" {\n  ami           = \"ami-0c55b159cbfafe1f0\"\n  instance_type = \"t2.micro\"\n  vpc_security_group_ids = [aws_security_group.web_sg.id]\n\n  tags = {\n    Name = \"WebServer\"\n  }\n}\n```",
+    "key_takeaway": "Terraform automatically builds a dependency graph from resource references — you rarely need explicit `depends_on` because referencing `resource.name.attribute` creates implicit ordering.",
+    "try_it": "Add an `aws_ebs_volume` resource and attach it to the instance using `aws_volume_attachment`. Observe how Terraform orders the creation automatically."
+  },
+  {
+    "subheading": "Variables, Outputs & Data Sources",
+    "explanation": "Hardcoding values in infrastructure code is like writing magic numbers in software — it works until you need to change environments. Terraform variables parameterize your configurations, making them reusable across dev, staging, and production. You define variable blocks with types, defaults, and validation rules, then reference them as `var.name` throughout your code.\n\nOutputs expose values after `terraform apply` — essential for sharing information like IP addresses or connection strings. Data sources are the reverse of resources: instead of creating infrastructure, they *query* existing infrastructure. Need the latest Ubuntu AMI ID or an existing VPC's ID? Data sources fetch that information so you can reference it dynamically.",
+    "example": "```hcl\nvariable \"environment\" {\n  type        = string\n  default     = \"dev\"\n  description = \"Deployment environment\"\n\n  validation {\n    condition     = contains([\"dev\", \"staging\", \"prod\"], var.environment)\n    error_message = \"Environment must be dev, staging, or prod.\"\n  }\n}\n\nvariable \"instance_count\" {\n  type    = number\n  default = 1\n}\n\n# Query existing infrastructure\ndata \"aws_ami\" \"ubuntu\" {\n  most_recent = true\n  owners      = [\"099720109477\"] # Canonical\n\n  filter {\n    name   = \"name\"\n    values = [\"ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*\"]\n  }\n}\n\n# Reference existing VPC\ndata \"aws_vpc\" \"default\" {\n  default = true\n}\n\nresource \"aws_instance\" \"app\" {\n  count         = var.instance_count\n  ami           = data.aws_ami.ubuntu.id\n  instance_type = var.environment == \"prod\" ? \"t3.medium\" : \"t2.micro\"\n\n  tags = {\n    Name        = \"${var.environment}-server-${count.index + 1}\"\n    Environment = var.environment\n  }\n}\n\noutput \"instance_ips\" {\n  value       = aws_instance.app[*].public_ip\n  description = \"Public IP addresses of created instances\"\n}\n```",
+    "key_takeaway": "Variables make configurations reusable, outputs share results between modules and with users, and data sources let you reference existing infrastructure without managing it.",
+    "try_it": "Add a `variable \"allowed_cidr\"` with validation ensuring it's a valid CIDR block, then use it in the security group's ingress rule instead of `0.0.0.0/0`."
+  },
+  {
+    "subheading": "State Management & Remote Backends",
+    "explanation": "Terraform's state file is its memory — a JSON file mapping your configuration to real-world resources. Without it, Terraform wouldn't know which EC2 instance corresponds to which resource block. By default, state is stored locally as `terraform.tfstate`, but this creates problems in teams: concurrent edits cause conflicts, and losing the file means losing track of infrastructure.\n\nRemote backends solve this by storing state in shared storage like AWS S3 with DynamoDB for locking. This ensures only one person runs `terraform apply` at a time, provides state versioning for rollback, and keeps sensitive infrastructure data off developer laptops. Think of it as a database for your infrastructure with built-in concurrency control.",
+    "example": "```hcl\n# backend.tf — Configure remote state storage\nterraform {\n  backend \"s3\" {\n    bucket         = \"my-terraform-state-bucket\"\n    key            = \"infrastructure/terraform.tfstate\"\n    region         = \"us-east-1\"\n    dynamodb_table = \"terraform-state-lock\"\n    encrypt        = true\n  }\n}\n\n# Create the DynamoDB table for locking (run once with local state)\nresource \"aws_dynamodb_table\" \"terraform_locks\" {\n  name         = \"terraform-state-lock\"\n  billing_mode = \"PAY_PER_REQUEST\"\n  hash_key     = \"LockID\"\n\n  attribute {\n    name = \"LockID\"\n    type = \"S\"\n  }\n}\n\n# Create the S3 bucket for state\nresource \"aws_s3_bucket\" \"terraform_state\" {\n  bucket = \"my-terraform-state-bucket\"\n\n  lifecycle {\n    prevent_destroy = true\n  }\n}\n\nresource \"aws_s3_bucket_versioning\" \"state\" {\n  bucket = aws_s3_bucket.terraform_state.id\n  versioning_configuration {\n    status = \"Enabled\"\n  }\n}\n\nresource \"aws_s3_bucket_server_side_encryption_configuration\" \"state\" {\n  bucket = aws_s3_bucket.terraform_state.id\n  rule {\n    apply_server_side_encryption_by_default {\n      sse_algorithm = \"aws:kms\"\n    }\n  }\n}\n```",
+    "key_takeaway": "Never store state locally in production — use a remote backend with locking (S3+DynamoDB, GCS, Terraform Cloud) to prevent conflicts and enable team collaboration.",
+    "try_it": "Initialize a local Terraform project, apply it to create the S3 bucket and DynamoDB table, then migrate the state to the newly created remote backend using `terraform init -migrate-state`."
+  },
+  {
+    "subheading": "Modules & Reusable Infrastructure Patterns",
+    "explanation": "Without modules, Terraform code becomes copy-paste spaghetti — the same VPC and security group definitions duplicated across every project. Modules are Terraform's packaging system: reusable, parameterized blocks of infrastructure that you compose like functions in programming. A module takes inputs (variables), creates resources, and returns outputs.\n\nThe Terraform Registry hosts thousands of community-maintained modules for common patterns like VPCs, EKS clusters, and RDS instances. For internal standards, you build private modules — a VPC module that enforces your company's subnet layout, tagging policy, and security rules. This creates a self-service infrastructure platform where teams consume pre-approved building blocks instead of reinventing networking from scratch.",
+    "example": "```hcl\n# modules/vpc/main.tf\nvariable \"cidr_block\" {\n  type = string\n}\n\nvariable \"environment\" {\n  type = string\n}\n\nvariable \"availability_zones\" {\n  type    = list(string)\n  default = [\"us-east-1a\", \"us-east-1b\"]\n}\n\nresource \"aws_vpc\" \"main\" {\n  cidr_block           = var.cidr_block\n  enable_dns_hostnames = true\n  enable_dns_support   = true\n\n  tags = {\n    Name        = \"${var.environment}-vpc\"\n    Environment = var.environment\n  }\n}\n\nresource \"aws_subnet\" \"public\" {\n  count             = length(var.availability_zones)\n  vpc_id            = aws_vpc.main.id\n  cidr_block        = cidrsubnet(var.cidr_block, 8, count.index)\n  availability_zone = var.availability_zones[count.index]\n\n  tags = {\n    Name = \"${var.environment}-public-${count.index + 1}\"\n  }\n}\n\noutput \"vpc_id\" {\n  value = aws_vpc.main.id\n}\n\noutput \"subnet_ids\" {\n  value = aws_subnet.public[*].id\n}\n```\n\n```hcl\n# main.tf — Use the module\nmodule \"production_vpc\" {\n  source = \"./modules/vpc\"\n\n  cidr_block        = \"10.0.0.0/16\"\n  environment       = \"prod\"\n  availability_zones = [\"us-east-1a\", \"us-east-1b\", \"us-east-1c\"]\n}\n\nmodule \"staging_vpc\" {\n  source = \"./modules/vpc\"\n\n  cidr_block  = \"10.1.0.0/16\"\n  environment = \"staging\"\n}\n\noutput \"prod_vpc_id\" {\n  value = module.production_vpc.vpc_id\n}\n```",
+    "key_takeaway": "Modules are Terraform's abstraction layer — define infrastructure once, parameterize it with variables, and reuse it across environments and teams to eliminate drift and duplication.",
+    "try_it": "Extend the VPC module to include an Internet Gateway and a route table for public subnets. Add an output for the Internet Gateway ID."
+  },
+  {
+    "subheading": "Expressions, Loops & Conditional Logic",
+    "explanation": "Terraform isn't just static declarations — it supports dynamic infrastructure creation through loops and conditionals. The `count` meta-argument creates multiple identical resources, while `for_each` iterates over maps or sets to create named variations. Think of `count` as a copy machine and `for_each` as a customizer that stamps unique labels on each copy.\n\nConditionals let you toggle resources on and off based on variables, and `for` expressions transform lists and maps inline — similar to list comprehensions in Python. The `locals` block lets you compute derived values, keeping your resource blocks clean. Together, these features turn Terraform from a static config tool into a dynamic infrastructure programming language.",
+    "example": "```hcl\nvariable \"environments\" {\n  default = {\n    dev = {\n      instance_type = \"t2.micro\"\n      instance_count = 1\n      enable_monitoring = false\n    }\n    staging = {\n      instance_type = \"t2.small\"\n      instance_count = 2\n      enable_monitoring = true\n    }\n    prod = {\n      instance_type = \"t3.medium\"\n      instance_count = 3\n      enable_monitoring = true\n    }\n  }\n}\n\nlocals {\n  # Flatten environments for for_each\n  instances = flatten([\n    for env, config in var.environments : [\n      for i in range(config.instance_count) : {\n        key           = \"${env}-${i}\"\n        environment   = env\n        instance_type = config.instance_type\n        monitoring    = config.enable_monitoring\n      }\n    ]\n  ])\n\n  instance_map = { for inst in local.instances : inst.key => inst }\n}\n\nresource \"aws_instance\" \"servers\" {\n  for_each = local.instance_map\n\n  ami           = \"ami-0c55b159cbfafe1f0\"\n  instance_type = each.value.instance_type\n\n  monitoring = each.value.monitoring\n\n  tags = {\n    Name        = \"server-${each.key}\"\n    Environment = each.value.environment\n  }\n}\n\n# Conditional resource creation\nresource \"aws_cloudwatch_metric_alarm\" \"cpu\" {\n  for_each = {\n    for k, v in local.instance_map : k => v if v.monitoring\n  }\n\n  alarm_name          = \"high-cpu-${each.key}\"\n  comparison_operator = \"GreaterThanThreshold\"\n  evaluation_periods  = 2\n  metric_name         = \"CPUUtilization\"\n  namespace           = \"AWS/EC2\"\n  period              = 300\n  statistic           = \"Average\"\n  threshold           = 80\n  alarm_description   = \"CPU utilization exceeds 80%\"\n}\n\noutput \"server_ids\" {\n  value = { for k, v in aws_instance.servers : k => v.id }\n}\n```",
+    "key_takeaway": "`count` creates identical copies; `for_each` creates named variations from maps/sets; `for` expressions transform data inline — use them to eliminate repetitive resource blocks.",
+    "try_it": "Add a conditional that creates a Route53 DNS record only for production instances using `count = var.environments[\"prod\"][\"instance_count\"] > 0 ? 1 : 0`."
+  },
+  {
+    "subheading": "Workspaces, Environments & State Operations",
+    "explanation": "Managing multiple environments (dev, staging, prod) with Terraform requires strategy. Workspaces provide lightweight state isolation within the same configuration — `terraform workspace new prod` creates a separate state file, so the same code manages different infrastructure. But workspaces share the same code and variables, which can be risky for production.\n\nThe directory-based approach is more common: separate directories for each environment that share modules but have distinct variable files. For state operations, `terraform import` brings existing infrastructure under management, `terraform state mv` renames resources without destroying them, and `terraform state rm` removes resources from state without deleting the actual infrastructure — essential for refactoring.",
+    "example": "```hcl\n# Directory structure:\n# environments/\n#   dev/main.tf\n#   staging/main.tf\n#   prod/main.tf\n# modules/ (shared)\n\n# environments/dev/main.tf\nmodule \"app\" {\n  source = \"../../modules/app-stack\"\n\n  environment    = \"dev\"\n  instance_type  = \"t2.micro\"\n  instance_count = 1\n  domain_name    = \"dev.example.com\"\n}\n\n# environments/prod/main.tf\nmodule \"app\" {\n  source = \"../../modules/app-stack\"\n\n  environment    = \"prod\"\n  instance_type  = \"t3.medium\"\n  instance_count = 3\n  domain_name    = \"example.com\"\n}\n```\n\n```bash\n# Workspace commands (alternative approach)\nterraform workspace list\nterraform workspace new dev\nterraform workspace new prod\nterraform workspace select prod\nterraform apply\n\n# Import existing infrastructure into Terraform\nterraform import aws_instance.existing i-0abcd1234efgh5678\nterraform import 'module.vpc.aws_vpc.main' vpc-abc123\n\n# Rename a resource (restructuring)\nterraform state mv aws_instance.old_name aws_instance.new_name\n\n# Move resource into a module\nterraform state mv aws_instance.web module.web_servers.aws_instance.web\n\n# Remove from state without destroying\nterraform state rm aws_instance.deprecated\n```",
+    "key_takeaway": "Use directory-based environments for true isolation with shared modules; `terraform import` adopts existing infrastructure, `state mv` renames resources, and `state rm` detaches without destroying.",
+    "try_it": "Create an import block that brings an existing S3 bucket named `legacy-bucket-2024` under Terraform management. Write the `terraform import` command and the corresponding resource block."
+  },
+  {
+    "subheading": "Provisioners, Null Resources & External Integrations",
+    "explanation": "Sometimes you need to run scripts after Terraform creates a resource — installing software, configuring applications, or initializing databases. Provisioners fill this gap: `remote-exec` runs commands on a remote resource over SSH, `local-exec` runs commands on the machine running Terraform, and `file` copies files to the remote host. They're a last resort, not a primary tool.\n\n`null_resource` with `triggers` lets you run arbitrary logic that doesn't correspond to any cloud resource — like calling an API, running a database migration, or invalidating a CDN cache. The `external` data source lets Terraform call any script that accepts JSON input and returns JSON output, bridging Terraform with tools that don't have native providers.",
+    "example": "```hcl\nresource \"aws_instance\" \"web\" {\n  ami           = \"ami-0c55b159cbfafe1f0\"\n  instance_type = \"t2.micro\"\n  key_name      = \"my-key\"\n\n  tags = {\n    Name = \"WebServer\"\n  }\n}\n\n# Provisioner: install software after creation\nresource \"null_resource\" \"setup_web\" {\n  triggers = {\n    instance_id = aws_instance.web.id\n  }\n\n  connection {\n    type        = \"ssh\"\n    user        = \"ubuntu\"\n    private_key = file(\"~/.ssh/my-key.pem\")\n    host        = aws_instance.web.public_ip\n  }\n\n  provisioner \"file\" {\n    source      = \"scripts/setup.sh\"\n    destination = \"/tmp/setup.sh\"\n  }\n\n  provisioner \"remote-exec\" {\n    inline = [\n      \"chmod +x /tmp/setup.sh\",\n      \"sudo /tmp/setup.sh\"\n    ]\n  }\n}\n\n# Local provisioner: run command on Terraform runner\nresource \"null_resource\" \"notify\" {\n  triggers = {\n    instance_id = aws_instance.web.id\n  }\n\n  provisioner \"local-exec\" {\n    command = \"echo 'Server ${aws_instance.web.id} created' >> deployment.log\"\n  }\n}\n\n# External data source: call any script\ndata \"external\" \"get_latest_ami\" {\n  program = [\"python3\", \"${path.module}/scripts/get_ami.py\"]\n\n  query = {\n    region = \"us-east-1\"\n    os     = \"ubuntu\"\n  }\n}\n\n# Null resource with triggers for API call\nresource \"null_resource\" \"invalidate_cdn\" {\n  triggers = {\n    # Re-run when the instance changes\n    deploy_time = timestamp()\n  }\n\n  provisioner \"local-exec\" {\n    command = \"aws cloudfront create-invalidation --distribution-id E1234 --paths '/*'\"\n  }\n}\n```",
+    "key_takeaway": "Provisioners are a last resort for bootstrapping — prefer cloud-init, Packer images, or configuration management; use `null_resource` for side effects and `external` for bridging non-Terraform tools.",
+    "try_it": "Add a `local-exec` provisioner that runs after the instance is destroyed (use `when = destroy`) to clean up a DNS record via AWS CLI."
+  },
+  {
+    "subheading": "Security, Policy as Code & CI/CD Pipelines",
+    "explanation": "Terraform files contain the blueprint of your entire infrastructure — a security vulnerability here cascades across every environment. Best practices include storing state in encrypted remote backends, using least-privilege IAM policies for Terraform's service account, and managing secrets through Vault or cloud secret managers instead of variables files.\n\nPolicy as Code tools like HashiCorp Sentinel and Open Policy Agent (OPA) enforce guardrails automatically: 'no public S3 buckets', 'all instances must have encryption', 'no resources without cost tags'. These policies run in the CI/CD pipeline during `terraform plan`, blocking violations before they reach production. This shifts security left — problems are caught in pull requests, not in incident response.",
+    "example": "```hcl\n# security.tf — Security best practices\nresource \"aws_s3_bucket\" \"data\" {\n  bucket = \"sensitive-data-bucket\"\n\n  tags = {\n    Environment = \"prod\"\n    CostCenter  = \"engineering\"\n  }\n}\n\nresource \"aws_s3_bucket_public_access_block\" \"data\" {\n  bucket = aws_s3_bucket.data.id\n\n  block_public_acls       = true\n  block_public_policy     = true\n  ignore_public_acls      = true\n  restrict_public_buckets = true\n}\n\nresource \"aws_s3_bucket_server_side_encryption_configuration\" \"data\" {\n  bucket = aws_s3_bucket.data.id\n  rule {\n    apply_server_side_encryption_by_default {\n      sse_algorithm = \"aws:kms\"\n    }\n  }\n}\n```\n\n```yaml\n# .github/workflows/terraform.yml\nname: Terraform CI/CD\non:\n  pull_request:\n    branches: [main]\n  push:\n    branches: [main]\n\njobs:\n  terraform:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n\n      - uses: hashicorp/setup-terraform@v3\n        with:\n          terraform_version: 1.6.0\n\n      - name: Terraform Init\n        run: terraform init\n\n      - name: Terraform Plan\n        run: terraform plan -out=tfplan\n\n      - name: OPA Policy Check\n        run: |\n          terraform show -json tfplan > plan.json\n          opa eval --data policy/ --input plan.json \"data.terraform.deny[msg]\"\n\n      - name: Terraform Apply\n        if: github.ref == 'refs/heads/main' && github.event_name == 'push'\n        run: terraform apply -auto-approve tfplan\n```\n\n```rego\n# policy/enforce_tags.rego — OPA policy\ndefault allow = false\n\nrequired_tags := {\"Environment\", \"CostCenter\", \"Owner\"}\n\ndeny[msg] {\n  resource := input.resource_changes[_]\n  resource.change.actions[_] == \"create\"\n  tags := object.get(resource.change.after, \"tags\", {})\n  missing := required_tags - {key | tags[key]}\n  count(missing) > 0\n  msg := sprintf(\"%s missing required tags: %v\", [resource.address, missing])\n}\n```",
+    "key_takeaway": "Secure Terraform by encrypting state, using least-privilege credentials, and enforcing policies as code with Sentinel or OPA — violations are caught in CI before reaching production, not in post-mortems.",
+    "try_it": "Write an OPA policy that denies any EC2 instance creation where `instance_type` is larger than `t3.xlarge` (to prevent cost overruns). Test it against a plan JSON file."
+  },
+  {
+    "subheading": "Practice Problems",
+    "explanation": "Terraform practice problems test your ability to define infrastructure declaratively, manage state across environments, and enforce security policies as code. The core pattern is: define resources in HCL, use variables for parameterization, outputs for sharing values, and modules for reuse. Always run `terraform plan` before `terraform apply` to preview changes.\n\nFor production systems, the patterns center on remote state backends (S3+DynamoDB), workspace or directory-based environment isolation, and policy-as-code enforcement with OPA or Sentinel. Import existing resources with `terraform import`, refactor with `terraform state mv`, and always encrypt state at rest.",
+    "example": "```hcl\n# Complete solution: Multi-environment VPC module\n# modules/vpc/main.tf\nvariable \"environment\" {\n  type = string\n  validation {\n    condition     = contains([\"dev\", \"staging\", \"prod\"], var.environment)\n    error_message = \"Must be dev, staging, or prod.\"\n  }\n}\n\nvariable \"cidr_block\" {\n  type = string\n}\n\nvariable \"availability_zones\" {\n  type    = list(string)\n  default = [\"us-east-1a\", \"us-east-1b\"]\n}\n\nlocals {\n  is_prod = var.environment == \"prod\"\n}\n\nresource \"aws_vpc\" \"main\" {\n  cidr_block           = var.cidr_block\n  enable_dns_hostnames = true\n  tags = {\n    Name        = \"${var.environment}-vpc\"\n    Environment = var.environment\n  }\n}\n\nresource \"aws_subnet\" \"public\" {\n  count             = length(var.availability_zones)\n  vpc_id            = aws_vpc.main.id\n  cidr_block        = cidrsubnet(var.cidr_block, 8, count.index)\n  availability_zone = var.availability_zones[count.index]\n  tags = {\n    Name = \"${var.environment}-public-${count.index + 1}\"\n  }\n}\n\nresource \"aws_s3_bucket\" \"logs\" {\n  count  = local.is_prod ? 1 : 0\n  bucket = \"${var.environment}-vpc-flow-logs\"\n}\n\noutput \"vpc_id\" {\n  value = aws_vpc.main.id\n}\n\noutput \"public_subnet_ids\" {\n  value = aws_subnet.public[*].id\n}\n```",
+    "key_takeaway": "Terraform problems: declare desired state in HCL, parameterize with variables, reuse with modules, secure with encrypted remote state and OPA policies.",
+    "try_it": "Complete all 5 problems. Each builds on different Terraform patterns.",
+    "complexity": "Varies by problem",
+    "practice_challenges": [
+      {
+        "title": "Import Existing S3 Bucket into Terraform",
+        "number": 1,
+        "difficulty": "Easy",
+        "url": null,
+        "pattern": "terraform import + Resource Definition",
+        "hint": "Use `terraform import aws_bucket.my_bucket bucket-name` then write the matching resource block to match the existing state.",
+        "description": "An existing S3 bucket named 'company-legacy-data' needs to be brought under Terraform management. Import it and write the resource block that matches its current configuration.",
+        "example_input": "Existing bucket: company-legacy-data, region: us-east-1, versioning: enabled",
+        "example_output": "terraform import executed, resource block written with matching config, subsequent terraform plan shows no changes"
+      },
+      {
+        "title": "Auto-Scaling EC2 with CloudWatch Alarms",
+        "number": 2,
+        "difficulty": "Easy",
+        "url": null,
+        "pattern": "Count + Conditional Resources",
+        "hint": "Use count with a variable for instance count, create CloudWatch alarms conditionally based on environment.",
+        "description": "Create an auto-scaling group that scales between 1-5 instances. Add CloudWatch alarms for CPU > 80% (scale up) and CPU < 20% (scale down). Only create alarms in production.",
+        "example_input": "var.environment = 'prod', var.min_instances = 2, var.max_instances = 5",
+        "example_output": "ASG created with 2 instances, 2 CloudWatch alarms created (scale-up and scale-down), scaling policies attached"
+      },
+      {
+        "title": "Multi-Environment Infrastructure with Modules",
+        "number": 3,
+        "difficulty": "Medium",
+        "url": null,
+        "pattern": "Modules + Directory Structure",
+        "hint": "Create a modules/ directory with reusable VPC and app-stack modules. Create environments/dev and environments/prod directories that instantiate modules with different parameters.",
+        "description": "Create a reusable app-stack module (VPC, subnets, EC2, RDS) and use it in dev (t2.micro, 1 instance) and prod (t3.medium, 3 instances) environments with different configurations.",
+        "example_input": "terraform apply in environments/prod/",
+        "example_output": "Production environment created: VPC with 3 AZs, 3 t3.medium instances, multi-AZ RDS, ALB with health checks"
+      },
+      {
+        "title": "OPA Policy: Enforce Security Guardrails",
+        "number": 4,
+        "difficulty": "Medium",
+        "url": null,
+        "pattern": "Policy as Code + OPA",
+        "hint": "Write Rego policies that check: no public S3 buckets, all EBS volumes encrypted, no instances larger than t3.xlarge, all resources must have tags.",
+        "description": "Write OPA policies that deny: public S3 buckets, unencrypted EBS volumes, instances larger than t3.xlarge, and resources missing required tags (Environment, Owner, CostCenter).",
+        "example_input": "terraform plan output with an m5.4xlarge instance and an unencrypted EBS volume",
+        "example_output": "OPA denies: 'Instance m5.4xlarge exceeds t3.xlarge max', 'EBS volume must be encrypted'"
+      },
+      {
+        "title": "Zero-Downtime Blue-Green Deployment",
+        "number": 5,
+        "difficulty": "Hard",
+        "url": null,
+        "pattern": "Lifecycle + Provisioners + State Ops",
+        "hint": "Use create_before_destroy lifecycle, provisioners for health checks, and state mv to swap blue/green resources. Use ALB target groups to shift traffic.",
+        "description": "Implement a blue-green deployment: create a new (green) environment alongside the existing (blue), verify health, shift ALB traffic, then destroy the old environment. All with zero downtime.",
+        "example_input": "terraform apply to deploy new version (green) while blue is serving traffic",
+        "example_output": "Green instances created, health check passes, ALB shifts traffic to green, blue instances destroyed after grace period"
+      }
+    ]
+  },
+  {
+    "subheading": "Practice Problems",
+    "explanation": "Terraform practice challenges test your ability to write reusable infrastructure-as-code modules, manage state across environments, and implement security best practices. The key patterns are: module composition (breaking infrastructure into reusable pieces), workspaces for environment isolation, and remote state backends for team collaboration.\n\nProduction Terraform also requires understanding drift detection, import of existing resources, and policy-as-code enforcement with Sentinel or OPA. These challenges progress from basic resource provisioning to designing complete multi-environment infrastructure stacks.",
+    "example": "",
+    "key_takeaway": "Terraform modules should be parameterized with variables, use locals for computed values, and always define outputs for downstream module consumption.",
+    "try_it": "Start with the Easy challenge before looking at any solutions — try building a reusable VPC module with configurable CIDR blocks.",
+    "complexity": "Varies",
+    "practice_challenges": [
+      {
+        "title": "Provision a Static Website on S3",
+        "difficulty": "Easy",
+        "pattern": "Resource Provisioning",
+        "hint": "Use aws_s3_bucket and aws_s3_bucket_website_configuration resources. Set the index_document to \"index.html\".",
+        "description": "Create a Terraform config that provisions an S3 bucket configured for static website hosting with public read access via a bucket policy.",
+        "example_input": "Variables: bucket_name = \"my-site\", index_document = \"index.html\"",
+        "example_output": "S3 bucket with website hosting enabled, bucket policy for public reads, and output for the website endpoint URL"
+      },
+      {
+        "title": "Create a Reusable VPC Module",
+        "difficulty": "Easy",
+        "pattern": "Module Composition",
+        "hint": "Create a modules/vpc directory with main.tf, variables.tf, and outputs.tf. Use cidrsubnet() to calculate subnet CIDRs dynamically.",
+        "description": "Build a reusable Terraform module that creates a VPC with public and private subnets across multiple availability zones.",
+        "example_input": "Module call: module \"vpc\" { source = \"./modules/vpc\"; vpc_cidr = \"10.0.0.0/16\"; environment = \"dev\" }",
+        "example_output": "VPC with 2 public subnets, 2 private subnets, NAT gateway, and route tables — all outputs accessible from the calling module"
+      },
+      {
+        "title": "Multi-Environment Infrastructure with Workspaces",
+        "difficulty": "Medium",
+        "pattern": "State Management",
+        "hint": "Use terraform.workspace to interpolate environment-specific values. Store state in an S3 backend with DynamoDB for locking.",
+        "description": "Design a Terraform project that uses workspaces to deploy the same infrastructure to dev, staging, and prod with environment-specific configurations.",
+        "example_input": "terraform workspace select prod && terraform apply",
+        "example_output": "Prod environment gets larger instance types, more replicas, and stricter security groups than dev — all from the same config"
+      },
+      {
+        "title": "RDS with Automated Backups and Monitoring",
+        "difficulty": "Medium",
+        "pattern": "Data Layer Infrastructure",
+        "hint": "Use aws_db_instance with backup_retention_period, enable_cloudwatch_logs_exports, and create a CloudWatch alarm for CPU utilization.",
+        "description": "Provision a PostgreSQL RDS instance with automated backups, CloudWatch monitoring, enhanced security groups, and parameter group customization.",
+        "example_input": "Variables: engine = \"postgres\", instance_class = \"db.t3.medium\", allocated_storage = 100",
+        "example_output": "RDS instance with 7-day backup retention, CloudWatch alarms for CPU > 80%, and security group allowing only app tier access"
+      },
+      {
+        "title": "Complete 3-Tier Architecture",
+        "difficulty": "Hard",
+        "pattern": "Full Stack Infrastructure",
+        "hint": "Create modules for VPC, ALB, ECS, and RDS. Use data sources for AZs and AMIs. Wire modules together with outputs and security group references.",
+        "description": "Design and implement a complete 3-tier architecture: VPC with public/private subnets, ALB for the web tier, ECS Fargate for the app tier, and RDS for the data tier with proper security group isolation.",
+        "example_input": "Variables: environment = \"prod\", vpc_cidr = \"10.0.0.0/16\", db_password (sensitive)",
+        "example_output": "Fully functional 3-tier app with ALB DNS name output, ECS service auto-scaling, RDS endpoint, and all tiers isolated by security groups"
+      }
+    ]
+  }
+]

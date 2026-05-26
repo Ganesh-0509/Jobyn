@@ -43,49 +43,49 @@
     "complexity": "Varies by problem",
     "practice_challenges": [
       {
-        "title": "RESTful Resource Design",
+        "title": "Design a RESTful API for a Library",
         "difficulty": "Easy",
-        "pattern": "REST Conventions & HTTP Methods",
-        "hint": "Map CRUD operations to POST/GET/PUT/DELETE with proper status codes",
-        "description": "Design and implement a RESTful API for a library system with /books, /authors, and /borrowers resources. Each endpoint must use appropriate HTTP methods, return correct status codes (201 for creation, 204 for deletion), and support pagination.",
-        "example_input": "POST /books with body: title=1984, author_id=1",
-        "example_output": "201 Created with Location header: /books/1"
+        "pattern": "Resource Naming & HTTP Methods",
+        "hint": "Map CRUD operations to HTTP methods: GET (read), POST (create), PUT (full update), PATCH (partial update), DELETE. Use plural nouns for resources.",
+        "description": "Design the complete REST API for a library management system with books, authors, and borrowing records. Define all endpoints, HTTP methods, request/response schemas, and proper status codes. Include pagination for list endpoints and filtering by author/genre.",
+        "example_input": "Requirements: manage books (CRUD), authors (CRUD), borrow/return books, list available books",
+        "example_output": "GET /api/v1/books?author=tolkien&genre=fantasy&page=2&limit=20 returns paginated filtered results with 200 OK"
       },
       {
-        "title": "API Rate Limiting Middleware",
+        "title": "API Rate Limiter Implementation",
         "difficulty": "Easy",
-        "pattern": "Token Bucket Algorithm",
-        "hint": "Use a sliding window counter stored in Redis or in-memory",
-        "description": "Implement a rate limiting middleware that allows 100 requests per minute per API key. Return proper 429 Too Many Requests responses with Retry-After headers. Support both per-user and global rate limits.",
-        "example_input": "API key abc123 makes 101st request in 60 seconds",
-        "example_output": "429 Too Many Requests | Retry-After: 15"
+        "pattern": "Token Bucket / Sliding Window",
+        "hint": "Use a middleware that tracks requests per client IP using a counter with TTL (Redis) or in-memory store. Return 429 Too Many Requests with Retry-After header.",
+        "description": "Implement a rate limiting middleware that limits each API key to 100 requests per minute. Return proper headers (X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset) and a 429 status when exceeded. Support both fixed window and sliding window algorithms.",
+        "example_input": "API key \"abc123\" makes 101 requests in 60 seconds",
+        "example_output": "First 100 return 200 with rate limit headers; 101st returns 429 with Retry-After: 12"
       },
       {
-        "title": "API Versioning Strategy",
+        "title": "API Versioning & Backward Compatibility",
         "difficulty": "Medium",
-        "pattern": "Version Negotiation & Backward Compatibility",
-        "hint": "Use URL path versioning (/v1/, /v2/) with a deprecation header for old versions",
-        "description": "Design an API versioning system that supports v1 and v2 simultaneously. V2 adds a metadata wrapper around responses. Implement a middleware that routes to the correct version handler and adds deprecation headers for v1 endpoints.",
-        "example_input": "GET /v1/users/1 vs GET /v2/users/1",
-        "example_output": "v1: {id:1,name:Alice} | v2: {data:{id:1,name:Alice},metadata:{version:2.0}}"
+        "pattern": "Content Negotiation / URI Versioning",
+        "hint": "Support multiple versioning strategies: URI path (/v1/users), query param (?version=1), and Accept header (application/vnd.api+json;version=2). Implement version-specific response transformers.",
+        "description": "Implement a versioning system that supports v1 and v2 of a user API. v1 returns {first_name, last_name}, v2 returns {name: {first, last}, avatar_url}. Old v1 clients must continue working without changes. New v2 fields should have sensible defaults when populated from v1 data.",
+        "example_input": "GET /api/v1/users/42 returns {\"first_name\": \"Alice\", \"last_name\": \"Smith\"}",
+        "example_output": "GET /api/v2/users/42 returns {\"name\": {\"first\": \"Alice\", \"last\": \"Smith\"}, \"avatar_url\": null}"
       },
       {
-        "title": "GraphQL Schema with Pagination",
+        "title": "HATEOAS-Driven API Navigation",
         "difficulty": "Medium",
-        "pattern": "Cursor-Based Pagination",
-        "hint": "Use relay-style cursor pagination with first, after, hasNextPage",
-        "description": "Implement a GraphQL schema for an e-commerce platform with products and categories. Support cursor-based pagination (Relay specification) for product listings. Include filtering by category, price range, and availability.",
-        "example_input": "query { products(first: 10, after: cursor123, filter: {category: electronics}) }",
-        "example_output": "Connection with edges, pageInfo { hasNextPage, endCursor }, and filtered products"
+        "pattern": "Hypermedia as the Engine of Application State",
+        "hint": "Add _links or links object to every response with self, next, prev, and related resource links. Use standard link relations (RFC 8288).",
+        "description": "Enhance a REST API with HATEOAS links so clients can discover all available actions from a single entry point. Each resource response should include links to related resources and available actions. Build a client that navigates the entire API starting from the root endpoint, without any hardcoded URLs beyond the root.",
+        "example_input": "GET /api returns {\"message\": \"Welcome\"}",
+        "example_output": "GET /api returns {\"_links\": {\"self\": \"/api\", \"books\": \"/api/books\", \"authors\": \"/api/authors\", \"search\": \"/api/search\"}}"
       },
       {
-        "title": "Webhook Delivery System with Retry",
+        "title": "API Gateway with Circuit Breaker",
         "difficulty": "Hard",
-        "pattern": "Event-Driven Architecture & Exponential Backoff",
-        "hint": "Use a message queue with dead-letter handling and exponential backoff retries",
-        "description": "Build a webhook delivery system that sends HTTP POST requests to registered endpoints when events occur. Implement exponential backoff retry (up to 5 attempts), dead-letter queue for permanently failed deliveries, and signature verification using HMAC-SHA256.",
-        "example_input": "Event: order.created | Webhook URL: https://client.com/webhooks | Payload: {order_id: 42}",
-        "example_output": "Delivery with X-Webhook-Signature header; retry at 1s, 2s, 4s, 8s, 16s intervals"
+        "pattern": "Circuit Breaker Pattern",
+        "hint": "Implement three states: CLOSED (normal), OPEN (failing, fast-fail), HALF-OPEN (testing recovery). Use a counter with a time window. After N failures in window, trip to OPEN. After timeout, move to HALF-OPEN and let one request through.",
+        "description": "Build an API gateway that routes requests to multiple downstream services, implementing circuit breaker, retry with exponential backoff, and request deduplication. When a downstream service fails 5 times in 60 seconds, the circuit opens and requests get a cached/fallback response for 30 seconds before probing. Include observability: log circuit state transitions and emit metrics.",
+        "example_input": "10 concurrent requests to /api/orders which calls inventory-service (down) and payment-service (up)",
+        "example_output": "First 5 requests fail and trigger circuit open; subsequent requests return fallback within 5ms; after 30s, one probe request tests recovery"
       }
     ]
   },

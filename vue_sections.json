@@ -1,0 +1,109 @@
+[
+  {
+    "subheading": "Vue 3 Composition API",
+    "explanation": "Vue 3 Composition API organizes component logic by feature. `<script setup>` is the recommended syntax — more concise with better TypeScript support. Variables and functions declared are automatically available in the template. Composables extract reusable logic into functions like React hooks.",
+    "example": "```vue\n<script setup>\nimport { ref, computed, onMounted } from 'vue'\n\nconst count = ref(0)\nconst name = ref('Vue')\n\nconst doubled = computed(() => count.value * 2)\n\nfunction increment() {\n  count.value++\n}\n\nonMounted(() => {\n  console.log('Component mounted')\n})\n</script>\n\n<template>\n  <div>\n    <h1>{{ name }} Counter</h1>\n    <p>Count: {{ count }}, Doubled: {{ doubled }}</p>\n    <button @click=\"increment\">+1</button>\n  </div>\n</template>\n```",
+    "key_takeaway": "`<script setup>` with `ref()` and `computed()` is the modern Vue 3 pattern. Composables extract reusable logic like React hooks.",
+    "try_it": "Build a counter component with `<script setup>`, `ref`, and `computed`."
+  },
+  {
+    "subheading": "Reactivity: ref, reactive, computed",
+    "explanation": "`ref()` wraps primitives in a reactive container — access with `.value` in JS, directly in templates. `reactive()` makes objects deeply reactive. `computed()` derives values that auto-update when dependencies change.",
+    "example": "```vue\n<script setup>\nimport { ref, reactive, computed, watch } from 'vue'\n\n// ref for primitives\nconst firstName = ref('John')\nconst lastName = ref('Doe')\n\n// computed derives from refs\nconst fullName = computed(() => `${firstName.value} ${lastName.value}`)\n\n// reactive for objects\nconst user = reactive({\n  name: 'Alice',\n  age: 30,\n  scores: [85, 90, 92]\n})\n\n// watch for side effects\nwatch(firstName, (newVal, oldVal) => {\n  console.log(`Name changed: ${oldVal} → ${newVal}`)\n})\n\nfunction birthday() {\n  user.age++\n}\n</script>\n\n<template>\n  <input v-model=\"firstName\" />\n  <input v-model=\"lastName\" />\n  <p>{{ fullName }}</p>\n  <p>{{ user.name }} is {{ user.age }}</p>\n  <button @click=\"birthday\">Birthday!</button>\n</template>\n```",
+    "key_takeaway": "`ref()` for primitives (access .value in JS), `reactive()` for objects, `computed()` for derived values, `watch()` for side effects.",
+    "try_it": "Build a form with ref-based inputs and a computed validation status that updates in real-time."
+  },
+  {
+    "subheading": "Components & Props",
+    "explanation": "Components are reusable UI pieces. Props pass data from parent to child. Emits send events from child to parent. This parent-child contract keeps components decoupled.",
+    "example": "```vue\n<!-- ChildComponent.vue -->\n<script setup>\ndefineProps({\n  title: { type: String, required: true },\n  count: { type: Number, default: 0 }\n})\n\nconst emit = defineEmits(['increment', 'reset'])\n</script>\n\n<template>\n  <div class=\"card\">\n    <h3>{{ title }}</h3>\n    <p>Count: {{ count }}</p>\n    <button @click=\"emit('increment')\">+1</button>\n    <button @click=\"emit('reset')\">Reset</button>\n  </div>\n</template>\n\n<!-- ParentComponent.vue -->\n<script setup>\nimport { ref } from 'vue'\nimport ChildComponent from './ChildComponent.vue'\n\nconst count = ref(0)\n</script>\n\n<template>\n  <ChildComponent\n    title=\"My Counter\"\n    :count=\"count\"\n    @increment=\"count++\"\n    @reset=\"count = 0\"\n  />\n</template>\n```",
+    "key_takeaway": "Props flow down, events flow up. `defineProps()` declares inputs, `defineEmits()` declares outputs. Keep components decoupled.",
+    "try_it": "Create a parent-child setup where the child displays data via props and communicates changes via emits."
+  },
+  {
+    "subheading": "Lifecycle Hooks & Watchers",
+    "explanation": "Lifecycle hooks run code at specific stages: `onMounted` after DOM is ready, `onUpdated` after re-renders, `onUnmounted` before cleanup. `watch()` observes specific refs; `watchEffect()` auto-tracks all dependencies.",
+    "example": "```vue\n<script setup>\nimport { ref, onMounted, onUnmounted, watch, watchEffect } from 'vue'\n\nconst data = ref(null)\nconst searchTerm = ref('')\nconst results = ref([])\n\n// onMounted — fetch data\nonMounted(async () => {\n  const res = await fetch('/api/items')\n  data.value = await res.json()\n  console.log('Data loaded:', data.value.length, 'items')\n})\n\n// Cleanup\nlet interval = setInterval(() => console.log('heartbeat'), 1000)\nonUnmounted(() => clearInterval(interval))\n\n// watch — specific ref\nwatch(searchTerm, async (term) => {\n  if (term.length > 2) {\n    const res = await fetch(`/api/search?q=${term}`)\n    results.value = await res.json()\n  } else {\n    results.value = []\n  }\n})\n\n// watchEffect — auto-tracks dependencies\nwatchEffect(() => {\n  console.log(`Searching: ${searchTerm.value}, found: ${results.value.length}`)\n})\n</script>\n\n<template>\n  <input v-model=\"searchTerm\" placeholder=\"Search...\" />\n  <ul><li v-for=\"r in results\" :key=\"r.id\">{{ r.name }}</li></ul>\n</template>\n```",
+    "key_takeaway": "`onMounted` for initialization, `onUnmounted` for cleanup. `watch()` for specific refs, `watchEffect()` for auto-tracked dependencies.",
+    "try_it": "Build a search component that debounces API calls using `watch` and cleans up on unmount."
+  },
+  {
+    "subheading": "Vue Router",
+    "explanation": "Vue Router maps URLs to components. Define routes with path and component, use `<router-link>` for navigation, and `<router-view>` to render matched components. Supports nested routes, guards, and lazy loading.",
+    "example": "```javascript\n// router/index.js\nimport { createRouter, createWebHistory } from 'vue-router'\nimport Home from '../views/Home.vue'\n\nconst routes = [\n  { path: '/', name: 'Home', component: Home },\n  { path: '/about', name: 'About', component: () => import('../views/About.vue') },  // lazy\n  {\n    path: '/user/:id',\n    name: 'User',\n    component: () => import('../views/User.vue'),\n    props: true,  // pass :id as prop\n    children: [\n      { path: 'profile', component: () => import('../views/UserProfile.vue') },\n      { path: 'settings', component: () => import('../views/UserSettings.vue') }\n    ]\n  }\n]\n\nconst router = createRouter({ history: createWebHistory(), routes })\n\nrouter.beforeEach((to, from) => {\n  if (to.meta.requiresAuth && !isAuthenticated()) return { name: 'Login' }\n})\n\nexport default router\n```\n\n```vue\n<script setup>\nimport { useRouter, useRoute } from 'vue-router'\nconst router = useRouter()\nconst route = useRoute()\n\nfunction goToUser(id) {\n  router.push({ name: 'User', params: { id } })\n}\n</script>\n\n<template>\n  <nav>\n    <router-link to=\"/\">Home</router-link>\n    <router-link to=\"/about\">About</router-link>\n  </nav>\n  <router-view />\n</template>\n```",
+    "key_takeaway": "Define routes with path/component, use `<router-link>` for navigation, `<router-view>` for rendering. Lazy-load routes with dynamic imports. Guards protect routes.",
+    "try_it": "Set up Vue Router with 3 routes, nested routes, and a navigation guard that redirects unauthenticated users."
+  },
+  {
+    "subheading": "Pinia State Management",
+    "explanation": "Pinia is Vue's official state management. Stores hold reactive state, computed getters, and actions. Unlike Vuex, Pinia has no mutations — actions directly modify state. DevTools integration for debugging.",
+    "example": "```javascript\n// stores/counter.js\nimport { defineStore } from 'pinia'\nimport { ref, computed } from 'vue'\n\nexport const useCounterStore = defineStore('counter', () => {\n  const count = ref(0)\n  const doubled = computed(() => count.value * 2)\n\n  function increment() { count.value++ }\n  function decrement() { count.value-- }\n  async function fetchCount() {\n    const res = await fetch('/api/count')\n    count.value = (await res.json()).value\n  }\n\n  return { count, doubled, increment, decrement, fetchCount }\n})\n```\n\n```vue\n<script setup>\nimport { useCounterStore } from '../stores/counter'\nimport { storeToRefs } from 'pinia'\n\nconst store = useCounterStore()\nconst { count, doubled } = storeToRefs(store)  // destructure without losing reactivity\n</script>\n\n<template>\n  <p>Count: {{ count }}, Doubled: {{ doubled }}</p>\n  <button @click=\"store.increment()\">+1</button>\n</template>\n```",
+    "key_takeaway": "Pinia stores hold state, getters, and actions. Use `storeToRefs()` to destructure without losing reactivity. Actions can be async.",
+    "try_it": "Create a Pinia store for a shopping cart with add/remove/total computed. Use it in multiple components."
+  },
+  {
+    "subheading": "Practice Problems",
+    "explanation": "Vue 3 practice problems focus on mastering the Composition API with `<script setup>`, reactive primitives (ref, reactive, computed), component composition (props, emits, slots), and state management with Pinia. The key pattern is organizing logic by feature using composables — extract reusable logic into functions like React hooks.\n\nFor routing and state, the patterns center on Vue Router with nested routes and navigation guards, Pinia stores with storeToRefs for destructuring without losing reactivity, and lifecycle hooks (onMounted, onUnmounted) for side effects and cleanup. Watch and watchEffect handle reactive side effects.",
+    "example": "```vue\n<!-- Complete solution: Shopping cart with Pinia store -->\n<script setup>\nimport { defineStore } from 'pinia'\nimport { ref, computed } from 'vue'\n\n// Pinia store\ntype CartItem = { id: number; name: string; price: number; qty: number }\n\nexport const useCartStore = defineStore('cart', () => {\n  const items = ref<CartItem[]>([])\n\n  const totalItems = computed(() => items.value.reduce((sum, i) => sum + i.qty, 0))\n  const totalPrice = computed(() => items.value.reduce((sum, i) => sum + i.price * i.qty, 0))\n\n  function add(product: { id: number; name: string; price: number }) {\n    const existing = items.value.find(i => i.id === product.id)\n    if (existing) {\n      existing.qty++\n    } else {\n      items.value.push({ ...product, qty: 1 })\n    }\n  }\n\n  function remove(id: number) {\n    items.value = items.value.filter(i => i.id !== id)\n  }\n\n  function updateQty(id: number, qty: number) {\n    const item = items.value.find(i => i.id === id)\n    if (item) item.qty = Math.max(0, qty)\n    if (item && item.qty === 0) remove(id)\n  }\n\n  return { items, totalItems, totalPrice, add, remove, updateQty }\n})\n\n// Component using the store\nimport { useCartStore } from '../stores/cart'\nimport { storeToRefs } from 'pinia'\n\nconst cart = useCartStore()\nconst { items, totalItems, totalPrice } = storeToRefs(cart)\n</script>\n\n<template>\n  <div>\n    <h2>Cart ({{ totalItems }} items)</h2>\n    <div v-for=\"item in items\" :key=\"item.id\">\n      {{ item.name }} - ${{ item.price }} x {{ item.qty }}\n      <button @click=\"cart.updateQty(item.id, item.qty + 1)\">+</button>\n      <button @click=\"cart.updateQty(item.id, item.qty - 1)\">-</button>\n      <button @click=\"cart.remove(item.id)\">Remove</button>\n    </div>\n    <p>Total: ${{ totalPrice.toFixed(2) }}</p>\n  </div>\n</template>\n```",
+    "key_takeaway": "Vue 3 practice: Composition API with <script setup>, ref/reactive for state, computed for derived, Pinia for shared state, composables for reusable logic.",
+    "try_it": "Complete all 5 problems. Each tests a different Vue 3 pattern.",
+    "complexity": "Varies by problem",
+    "practice_challenges": [
+      {
+        "title": "Reactive Form with Real-Time Validation",
+        "number": 1,
+        "difficulty": "Easy",
+        "url": null,
+        "pattern": "ref + computed + v-model",
+        "hint": "Use ref for form fields, computed for validation status (email regex, password length, match check), and display errors reactively.",
+        "description": "Build a signup form with email, password, and confirm password fields. Show real-time validation: valid email format, password >= 8 chars, passwords match. Disable submit until valid.",
+        "example_input": "User types 'alice@' in email field",
+        "example_output": "Error shown: 'Invalid email format'. Submit button disabled. When corrected to 'alice@test.com', error clears."
+      },
+      {
+        "title": "Todo List with Pinia Persistence",
+        "number": 2,
+        "difficulty": "Easy",
+        "url": null,
+        "pattern": "Pinia Store + localStorage",
+        "hint": "Create a Pinia store with add/toggle/remove actions. Use a $subscribe watcher to persist to localStorage on every change.",
+        "description": "Build a todo app with Pinia state management. Todos persist to localStorage. Include filters for all/active/completed with computed getters.",
+        "example_input": "Add 'Learn Vue', toggle it done, refresh page",
+        "example_output": "Todo persists as done after refresh. Filter 'active' shows 0, 'completed' shows 1."
+      },
+      {
+        "title": "Vue Router with Auth Guard",
+        "number": 3,
+        "difficulty": "Medium",
+        "url": null,
+        "pattern": "Vue Router + Navigation Guards",
+        "hint": "Define routes with meta.requiresAuth, use beforeEach guard to check auth state, redirect to /login if not authenticated.",
+        "description": "Set up Vue Router with public routes (home, login) and protected routes (dashboard, profile). Implement beforeEach guard that redirects unauthenticated users to login.",
+        "example_input": "Unauthenticated user navigates to /dashboard",
+        "example_output": "Redirected to /login with return URL stored. After login, redirected back to /dashboard."
+      },
+      {
+        "title": "Composable: useFetch with Loading/Error States",
+        "number": 4,
+        "difficulty": "Medium",
+        "url": null,
+        "pattern": "Composables + Lifecycle",
+        "hint": "Create a useFetch(url) composable that returns {data, error, loading, refetch}. Use onMounted for initial fetch and watch for URL changes.",
+        "description": "Build a useFetch composable that wraps fetch with reactive loading, error, and data states. Support automatic refetch on URL change and manual refetch trigger.",
+        "example_input": "const { data, loading, error } = useFetch('/api/users')",
+        "example_output": "loading=true initially, data populated when response arrives, error set if request fails. refetch() triggers a new request."
+      },
+      {
+        "title": "Drag-and-Drop Kanban Board",
+        "number": 5,
+        "difficulty": "Hard",
+        "url": null,
+        "pattern": "Reactivity + Drag Events + Pinia",
+        "hint": "Use a Pinia store for columns and cards, HTML drag events (dragstart, dragover, drop) for moving cards, and transition-group for animated reordering.",
+        "description": "Build a Kanban board with columns (Todo, In Progress, Done). Cards can be dragged between columns. Use Pinia for state, transition-group for animations, and persist to localStorage.",
+        "example_input": "Drag 'Build login page' from Todo to In Progress",
+        "example_output": "Card animates from Todo column to In Progress column. State persists on page refresh."
+      }
+    ]
+  }
+]
