@@ -1,506 +1,347 @@
 import { useState, useEffect, useRef } from 'react'
 import {
-    Check, X, Shield, Users, BookOpen, Clock,
-    TrendingUp, AlertCircle, Database, Search,
-    Filter, RefreshCcw, Activity, HardDrive,
-    ArrowLeft, Terminal, Cpu, Layout, Info,
-    UserCheck, Zap, MoreHorizontal, FileText
+  Check, X, Shield, Users, BookOpen, TrendingUp, AlertCircle, Database, Search,
+  RefreshCcw, Activity, ArrowLeft, Terminal, Cpu, Zap, FileText, Trash2,
 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
-    getAdminStats, getPendingContributions, approveContribution,
-    rejectContribution, getFullDataset, deleteAnalysis
+  getAdminStats, getPendingContributions, approveContribution,
+  rejectContribution, getFullDataset, deleteAnalysis
 } from '../api/client'
-import { Trash2 } from 'lucide-react'
 import type { AdminStats, Contribution, AdminStudent } from '../api/client'
 import { LoadingState, ErrorState } from '../components/StateDisplay'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Progress } from '@/components/ui/progress'
+import { Separator } from '@/components/ui/separator'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 export default function AdminDashboard() {
-    const [stats, setStats] = useState<AdminStats | null>(null)
-    const [contributions, setContributions] = useState<Contribution[]>([])
-    const [students, setStudents] = useState<AdminStudent[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-    const [filter, setFilter] = useState('')
-    const [selectedView, setSelectedView] = useState<string | null>(null)
-    const [viewingStudent, setViewingStudent] = useState<AdminStudent | null>(null)
-    const overlayRef = useRef<HTMLDivElement>(null)
+  const [stats, setStats] = useState<AdminStats | null>(null)
+  const [contributions, setContributions] = useState<Contribution[]>([])
+  const [students, setStudents] = useState<AdminStudent[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [filter, setFilter] = useState('')
+  const [selectedView, setSelectedView] = useState<string | null>(null)
+  const [viewingStudent, setViewingStudent] = useState<AdminStudent | null>(null)
+  const overlayRef = useRef<HTMLDivElement>(null)
 
-    const fetchData = async (showLoading = true) => {
-        if (showLoading) setLoading(true)
-        setError(null)
-        try {
-            const [s, c, d] = await Promise.all([
-                getAdminStats(),
-                getPendingContributions(),
-                getFullDataset()
-            ])
-            setStats(s)
-            setContributions(c)
-            setStudents(d)
-        } catch (err: unknown) {
-            console.error("Failed to load admin data:", err)
-            setError(err instanceof Error ? err.message : 'Failed to load admin data')
-        } finally {
-            setLoading(false)
-        }
-    }
+  const fetchData = async (showLoading = true) => {
+    if (showLoading) setLoading(true)
+    setError(null)
+    try {
+      const [s, c, d] = await Promise.all([getAdminStats(), getPendingContributions(), getFullDataset()])
+      setStats(s); setContributions(c); setStudents(d)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load admin data')
+    } finally { setLoading(false) }
+  }
 
-    useEffect(() => {
-        fetchData(false)
-    }, [])
+  useEffect(() => { fetchData(false) }, [])
+  useEffect(() => { if (viewingStudent) overlayRef.current?.focus() }, [viewingStudent])
 
-    useEffect(() => {
-        if (viewingStudent) overlayRef.current?.focus()
-    }, [viewingStudent])
+  const handleApprove = async (id: number) => { await approveContribution(id); fetchData() }
+  const handleReject = async (id: number) => { await rejectContribution(id); fetchData() }
+  const handleDeleteAnalysis = async (e: React.MouseEvent, id: number) => {
+    e.stopPropagation()
+    if (!confirm('Delete this analysis permanently?')) return
+    try { await deleteAnalysis(id); fetchData() } catch { alert('Failed to delete') }
+  }
 
-    const handleApprove = async (id: number) => {
-        await approveContribution(id)
-        fetchData()
-    }
+  const filteredContributions = contributions.filter(c =>
+    c.topic.toLowerCase().includes(filter.toLowerCase()) || c.submitted_by.toLowerCase().includes(filter.toLowerCase())
+  )
 
-    const handleReject = async (id: number) => {
-        await rejectContribution(id)
-        fetchData()
-    }
+  if (loading && !selectedView) return <div className="page-content"><LoadingState message="Loading admin data..." /></div>
+  if (error && !stats) return <div className="page-content"><ErrorState title="Failed to load admin data" message={error} onRetry={() => fetchData()} /></div>
 
-    const handleDeleteAnalysis = async (e: React.MouseEvent, id: number) => {
-        e.stopPropagation()
-        if (!confirm('Are you sure you want to delete this analysis permanently?')) return
-        try {
-            await deleteAnalysis(id)
-            fetchData()
-        } catch (err) {
-            alert('Failed to delete analysis')
-        }
-    }
-
-    const filteredContributions = contributions.filter(c =>
-        c.topic.toLowerCase().includes(filter.toLowerCase()) ||
-        c.submitted_by.toLowerCase().includes(filter.toLowerCase())
-    )
-
-    if (loading && !selectedView) return (
-        <div className="page-content">
-            <LoadingState message="Loading admin data..." />
-        </div>
-    )
-
-    if (error && !stats) return (
-        <div className="page-content">
-            <ErrorState title="Failed to load admin data" message={error} onRetry={() => fetchData()} />
-        </div>
-    )
-
-    // --- Sub-Views (Drill-downs) ---
-
-    // 1. Student Directory View
-    if (selectedView === 'users') {
-        return (
-            <div className="page-content animate-fade-in">
-                <button type="button" className="btn btn--ghost btn--sm mb-24" onClick={() => setSelectedView(null)}>
-                    <ArrowLeft size={14} /> Back to Command Center
-                </button>
-
-                <div className="card">
-                    <div className="flex items-center justify-between mb-32">
-                        <div className="flex items-center gap-12">
-                            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(var(--blue-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue)' }}>
-                                <Users size={24} />
-                            </div>
-                            <div>
-                                <h2 style={{ margin: 0, fontSize: 20 }}>Student Readiness Pool</h2>
-                                <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Performance tracking across all registered users</p>
-                            </div>
-                        </div>
-                        <div className="badge badge--active">Total: {stats?.active_students ?? 0}</div>
-                    </div>
-
-                    <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 14 }}>
-                            <thead style={{ background: 'var(--bg-glass)', borderBottom: '1px solid var(--border)' }}>
-                                <tr>
-                                    <th style={{ padding: '16px 20px', color: 'var(--text-muted)', fontWeight: 600 }}>File Ref</th>
-                                    <th style={{ padding: '16px 20px', color: 'var(--text-muted)', fontWeight: 600 }}>Target Role</th>
-                                    <th style={{ padding: '16px 20px', color: 'var(--text-muted)', fontWeight: 600 }}>Score</th>
-                                    <th style={{ padding: '16px 20px', color: 'var(--text-muted)', fontWeight: 600 }}>Top Skills</th>
-                                    <th style={{ padding: '16px 20px', color: 'var(--text-muted)', fontWeight: 600 }}>Analysis ID</th>
-                                    <th style={{ padding: '16px 20px', textAlign: 'right' }}></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {students.map(s => (
-                                    <tr
-                                        key={s.analysis_id}
-                                        onClick={() => setViewingStudent(s)}
-                                        style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s', cursor: 'pointer' }}
-                                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-glass-hover)'}
-                                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                    >
-                                        <td style={{ padding: '16px 20px', fontWeight: 700 }}>{s.filename.split('.')[0]}</td>
-                                        <td style={{ padding: '16px 20px', color: 'var(--text-secondary)' }}>{s.role}</td>
-                                        <td style={{ padding: '16px 20px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                                <div style={{ flex: 1, height: 4, background: 'var(--track-color)', borderRadius: 2, width: 60 }}>
-                                                    <div style={{ height: '100%', width: `${s.final_score}%`, background: s.final_score > 80 ? 'var(--green)' : 'var(--blue)', borderRadius: 2 }} />
-                                                </div>
-                                                <span style={{ fontSize: 12, fontWeight: 700 }}>{s.final_score}%</span>
-                                            </div>
-                                        </td>
-                                        <td style={{ padding: '16px 20px' }}>
-                                            <div style={{ display: 'flex', gap: 4 }}>
-                                                {s.detected_skills.slice(0, 3).map(sk => <span key={sk} className="tag tag--skill" style={{ fontSize: 12 }}>{sk}</span>)}
-                                            </div>
-                                        </td>
-                                        <td style={{ padding: '16px 20px' }}>
-                                            <span style={{ fontSize: 12, opacity: 0.5, fontFamily: 'monospace' }}>#{s.analysis_id}</span>
-                                        </td>
-                                        <td style={{ padding: '16px 20px', textAlign: 'right' }}>
-                                            <button type="button"
-                                                className="btn btn--ghost btn--sm"
-                                                onClick={(e) => handleDeleteAnalysis(e, s.analysis_id)}
-                                                style={{ color: 'var(--red)', padding: 4 }}
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        <div style={{ padding: 16, textAlign: 'center', background: 'var(--bg-glass)', fontSize: 12, color: 'var(--text-muted)' }}>
-                            Showing {students.length} historical analyses
-                        </div>
-                    </div>
-
-                    {/* Student Detail Slideover/Modal Overlay */}
-                    {viewingStudent && (
-                        <div ref={overlayRef} tabIndex={-1} onKeyDown={e => { if (e.key === 'Escape') setViewingStudent(null) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', justifyContent: 'flex-end', outline: 'none' }}>
-                            <div style={{ width: 500, background: 'var(--bg-card)', height: '100%', borderLeft: '1px solid var(--border)', padding: 40, overflowY: 'auto', position: 'relative' }}>
-                                <button type="button"
-                                    onClick={() => setViewingStudent(null)}
-                                    style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
-                                >
-                                    <X size={24} />
-                                </button>
-
-                                <div className="flex items-center gap-12 mb-32">
-                                    <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(var(--blue-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue)' }}>
-                                        <FileText size={24} />
-                                    </div>
-                                    <div>
-                                        <h2 style={{ margin: 0, fontSize: 20 }}>Analysis View</h2>
-                                        <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Resume ID: {viewingStudent.resume_id}</p>
-                                    </div>
-                                </div>
-
-                                <div className="card mb-24" style={{ padding: 20 }}>
-                                    <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--blue)', marginBottom: 8, textTransform: 'uppercase' }}>Target Role Profile</div>
-                                    <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 12 }}>{viewingStudent.role}</div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                                        <div style={{ padding: 12, background: 'var(--bg-input)', borderRadius: 8 }}>
-                                            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Readiness</div>
-                                            <div style={{ fontSize: 16, fontWeight: 800 }}>{viewingStudent.final_score}%</div>
-                                        </div>
-                                        <div style={{ padding: 12, background: 'var(--bg-input)', borderRadius: 8 }}>
-                                            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>ATS Score</div>
-                                            <div style={{ fontSize: 16, fontWeight: 800 }}>{viewingStudent.ats_score_percent}%</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="mb-24">
-                                    <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 12 }}>Detected Skills</div>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                                        {viewingStudent.detected_skills.map(s => <span key={s} className="tag tag--skill">{s}</span>)}
-                                    </div>
-                                </div>
-
-                                <div className="mb-24">
-                                    <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 12 }}>Missing Core Skills</div>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                                        {viewingStudent.missing_core_skills.length > 0
-                                            ? viewingStudent.missing_core_skills.map(s => <span key={s} className="badge badge--high" style={{ fontSize: 12 }}>{s}</span>)
-                                            : <div style={{ fontSize: 12, color: 'var(--green)' }}>✓ All core skills present</div>
-                                        }
-                                    </div>
-                                </div>
-
-                                <div style={{ padding: 20, background: 'var(--bg-glass)', borderRadius: 12, border: '1px dashed var(--border)' }}>
-                                    <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8 }}>Analysis metadata</div>
-                                    <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.8 }}>
-                                        Filename: {viewingStudent.filename}<br />
-                                        Analyzed: {new Date(viewingStudent.analyzed_at).toLocaleString()}<br />
-                                        Structure Score: {viewingStudent.structure_score_percent}%<br />
-                                        Project Score: {viewingStudent.project_score_percent}%
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-        )
-    }
-
-    // 2. Database Explorer View
-    if (selectedView === 'database') {
-        return (
-            <div className="page-content animate-fade-in">
-                <button type="button" className="btn btn--ghost btn--sm mb-24" onClick={() => setSelectedView(null)}>
-                    <ArrowLeft size={14} /> Back to Command Center
-                </button>
-
-                <div className="grid-2">
-                    <div className="card" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)' }}>
-                        <div className="flex items-center gap-12 mb-24">
-                            <Terminal size={24} className="text-blue" />
-                            <h2 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>Vector Engine Console</h2>
-                        </div>
-                        <div style={{ padding: 20, background: 'var(--bg-secondary)', borderRadius: 8, fontFamily: 'monospace', fontSize: 12, height: 400, overflowY: 'auto', border: '1px solid var(--border)' }}>
-                            <div style={{ color: 'var(--text-secondary)' }}>[CampusSync Edge - System Console]</div>
-                            <div style={{ color: 'var(--green)', marginTop: 8 }}>{'>'} Status: {stats ? 'Connected' : 'Checking...'}</div>
-                            <div style={{ color: 'var(--blue)' }}>{'>'} Pending Reviews: {stats?.pending_reviews ?? '...'}</div>
-                            <div style={{ color: 'var(--blue)' }}>{'>'} Approved Content: {stats?.approved_contributions ?? '...'}</div>
-                            <div style={{ color: 'var(--text-secondary)', marginTop: 12 }}>{'>'} Active Students: {stats?.active_students ?? '...'}</div>
-                            <div style={{ color: 'var(--text-secondary)' }}>{'>'} Cached Courses: {stats?.total_courses_cached ?? '...'}</div>
-                            <div style={{ color: 'var(--text-secondary)', marginTop: 12 }}>{'>'} Analyses in DB: {students.length}</div>
-                            <div className="pulse" style={{ color: 'var(--text-primary)', display: 'flex', gap: 4, marginTop: 20 }}>
-                                <span>_</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                        <div className="card" style={{ padding: 24 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                                <Cpu size={20} className="text-purple" />
-                                <div style={{ fontSize: 15, fontWeight: 700 }}>Neural Processing Units</div>
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                                <div style={{ padding: 16, background: 'var(--bg-input)', borderRadius: 10, border: '1px solid var(--border)' }}>
-                                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Students</div>
-                                    <div style={{ fontSize: 18, fontWeight: 800 }}>{stats?.active_students ?? '--'}</div>
-                                </div>
-                                <div style={{ padding: 16, background: 'rgba(var(--green-rgb), 0.05)', borderRadius: 10, border: '1px solid rgba(var(--green-rgb), 0.2)' }}>
-                                    <div style={{ fontSize: 12, color: 'var(--green)', marginBottom: 4 }}>Courses Cached</div>
-                                    <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--green)' }}>{stats?.total_courses_cached ?? '--'}</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="card" style={{ padding: 24 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                                <Zap size={20} className="text-cyan" />
-                                <div style={{ fontSize: 15, fontWeight: 700 }}>Cache Strategy</div>
-                            </div>
-                            <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                                Modern RAG (Retrieval-Augmented Generation) is enabled for all community-approved sources. Semantic indices are updated instantly upon approval.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        )
-    }
-
-    // --- Main Dashboard ---
-
+  // --- Student Directory View ---
+  if (selectedView === 'users') {
     return (
-        <div className="page-content">
-            {/* Header with System Health */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 40 }}>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+        <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setSelectedView(null)}>
+          <ArrowLeft className="size-4" /> Back to Command Center
+        </Button>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10"><Users className="size-5 text-primary" /></div>
                 <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                        <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', boxShadow: '0 0 20px rgba(var(--blue-rgb), 0.3)' }}>
-                            <Shield size={24} />
+                  <CardTitle>Student Readiness Pool</CardTitle>
+                  <p className="text-xs text-muted-foreground">Performance tracking across all registered users</p>
+                </div>
+              </div>
+              <Badge variant="outline">Total: {stats?.active_students ?? 0}</Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-hidden rounded-lg border">
+              <table className="w-full text-left text-sm">
+                <thead className="border-b bg-muted/30">
+                  <tr>
+                    <th className="p-3 text-xs font-semibold text-muted-foreground">File Ref</th>
+                    <th className="p-3 text-xs font-semibold text-muted-foreground">Target Role</th>
+                    <th className="p-3 text-xs font-semibold text-muted-foreground">Score</th>
+                    <th className="p-3 text-xs font-semibold text-muted-foreground">Top Skills</th>
+                    <th className="p-3 text-xs font-semibold text-muted-foreground">ID</th>
+                    <th className="p-3 text-right"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.map(s => (
+                    <tr key={s.analysis_id} onClick={() => setViewingStudent(s)}
+                      className="cursor-pointer border-b transition-colors hover:bg-muted/30">
+                      <td className="p-3 font-semibold">{s.filename.split('.')[0]}</td>
+                      <td className="p-3 text-muted-foreground">{s.role}</td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-2">
+                          <Progress value={s.final_score} className="h-1 w-14" />
+                          <span className="text-xs font-bold">{s.final_score}%</span>
                         </div>
-                        <h1 className="page-title" style={{ margin: 0 }}>Command Center</h1>
-                    </div>
-                    <p className="page-subtitle">Unified platform control, content moderation, and real-time system metrics</p>
-                </div>
-
-                <div style={{ display: 'flex', gap: 12 }}>
-                    <div className="card card-sm" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 16px', background: 'rgba(var(--green-rgb), 0.05)', border: '1px solid rgba(var(--green-rgb), 0.2)' }}>
-                        <div className="pulse" style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)' }} />
-                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--green)' }}>SYSTEM OPERATIONAL</span>
-                    </div>
-                    <button type="button" className="btn btn--ghost btn--sm" onClick={() => fetchData()}>
-                        <RefreshCcw size={14} /> Sync
-                    </button>
-                </div>
+                      </td>
+                      <td className="p-3">
+                        <div className="flex gap-1">
+                          {s.detected_skills.slice(0, 3).map(sk => <Badge key={sk} variant="outline" className="text-[10px]">{sk}</Badge>)}
+                        </div>
+                      </td>
+                      <td className="p-3 font-mono text-xs text-muted-foreground">#{s.analysis_id}</td>
+                      <td className="p-3 text-right">
+                        <Button variant="ghost" size="icon" className="text-destructive" onClick={(e) => handleDeleteAnalysis(e, s.analysis_id)}>
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="border-t bg-muted/20 p-3 text-center text-xs text-muted-foreground">
+                Showing {students.length} historical analyses
+              </div>
             </div>
 
-            {/* Live Metrics Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20, marginBottom: 40 }}>
-                <div
-                    className="card clickable-card"
-                    onClick={() => setSelectedView('users')}
-                    style={{ padding: 24, position: 'relative', overflow: 'hidden', cursor: 'pointer', transition: 'transform 0.2s' }}
-                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
-                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+            {/* Student Detail Slide-over */}
+            <AnimatePresence>
+              {viewingStudent && (
+                <motion.div ref={overlayRef} tabIndex={-1} onKeyDown={e => { if (e.key === 'Escape') setViewingStudent(null) }}
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-50 flex justify-end bg-black/80 outline-none"
                 >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(var(--blue-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue)' }}>
-                            <Users size={18} />
-                        </div>
-                        <span style={{ fontSize: 12, color: 'var(--green)', fontWeight: 800 }}>LIVE</span>
+                  <motion.div initial={{ x: 500 }} animate={{ x: 0 }} exit={{ x: 500 }} transition={{ type: 'spring', damping: 25 }}
+                    className="h-full w-full max-w-lg overflow-y-auto border-l border-border bg-card p-6"
+                  >
+                    <Button variant="ghost" size="icon" className="absolute right-4 top-4" onClick={() => setViewingStudent(null)}>
+                      <X className="size-5" />
+                    </Button>
+                    <div className="mb-6 flex items-center gap-3">
+                      <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10"><FileText className="size-5 text-primary" /></div>
+                      <div>
+                        <h2 className="font-heading text-lg font-bold">Analysis View</h2>
+                        <p className="text-xs text-muted-foreground">Resume ID: {viewingStudent.resume_id}</p>
+                      </div>
                     </div>
-                    <div style={{ fontSize: 28, fontWeight: 900 }}>{stats?.active_students.toLocaleString() ?? '1,248'}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Active Engineers</div>
-                    <div style={{ height: 2, background: 'rgba(var(--blue-rgb), 0.1)', marginTop: 16 }}>
-                        <div style={{ width: '70%', height: '100%', background: 'var(--blue)' }} />
+                    <Card className="mb-4"><CardContent className="p-4">
+                      <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-primary">Target Role Profile</p>
+                      <p className="mb-3 font-heading text-lg font-bold">{viewingStudent.role}</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="rounded-lg bg-muted/30 p-2.5"><p className="text-[10px] text-muted-foreground">Readiness</p><p className="text-sm font-bold">{viewingStudent.final_score}%</p></div>
+                        <div className="rounded-lg bg-muted/30 p-2.5"><p className="text-[10px] text-muted-foreground">ATS Score</p><p className="text-sm font-bold">{viewingStudent.ats_score_percent}%</p></div>
+                      </div>
+                    </CardContent></Card>
+                    <div className="mb-4">
+                      <p className="mb-2 text-xs font-bold text-foreground">Detected Skills</p>
+                      <div className="flex flex-wrap gap-1">{viewingStudent.detected_skills.map(s => <Badge key={s} variant="outline">{s}</Badge>)}</div>
                     </div>
-                </div>
-
-                <div className="card" style={{ padding: 24 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(var(--green-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--green)' }}>
-                            <BookOpen size={18} />
-                        </div>
-                        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700 }}>+12 Today</span>
+                    <div className="mb-4">
+                      <p className="mb-2 text-xs font-bold text-foreground">Missing Core Skills</p>
+                      <div className="flex flex-wrap gap-1">
+                        {viewingStudent.missing_core_skills.length > 0
+                          ? viewingStudent.missing_core_skills.map(s => <Badge key={s} variant="destructive">{s}</Badge>)
+                          : <span className="text-xs text-green-500">All core skills present</span>}
+                      </div>
                     </div>
-                    <div style={{ fontSize: 28, fontWeight: 900 }}>{stats?.total_courses_cached ?? '42'}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>AI Learning Tracks</div>
-                    <div style={{ height: 2, background: 'rgba(var(--green-rgb), 0.1)', marginTop: 16 }}>
-                        <div style={{ width: '45%', height: '100%', background: 'var(--green)' }} />
+                    <div className="rounded-lg border border-dashed bg-muted/20 p-4 text-xs leading-relaxed text-muted-foreground">
+                      <p className="mb-1 font-bold">Analysis metadata</p>
+                      Filename: {viewingStudent.filename}<br />
+                      Analyzed: {new Date(viewingStudent.analyzed_at).toLocaleString()}<br />
+                      Structure: {viewingStudent.structure_score_percent}% | Project: {viewingStudent.project_score_percent}%
                     </div>
-                </div>
-
-                <div className="card" style={{ padding: 24 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(var(--orange-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--orange)' }}>
-                            <AlertCircle size={18} />
-                        </div>
-                        <span className="badge badge--medium" style={{ fontSize: 9 }}>TOP PRIORITY</span>
-                    </div>
-                    <div style={{ fontSize: 28, fontWeight: 900 }}>{stats?.pending_reviews ?? contributions.length}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Pending Moderation</div>
-                    <div style={{ height: 2, background: 'rgba(var(--orange-rgb), 0.1)', marginTop: 16 }}>
-                        <div style={{ width: `${(stats?.pending_reviews ?? 0) * 10}%`, height: '100%', background: 'var(--orange)' }} />
-                    </div>
-                </div>
-
-                <div
-                    className="card clickable-card"
-                    onClick={() => setSelectedView('database')}
-                    style={{ padding: 24, cursor: 'pointer', transition: 'transform 0.2s' }}
-                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
-                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(var(--purple-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--purple)' }}>
-                            <Activity size={18} />
-                        </div>
-                        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700 }}>99.9% SLI</span>
-                    </div>
-                    <div style={{ fontSize: 28, fontWeight: 900 }}>142ms</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>AI Inference Latency</div>
-                    <div style={{ height: 2, background: 'rgba(var(--purple-rgb), 0.1)', marginTop: 16 }}>
-                        <div style={{ width: '60%', height: '100%', background: 'var(--purple)' }} />
-                    </div>
-                </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 32 }}>
-                {/* Community Moderation Queue */}
-                <div className="card" style={{ padding: 24 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                        <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-                            Moderation Queue <span className="badge badge--active">{filteredContributions.length}</span>
-                        </h2>
-                        <div style={{ display: 'flex', gap: 12 }}>
-                            <div style={{ position: 'relative' }}>
-                                <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }} />
-                                <input
-                                    className="input-field"
-                                    placeholder="Search by topic or user..."
-                                    style={{ paddingLeft: 36, height: 36, width: 240, fontSize: 12 }}
-                                    value={filter}
-                                    onChange={(e) => setFilter(e.target.value)}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {filteredContributions.length > 0 ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                            {filteredContributions.map(c => (
-                                <div key={c.id} style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--border)', borderRadius: 12 }}>
-                                    <div style={{ padding: '20px 24px', background: 'var(--bg-glass)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                            <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(var(--blue-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue)', fontSize: 14, fontWeight: 800 }}>
-                                                {c.topic.charAt(0).toUpperCase()}
-                                            </div>
-                                            <div>
-                                                <div style={{ fontSize: 15, fontWeight: 700 }}>{c.topic.toUpperCase()}</div>
-                                                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                                                    By <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{c.submitted_by}</span> • {new Date(c.created_at).toLocaleDateString()}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', gap: 8 }}>
-                                            <button type="button" className="btn btn--danger btn--sm" onClick={() => handleReject(c.id)}>
-                                                <X size={14} /> Reject
-                                            </button>
-                                            <button type="button" className="btn btn--primary btn--sm" onClick={() => handleApprove(c.id)} style={{ background: 'var(--green)' }}>
-                                                <Check size={14} /> Approve
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div style={{ padding: 20 }}>
-                                        <div style={{ background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 8, padding: 16, fontSize: 13, lineHeight: 1.6, color: 'var(--text-secondary)' }}>
-                                            {c.content ? (
-                                                <>
-                                                    {c.content.substring(0, 250)}...
-                                                    <span style={{ color: 'var(--blue)', cursor: 'pointer', fontWeight: 600, marginLeft: 6 }}>Review Full Source →</span>
-                                                </>
-                                            ) : 'No semantic content detected.'}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div style={{ padding: 60, textAlign: 'center', border: '1px dashed var(--border)', borderRadius: 12 }}>
-                            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(var(--green-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--green)', margin: '0 auto 20px' }}>
-                                <Check size={32} />
-                            </div>
-                            <h3 style={{ fontSize: 18, color: 'var(--text-primary)', marginBottom: 8 }}>Queue Clean!</h3>
-                            <p style={{ color: 'var(--text-muted)' }}>All contributions have been indexed.</p>
-                        </div>
-                    )}
-                </div>
-
-                {/* Right Panel: Advanced Stats */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                    <div className="card" onClick={() => setSelectedView('database')} style={{ padding: 24, cursor: 'pointer' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                            <Database size={20} className="text-blue" />
-                            <div style={{ fontWeight: 800 }}>Vector Index</div>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Health Check</span>
-                            <span style={{ fontSize: 12, color: 'var(--green)', fontWeight: 800 }}>99.9% Sync</span>
-                        </div>
-                        <div style={{ height: 6, background: 'var(--track-color)', borderRadius: 3 }}>
-                            <div style={{ width: '99.9%', height: '100%', background: 'var(--green)', borderRadius: 3 }} />
-                        </div>
-                    </div>
-
-                    <div className="card" style={{ padding: 24 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                            <Activity size={20} className="text-purple" />
-                            <div style={{ fontWeight: 800 }}>Traffic surge</div>
-                        </div>
-                        <div style={{ height: 80, display: 'flex', alignItems: 'flex-end', gap: 4 }}>
-                            {[20, 40, 30, 60, 80, 50, 70, 90, 40, 60].map((h, i) => (
-                                <div key={i} style={{ flex: 1, height: `${h}%`, background: 'rgba(var(--purple-rgb), 0.3)', borderRadius: '2px 2px 0 0' }} />
-                            ))}
-                        </div>
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 12, textAlign: 'center' }}>Traffic intensity (Last 12 Hours)</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </CardContent>
+        </Card>
+      </motion.div>
     )
+  }
+
+  // --- Database Explorer View ---
+  if (selectedView === 'database') {
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+        <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setSelectedView(null)}>
+          <ArrowLeft className="size-4" /> Back to Command Center
+        </Button>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card className="border-border bg-card">
+            <CardHeader><div className="flex items-center gap-3">
+              <Terminal className="size-5 text-primary" />
+              <CardTitle className="text-base">Vector Engine Console</CardTitle>
+            </div></CardHeader>
+            <CardContent>
+              <div className="h-80 overflow-y-auto rounded-lg border bg-background p-4 font-mono text-xs leading-relaxed">
+                <p className="text-muted-foreground">[CampusSync Edge - System Console]</p>
+                <p className="mt-2 text-green-500">&gt; Status: {stats ? 'Connected' : 'Checking...'}</p>
+                <p className="text-primary">&gt; Pending Reviews: {stats?.pending_reviews ?? '...'}</p>
+                <p className="text-primary">&gt; Approved Content: {stats?.approved_contributions ?? '...'}</p>
+                <p className="mt-3 text-muted-foreground">&gt; Active Students: {stats?.active_students ?? '...'}</p>
+                <p className="text-muted-foreground">&gt; Cached Courses: {stats?.total_courses_cached ?? '...'}</p>
+                <p className="text-muted-foreground">&gt; Analyses in DB: {students.length}</p>
+                <p className="mt-4 animate-pulse text-foreground">_</p>
+              </div>
+            </CardContent>
+          </Card>
+          <div className="space-y-4">
+            <Card><CardContent className="p-5">
+              <div className="mb-3 flex items-center gap-2.5"><Cpu className="size-4 text-violet-500" /><span className="text-sm font-bold">Neural Processing Units</span></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg bg-muted/30 p-3"><p className="text-[10px] text-muted-foreground">Students</p><p className="text-lg font-bold">{stats?.active_students ?? '--'}</p></div>
+                <div className="rounded-lg bg-green-500/5 p-3"><p className="text-[10px] text-green-500">Courses Cached</p><p className="text-lg font-bold text-green-500">{stats?.total_courses_cached ?? '--'}</p></div>
+              </div>
+            </CardContent></Card>
+            <Card><CardContent className="p-5">
+              <div className="mb-2 flex items-center gap-2.5"><Zap className="size-4 text-primary" /><span className="text-sm font-bold">Cache Strategy</span></div>
+              <p className="text-xs leading-relaxed text-muted-foreground">Modern RAG (Retrieval-Augmented Generation) is enabled for all community-approved sources. Semantic indices are updated instantly upon approval.</p>
+            </CardContent></Card>
+          </div>
+        </div>
+      </motion.div>
+    )
+  }
+
+  // --- Main Dashboard ---
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-primary shadow-[0_0_20px_rgba(0,242,254,0.3)]">
+            <Shield className="size-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h1 className="font-heading text-2xl font-bold tracking-tight">Command Center</h1>
+            <p className="text-sm text-muted-foreground">Platform control, content moderation, and real-time metrics</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Badge variant="outline" className="gap-1.5 border-green-500/30 text-green-500">
+            <span className="size-1.5 rounded-full bg-green-500 animate-pulse" /> OPERATIONAL
+          </Badge>
+          <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => fetchData()}><RefreshCcw className="size-3.5" /> Sync</Button>
+        </div>
+      </div>
+
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {[
+          { label: 'Active Engineers', value: stats?.active_students?.toLocaleString() ?? '—', icon: Users, color: 'text-primary', bg: 'bg-primary/10', clickable: true, onClick: () => setSelectedView('users') },
+          { label: 'AI Learning Tracks', value: String(stats?.total_courses_cached ?? '—'), icon: BookOpen, color: 'text-green-500', bg: 'bg-green-500/10', extra: '+12 Today' },
+          { label: 'Pending Moderation', value: String(stats?.pending_reviews ?? contributions.length), icon: AlertCircle, color: 'text-amber-500', bg: 'bg-amber-500/10', extra: 'TOP PRIORITY' },
+          { label: 'AI Inference Latency', value: '142ms', icon: Activity, color: 'text-violet-500', bg: 'bg-violet-500/10', extra: '99.9% SLI', clickable: true, onClick: () => setSelectedView('database') },
+        ].map((m, i) => (
+          <motion.div key={i} whileHover={m.clickable ? { y: -2 } : undefined} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
+            <Card className={m.clickable ? 'cursor-pointer transition-shadow hover:shadow-lg' : ''} onClick={m.onClick}>
+              <CardContent className="p-5">
+                <div className="mb-2 flex items-center justify-between">
+                  <div className={`flex size-8 items-center justify-center rounded-lg ${m.bg}`}>
+                    <m.icon className={`size-4 ${m.color}`} />
+                  </div>
+                  {m.extra && <span className={`text-[10px] font-bold ${m.color}`}>{m.extra}</span>}
+                </div>
+                <div className="font-heading text-2xl font-black text-foreground">{m.value}</div>
+                <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{m.label}</p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+        {/* Moderation Queue */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base">
+                Moderation Queue <Badge variant="outline">{filteredContributions.length}</Badge>
+              </CardTitle>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input placeholder="Search topic or user..." value={filter} onChange={e => setFilter(e.target.value)} className="h-8 w-52 pl-8 text-xs" />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {filteredContributions.length > 0 ? (
+              <div className="space-y-3">
+                {filteredContributions.map(c => (
+                  <div key={c.id} className="overflow-hidden rounded-lg border">
+                    <div className="flex items-center justify-between border-b bg-muted/20 px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">{c.topic.charAt(0).toUpperCase()}</div>
+                        <div>
+                          <p className="text-sm font-bold">{c.topic.toUpperCase()}</p>
+                          <p className="text-[10px] text-muted-foreground">By <span className="font-semibold text-foreground">{c.submitted_by}</span> · {new Date(c.created_at).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-1.5">
+                        <Button variant="outline" size="sm" className="gap-1 text-destructive" onClick={() => handleReject(c.id)}><X className="size-3.5" /> Reject</Button>
+                        <Button size="sm" className="gap-1 bg-green-600 hover:bg-green-700" onClick={() => handleApprove(c.id)}><Check className="size-3.5" /> Approve</Button>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <div className="rounded-lg border bg-muted/10 p-3 text-xs leading-relaxed text-muted-foreground">
+                        {c.content ? <>{c.content.substring(0, 250)}...<span className="ml-1 cursor-pointer font-semibold text-primary">Review Full →</span></> : 'No semantic content detected.'}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed py-12">
+                <div className="flex size-14 items-center justify-center rounded-full bg-green-500/10"><Check className="size-7 text-green-500" /></div>
+                <h3 className="font-heading text-base font-bold">Queue Clean!</h3>
+                <p className="text-sm text-muted-foreground">All contributions have been indexed.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Right Panel */}
+        <div className="space-y-4">
+          <Card className="cursor-pointer" onClick={() => setSelectedView('database')}>
+            <CardContent className="p-5">
+              <div className="mb-4 flex items-center gap-3"><Database className="size-4 text-primary" /><span className="font-bold">Vector Index</span></div>
+              <div className="mb-2 flex items-center justify-between"><span className="text-xs text-muted-foreground">Health Check</span><span className="text-xs font-bold text-green-500">99.9% Sync</span></div>
+              <Progress value={99.9} className="h-1.5" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-5">
+              <div className="mb-4 flex items-center gap-3"><Activity className="size-4 text-violet-500" /><span className="font-bold">Traffic surge</span></div>
+              <div className="flex h-16 items-end gap-1">
+                {[20, 40, 30, 60, 80, 50, 70, 90, 40, 60].map((h, i) => (
+                  <div key={i} className="flex-1 rounded-t bg-violet-500/30" style={{ height: `${h}%` }} />
+                ))}
+              </div>
+              <p className="mt-2 text-center text-[10px] text-muted-foreground">Traffic intensity (Last 12 Hours)</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </motion.div>
+  )
 }

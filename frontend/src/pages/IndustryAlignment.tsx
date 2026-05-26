@@ -1,194 +1,178 @@
 import { useNavigate } from 'react-router-dom'
 import { useResume, getIndustryAlignment } from '../context/ResumeContext'
-import { Building2, Monitor, Rocket, ExternalLink, Info, BookOpen, Shield } from 'lucide-react'
+import { Building2, Monitor, Rocket, ExternalLink, Info, BookOpen, Shield, TrendingUp, Lock } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
+import { Separator } from '@/components/ui/separator'
 
 const INDUSTRY_DETAILS: Record<string, {
-    summary: string;
-    benchmark: string;
-    resources: { name: string; url: string; platform: string }[]
+  summary: string;
+  benchmark: string;
+  resources: { name: string; url: string; platform: string }[]
 }> = {
-    'Service-Based Companies': {
-        summary: 'Mass recruiters prioritize language fluency (Java/C++) and core CS fundamentals over high-end system design. Your score indicates your proficiency in standard corporate aptitude and coding standards.',
-        benchmark: 'Corporate Average: 65% | Your Score identifies alignment with hiring cycles of TCS Digital, Wipro Turbo, and Infosys Power Programmer roles.',
-        resources: [
-            { name: 'NQT Learning Portal', url: 'https://learning.tcsionhub.in/hub/national-qualifier-test/', platform: 'TCS iON' },
-            { name: 'Infosys Springboard', url: 'https://infyspringboard.onwingspan.com/', platform: 'Lex' },
-            { name: 'Wipro TalentNext', url: 'https://www.wipro.com/careers/', platform: 'Wipro' }
-        ]
-    },
-    'Product-Based Companies': {
-        summary: 'FAANG/Product roles involve rigorous 5-stage interviews focusing on DSA, LLD/HLD, and scalability. Our engine uses competitive benchmarks from successful candidates to predict your alignment.',
-        benchmark: 'Product Benchmark: 85% | Your alignment is based on the "Critical" gaps identified in your profile compared to LeetCode Medium/Hard patterns.',
-        resources: [
-            { name: 'Google Tech Guide', url: 'https://www.google.com/about/careers/applications/students/guide-to-technical-development/', platform: 'Google' },
-            { name: 'Microsoft Students', url: 'https://careers.microsoft.com/students/us/en', platform: 'Microsoft' },
-            { name: 'AWS Cloud Basics', url: 'https://aws.amazon.com/training/introductory/', platform: 'Amazon' }
-        ]
-    },
-    'Startup Roles': {
-        summary: 'Startups value "Fullstack Agility"-the ability to learn and ship features fast using modern stacks (MERN, Golang, DevOps). Your score tracks your project depth and tech-stack variety.',
-        benchmark: 'High-Growth Benchmark: 75% | We analyze your project complexity and "Detected Skills" to match you with Series A/B startup requirements.',
-        resources: [
-            { name: 'Founders Guide', url: 'https://www.ycombinator.com/library', platform: 'Y Combinator' },
-            { name: 'HackerNews Hiring', url: 'https://news.ycombinator.com/jobs', platform: 'HN' },
-            { name: 'Angellist Talent', url: 'https://wellfound.com/', platform: 'Wellfound' }
-        ]
-    }
+  'Service-Based Companies': {
+    summary: 'Mass recruiters prioritize language fluency (Java/C++) and core CS fundamentals over high-end system design. Your score indicates your proficiency in standard corporate aptitude and coding standards.',
+    benchmark: 'Corporate Average: 65% | Your Score identifies alignment with hiring cycles of TCS Digital, Wipro Turbo, and Infosys Power Programmer roles.',
+    resources: [
+      { name: 'NQT Learning Portal', url: 'https://learning.tcsionhub.in/hub/national-qualifier-test/', platform: 'TCS iON' },
+      { name: 'Infosys Springboard', url: 'https://infyspringboard.onwingspan.com/', platform: 'Lex' },
+      { name: 'Wipro TalentNext', url: 'https://www.wipro.com/careers/', platform: 'Wipro' }
+    ]
+  },
+  'Product-Based Companies': {
+    summary: 'FAANG/Product roles involve rigorous 5-stage interviews focusing on DSA, LLD/HLD, and scalability. Our engine uses competitive benchmarks from successful candidates to predict your alignment.',
+    benchmark: 'Product Benchmark: 85% | Your alignment is based on the "Critical" gaps identified in your profile compared to LeetCode Medium/Hard patterns.',
+    resources: [
+      { name: 'Google Tech Guide', url: 'https://www.google.com/about/careers/applications/students/guide-to-technical-development/', platform: 'Google' },
+      { name: 'Microsoft Students', url: 'https://careers.microsoft.com/students/us/en', platform: 'Microsoft' },
+      { name: 'AWS Cloud Basics', url: 'https://aws.amazon.com/training/introductory/', platform: 'Amazon' }
+    ]
+  },
+  'Startup Roles': {
+    summary: 'Startups value "Fullstack Agility"-the ability to learn and ship features fast using modern stacks (MERN, Golang, DevOps). Your score tracks your project depth and tech-stack variety.',
+    benchmark: 'High-Growth Benchmark: 75% | We analyze your project complexity and "Detected Skills" to match you with Series A/B startup requirements.',
+    resources: [
+      { name: 'Founders Guide', url: 'https://www.ycombinator.com/library', platform: 'Y Combinator' },
+      { name: 'HackerNews Hiring', url: 'https://news.ycombinator.com/jobs', platform: 'HN' },
+      { name: 'Angellist Talent', url: 'https://wellfound.com/', platform: 'Wellfound' }
+    ]
+  }
 }
 
+const ROWS = [
+  { Icon: Building2, title: 'Service-Based Companies', sub: 'TCS, Infosys, Wipro, Cognizant', color: 'text-blue-500', bg: 'bg-blue-500/10' },
+  { Icon: Monitor, title: 'Product-Based Companies', sub: 'Google, Microsoft, Amazon, Meta', color: 'text-primary', bg: 'bg-primary/10' },
+  { Icon: Rocket, title: 'Startup Roles', sub: 'Early-stage, Series A, Growth', color: 'text-green-500', bg: 'bg-green-500/10' },
+]
+
+const container = { hidden: {}, show: { transition: { staggerChildren: 0.15 } } }
+const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }
+
 export default function IndustryAlignment() {
-    const navigate = useNavigate()
-    const { analysis } = useResume()
-    const score = analysis?.final_score ?? null
-    const align = score !== null ? getIndustryAlignment(score) : null
+  const navigate = useNavigate()
+  const { analysis } = useResume()
+  const score = analysis?.final_score ?? null
+  const align = score !== null ? getIndustryAlignment(score) : null
 
-    const ROWS = [
-        {
-            Icon: Building2,
-            title: 'Service-Based Companies',
-            sub: 'TCS, Infosys, Wipro, Cognizant',
-            pct: align?.service ?? 0,
-            cls: 'blue',
-        },
-        {
-            Icon: Monitor,
-            title: 'Product-Based Companies',
-            sub: 'Google, Microsoft, Amazon, Meta',
-            pct: align?.product ?? 0,
-            cls: 'cyan',
-        },
-        {
-            Icon: Rocket,
-            title: 'Startup Roles',
-            sub: 'Early-stage, Series A, Growth',
-            pct: align?.startup ?? 0,
-            cls: 'green',
-        },
-    ]
+  const pcts = [align?.service ?? 0, align?.product ?? 0, align?.startup ?? 0]
 
-    if (score === null) {
-        return (
-            <div className="page-content">
-                <div style={{ maxWidth: 800, margin: '60px auto', textAlign: 'center' }}>
-                    <div style={{ fontSize: 60, marginBottom: 20 }}>🏢</div>
-                    <h1 className="page-title">Industry Alignment Locked</h1>
-                    <p className="page-subtitle">Upload your resume to see personalized industry alignment scores.</p>
-                    <button type="button" className="btn btn--primary" onClick={() => navigate('/resume-analyzer')} style={{ marginTop: 24 }}>
-                        Analyze Your Resume Now
-                    </button>
-                </div>
-            </div>
-        )
-    }
-
+  if (score === null) {
     return (
-        <div className="page-content">
-            <div className="page-header" style={{ marginBottom: 40 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                    <div>
-                        <div className="page-title">Industry Alignment</div>
-                        <div className="page-subtitle">Real-world placement probability based on deep-learning benchmarks</div>
-                    </div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)', boxShadow: '0 0 10px var(--green)' }} /> Live Market Benchmarks
-                    </div>
-                </div>
-            </div>
-
-            <div style={{ display: 'grid', gap: 32 }}>
-                {ROWS.map((row, i) => {
-                    const Icon = row.Icon
-                    const details = INDUSTRY_DETAILS[row.title]
-
-                    return (
-                        <div className="card" key={i} style={{ padding: 28, position: 'relative', overflow: 'hidden' }}>
-                            <div style={{ position: 'absolute', top: 0, right: 0, width: 200, height: 200, background: `radial-gradient(circle at top right, var(--${row.cls}), transparent)`, opacity: 0.03, pointerEvents: 'none' }} />
-
-                            <div className="industry-row" style={{ border: 'none', padding: 0, marginBottom: 24 }}>
-                                <div className="industry-row__header">
-                                    <div className="industry-row__info">
-                                        <div className="industry-row__icon" style={{ width: 42, height: 42, background: `rgba(var(--${row.cls}-rgb), 0.1)`, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon size={20} /></div>
-                                        <div>
-                                            <div className="industry-row__title" style={{ fontSize: 18, fontWeight: 700 }}>{row.title}</div>
-                                            <div className="industry-row__sub">{row.sub}</div>
-                                        </div>
-                                    </div>
-                                    <div style={{ textAlign: 'right' }}>
-                                        <div className="industry-row__pct" style={{ color: `var(--${row.cls})`, fontSize: 24, fontWeight: 800 }}>{score !== null ? `${row.pct}%` : '-'}</div>
-                                        <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700 }}>{score !== null ? 'ALIGNMENT MATCH' : 'MATCH SCORE'}</div>
-                                    </div>
-                                </div>
-                                <div className="progress-track" style={{ height: 12, marginTop: 16 }}>
-                                    <div className={`progress-fill progress-fill--${row.cls}`} style={{ width: `${row.pct}%` }} />
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 40, paddingTop: 24, borderTop: '1px solid var(--border)' }}>
-                                <div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12 }}>
-                                        <Info size={14} className="text-blue" /> Scoring Insight & Benchmark Logic
-                                    </div>
-                                    <p style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.6, marginBottom: 12 }}>
-                                        {details.summary}
-                                    </p>
-                                    <div style={{ padding: '12px 16px', borderRadius: 8, background: 'var(--bg-glass)', borderLeft: `3px solid var(--${row.cls})`, fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500 }}>
-                                        {details.benchmark}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12 }}>
-                                        <BookOpen size={14} className="text-blue" /> Official Resource Library
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                        {details.resources.map((res, ri) => (
-                                            <a
-                                                key={ri}
-                                                href={res.url}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                style={{
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    gap: 4,
-                                                    padding: '12px 16px',
-                                                    background: 'var(--bg-glass)',
-                                                    borderRadius: 10,
-                                                    border: '1px solid var(--border)',
-                                                    textDecoration: 'none',
-                                                    transition: 'all 0.2s',
-                                                }}
-                                                className="resource-card-link"
-                                            >
-                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{res.name}</span>
-                                                    <ExternalLink size={14} style={{ opacity: 0.5, color: 'var(--text-secondary)' }} />
-                                                </div>
-                                                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>via {res.platform}</span>
-                                            </a>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )
-                })}
-            </div>
-
-            {/* Credibility Footer */}
-            <div className="card" style={{ marginTop: 48, padding: 32, background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(34, 211, 238, 0.05))', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
-                <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
-                    <div style={{ width: 64, height: 64, borderRadius: 16, background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Shield className="text-blue" size={32} />
-                    </div>
-                    <div>
-                        <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>Scoring Methodology & Credibility</h3>
-                        <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, maxWidth: 800, margin: 0 }}>
-                            Our alignment engine leverages a dual-layer approach: <strong>Cloud-based LLM analysis</strong> for deep project semantic understanding and <strong>Local Browser-only ONNX models</strong> for profile classification across 1.2M+ industry data points. Your data remains encrypted and is processed against real-time placement statistics from top-tier institutional hiring cycles.
-                        </p>
-                    </div>
-                </div>
-            </div>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
+        <div className="flex size-16 items-center justify-center rounded-2xl bg-muted/50">
+          <Lock className="size-8 text-muted-foreground" />
         </div>
+        <h1 className="font-heading text-2xl font-bold">Industry Alignment Locked</h1>
+        <p className="max-w-md text-sm text-muted-foreground">Upload your resume to see personalized industry alignment scores.</p>
+        <Button onClick={() => navigate('/resume-analyzer')}>Analyze Your Resume</Button>
+      </motion.div>
     )
+  }
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-4xl space-y-8">
+      {/* Header */}
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">Industry Alignment</h1>
+          <p className="text-sm text-muted-foreground">Real-world placement probability based on deep-learning benchmarks</p>
+        </div>
+        <Badge variant="outline" className="gap-1.5 border-green-500/30 text-green-500">
+          <span className="size-2 rounded-full bg-green-500 animate-pulse" />
+          Live Benchmarks
+        </Badge>
+      </div>
+
+      {/* Industry Cards */}
+      <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
+        {ROWS.map((row, i) => {
+          const details = INDUSTRY_DETAILS[row.title]
+          const pct = pcts[i]
+          return (
+            <motion.div key={row.title} variants={item}>
+              <Card className="overflow-hidden">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`flex size-11 items-center justify-center rounded-xl ${row.bg}`}>
+                        <row.Icon className={`size-5 ${row.color}`} />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">{row.title}</CardTitle>
+                        <p className="text-xs text-muted-foreground">{row.sub}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`font-heading text-3xl font-bold ${row.color}`}>{pct}%</div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Alignment</p>
+                    </div>
+                  </div>
+                  <Progress value={pct} className="mt-4 h-2.5" />
+                </CardHeader>
+
+                <Separator className="opacity-50" />
+
+                <CardContent className="grid gap-8 pt-6 md:grid-cols-[1.4fr_1fr]">
+                  <div>
+                    <div className="mb-3 flex items-center gap-2 text-xs font-bold text-foreground">
+                      <Info className="size-3.5 text-primary" />
+                      Scoring Insight & Benchmark Logic
+                    </div>
+                    <p className="text-sm leading-relaxed text-muted-foreground">{details.summary}</p>
+                    <div className="mt-3 rounded-lg border-l-[3px] border-primary bg-muted/30 p-3 text-xs text-muted-foreground">
+                      {details.benchmark}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="mb-3 flex items-center gap-2 text-xs font-bold text-foreground">
+                      <BookOpen className="size-3.5 text-primary" />
+                      Official Resource Library
+                    </div>
+                    <div className="space-y-2">
+                      {details.resources.map((res) => (
+                        <a
+                          key={res.name}
+                          href={res.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="group flex items-center justify-between rounded-lg border bg-muted/20 p-3 transition-colors hover:bg-muted/40"
+                        >
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">{res.name}</p>
+                            <p className="text-xs text-muted-foreground">via {res.platform}</p>
+                          </div>
+                          <ExternalLink className="size-4 text-muted-foreground opacity-50 transition-opacity group-hover:opacity-100" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )
+        })}
+      </motion.div>
+
+      {/* Credibility Footer */}
+      <motion.div variants={item} initial="hidden" animate="show">
+        <Card className="border-primary/10 bg-gradient-to-br from-primary/5 to-violet-500/5">
+          <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:gap-6">
+            <div className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+              <Shield className="size-7 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-heading text-base font-bold">Scoring Methodology & Credibility</h3>
+              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                Our alignment engine leverages a dual-layer approach: <strong className="text-foreground">Cloud-based LLM analysis</strong> for deep project semantic understanding and <strong className="text-foreground">Local Browser-only ONNX models</strong> for profile classification across 1.2M+ industry data points. Your data remains encrypted and is processed against real-time placement statistics from top-tier institutional hiring cycles.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
+  )
 }
