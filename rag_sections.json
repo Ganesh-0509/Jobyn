@@ -1,0 +1,87 @@
+[
+  {
+    "subheading": "What is RAG & Why It Matters",
+    "explanation": "RAG (Retrieval-Augmented Generation) enhances LLMs by retrieving relevant documents before generating answers. This reduces hallucination, keeps responses current, and enables LLMs to answer about private data.\n\nRAG solves knowledge cutoffs, hallucination, and private data access.",
+    "example": "```python\nfrom langchain.document_loaders import PyPDFLoader\nfrom langchain.text_splitter import RecursiveCharacterTextSplitter\nfrom langchain.embeddings import OpenAIEmbeddings\nfrom langchain.vectorstores import Chroma\nfrom langchain.chat_models import ChatOpenAI\nfrom langchain.chains import RetrievalQA\n\nloader = PyPDFLoader('handbook.pdf')\ndocuments = loader.load()\n\nsplitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)\nchunks = splitter.split_documents(documents)\n\nembeddings = OpenAIEmbeddings()\nvectorstore = Chroma.from_documents(chunks, embeddings, persist_directory='./chroma_db')\n\nllm = ChatOpenAI(model='gpt-4', temperature=0)\nqa_chain = RetrievalQA.from_chain_type(\n    llm=llm, chain_type='stuff',\n    retriever=vectorstore.as_retriever(search_kwargs={'k': 4}),\n    return_source_documents=True\n)\n\nresult = qa_chain({'query': 'What is the remote work policy?'})\nprint(result['result'])\nfor doc in result['source_documents']:\n    print(f'  Source: {doc.metadata[\"source\"]}, page {doc.metadata.get(\"page\", \"N/A\")}')\n```",
+    "key_takeaway": "RAG = Retrieve relevant docs + Generate with context. It reduces hallucination and handles private data. Three steps: load, embed, query.",
+    "try_it": "Build a RAG pipeline over PDFs and verify answers are grounded in source documents."
+  },
+  {
+    "subheading": "Document Chunking Strategies",
+    "explanation": "Chunking splits documents into pieces small enough for embedding models (256-1024 tokens). Good chunks are semantically coherent. Overlap preserves context across boundaries.\n\nStrategies: fixed-size, recursive (best general-purpose), semantic, and document-aware.",
+    "example": "```python\nfrom langchain.text_splitter import (\n    RecursiveCharacterTextSplitter,\n    TokenTextSplitter,\n    MarkdownHeaderTextSplitter\n)\n\nrecursive = RecursiveCharacterTextSplitter(\n    chunk_size=1000, chunk_overlap=200,\n    separators=['\\n\\n', '\\n', '. ', ', ', ' ', '']\n)\n\ntoken = TokenTextSplitter(chunk_size=500, chunk_overlap=50, encoding_name='cl100k_base')\n\nheaders = [('#', 'Header 1'), ('##', 'Header 2'), ('###', 'Header 3')]\nmd_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers)\n\ndef evaluate_chunks(chunks):\n    sizes = [len(c.page_content) for c in chunks]\n    print(f'Chunks: {len(chunks)}')\n    print(f'Avg size: {sum(sizes)/len(sizes):.0f}')\n    print(f'Min: {min(sizes)}, Max: {max(sizes)}')\n    tiny = sum(1 for s in sizes if s < 100)\n    print(f'Tiny chunks: {tiny}')\n```",
+    "key_takeaway": "RecursiveCharacterTextSplitter is the best general-purpose chunker. Use 1000-char chunks with 200-char overlap. Markdown-aware splitting preserves structure.",
+    "try_it": "Compare chunking strategies on the same document and evaluate retrieval quality."
+  },
+  {
+    "subheading": "Embedding Generation & Models",
+    "explanation": "Embeddings convert text into numerical vectors capturing semantic meaning. Similar texts have similar vectors.\n\nAPI models (OpenAI) are higher quality but cost money. Open-source models (all-MiniLM-L6-v2) run locally for free.",
+    "example": "```python\nfrom langchain.embeddings import OpenAIEmbeddings, HuggingFaceEmbeddings\nimport numpy as np\nfrom sklearn.metrics.pairwise import cosine_similarity\n\nopenai_emb = OpenAIEmbeddings(model='text-embedding-ada-002')\nvectors = openai_emb.embed_documents([\n    'The cat sat on the mat',\n    'A feline rested on the rug',\n    'Python is a programming language'\n])\n\nsim = cosine_similarity(vectors)\nprint(f'Cat-Feline: {sim[0][1]:.3f}')\nprint(f'Cat-Python: {sim[0][2]:.3f}')\n\nhf_emb = HuggingFaceEmbeddings(\n    model_name='sentence-transformers/all-MiniLM-L6-v2',\n    encode_kwargs={'normalize_embeddings': True}\n)\nvectors_local = hf_emb.embed_documents([\n    'The cat sat on the mat',\n    'A feline rested on the rug',\n    'Python is a programming language'\n])\n\nquery_vec = openai_emb.embed_query('Where did the cat sit?')\nsimilarities = cosine_similarity([query_vec], vectors)[0]\nbest_idx = np.argmax(similarities)\nprint(f'Best match: {best_idx} (score: {similarities[best_idx]:.3f})')\n```",
+    "key_takeaway": "Embeddings capture semantic meaning as vectors. Cosine similarity measures relatedness. OpenAI for quality, HuggingFace for free local inference.",
+    "try_it": "Embed 100 document chunks with a local model and build a simple search function."
+  },
+  {
+    "subheading": "Vector Store Integration",
+    "explanation": "Vector stores index embeddings for fast similarity search. Chroma (lightweight, local), Pinecone (managed, scalable), FAISS (fast in-memory).\n\nHybrid search (vector + keyword) improves recall for specific terms.",
+    "example": "```python\nfrom langchain.vectorstores import Chroma, FAISS\nfrom langchain.embeddings import OpenAIEmbeddings\n\nembeddings = OpenAIEmbeddings()\n\nchroma_store = Chroma(embedding_function=embeddings, persist_directory='./chroma_db')\nchroma_store.add_texts(\n    texts=['doc1 content', 'doc2 content', 'doc3 content'],\n    metadatas=[{'source': 'file1'}, {'source': 'file2'}, {'source': 'file3'}]\n)\nresults = chroma_store.similarity_search('query', k=3, filter={'source': 'file1'})\n\nfaiss_store = FAISS.from_texts(texts=['doc1', 'doc2', 'doc3'], embedding=embeddings)\nfaiss_store.save_local('faiss_index')\nfaiss_store = FAISS.load_local('faiss_index', embeddings)\nresults = faiss_store.similarity_search_with_score('query', k=3)\n\nresults = chroma_store.max_marginal_relevance_search('query', k=5, fetch_k=20, lambda_mult=0.5)\n```",
+    "key_takeaway": "Chroma for prototyping, Pinecone for production, FAISS for large in-memory. Use metadata filtering and MMR for diverse results.",
+    "try_it": "Create a Chroma vectorstore and implement search with metadata filtering and MMR."
+  },
+  {
+    "subheading": "RAG Pipeline with LangChain",
+    "explanation": "A production RAG pipeline combines: document loading, chunking, embedding, vector storage, retrieval, and generation. LangChain provides composable components.\n\nAdvanced patterns: multi-query retrieval, contextual compression, self-RAG. Evaluation uses faithfulness and relevance metrics.",
+    "example": "```python\nfrom langchain.chat_models import ChatOpenAI\nfrom langchain.chains import RetrievalQA, ConversationalRetrievalChain\nfrom langchain.memory import ConversationBufferMemory\nfrom langchain.prompts import PromptTemplate\nfrom langchain.retrievers import MultiQueryRetriever\n\nllm = ChatOpenAI(model='gpt-4', temperature=0)\nretriever = vectorstore.as_retriever(search_kwargs={'k': 4})\n\nqa_chain = RetrievalQA.from_chain_type(\n    llm=llm, chain_type='stuff', retriever=retriever, return_source_documents=True\n)\n\ntemplate = '''Use the following context to answer the question.\nIf you don't know, say you don't know.\n\nContext: {context}\nQuestion: {question}\nAnswer:'''\n\nprompt = PromptTemplate(template=template, input_variables=['context', 'question'])\n\nmemory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)\nconversational = ConversationalRetrievalChain.from_llm(llm=llm, retriever=retriever, memory=memory)\n\nmulti_query = MultiQueryRetriever.from_llm(retriever=retriever, llm=llm)\n\ndef evaluate_rag(qa_chain, questions, ground_truths):\n    results = []\n    for q, gt in zip(questions, ground_truths):\n        result = qa_chain({'query': q})\n        results.append({\n            'question': q,\n            'answer': result['result'],\n            'sources': [d.page_content[:100] for d in result['source_documents']]\n        })\n    return results\n```",
+    "key_takeaway": "Production RAG needs custom prompts, conversation memory, multi-query retrieval, and evaluation. LangChain chains compose these components.",
+    "try_it": "Build a conversational RAG chatbot with memory and multi-query retrieval."
+  },
+  {
+    "subheading": "Practice Problems",
+    "explanation": "RAG problems test your ability to build systems that ground LLM responses in external knowledge. The core pipeline is: load documents, chunk them into pieces, embed into vectors, store in a vector database, retrieve relevant chunks at query time, and generate answers with the retrieved context. Each step has design decisions that affect quality.\n\nInterview questions focus on building RAG pipelines from scratch, comparing chunking strategies, evaluating retrieval quality (precision, recall, faithfulness), and optimizing for production (hybrid search, re-ranking, multi-query retrieval). Understanding the tradeoffs between chunk size, overlap, and retrieval accuracy is key.",
+    "example": "",
+    "key_takeaway": "RAG quality depends on chunking (semantic boundaries matter), embedding quality (use real models), and retrieval strategy (hybrid search, re-ranking). Always evaluate faithfulness - answers must be grounded in retrieved context.",
+    "try_it": "Build a RAG pipeline and evaluate it with faithfulness scoring: does every claim in the answer appear in the retrieved chunks?",
+    "complexity": "Varies by problem",
+    "practice_challenges": [
+      {
+        "title": "Implement Document Chunking",
+        "difficulty": "Easy",
+        "pattern": "Text Splitting",
+        "hint": "RecursiveCharacterTextSplitter: split by paragraphs first, then sentences, then characters",
+        "description": "Implement 3 chunking strategies (fixed-size, sentence-aware, paragraph-aware) on the same document. Compare chunk count, average size, and retrieval quality for each strategy.",
+        "expected_output": "Chunk statistics and retrieval accuracy comparison across strategies"
+      },
+      {
+        "title": "Build a Simple Vector Store",
+        "difficulty": "Easy",
+        "pattern": "Similarity Search",
+        "hint": "Store embeddings as a matrix, query with cosine similarity, return top-k",
+        "description": "Implement an in-memory vector store that supports add_documents(), similarity_search(), and similarity_search_with_score(). Use numpy for vector operations.",
+        "expected_output": "Retrieved documents with similarity scores for test queries"
+      },
+      {
+        "title": "Build a Complete RAG Pipeline",
+        "difficulty": "Medium",
+        "pattern": "End-to-End RAG",
+        "hint": "Load -> Chunk -> Embed -> Store -> Retrieve -> Generate",
+        "description": "Build a RAG pipeline over a PDF document. Implement chunking, embedding (using OpenAI or HuggingFace), vector storage, retrieval with context injection, and answer generation with source citations.",
+        "expected_output": "Answers with page-level source citations and faithfulness scores"
+      },
+      {
+        "title": "Implement Multi-Query Retrieval",
+        "difficulty": "Medium",
+        "pattern": "Query Expansion",
+        "hint": "Generate multiple phrasings of the same question, retrieve for each, deduplicate results",
+        "description": "Build a multi-query retriever that takes a user question, generates 3 alternative phrasings using an LLM, retrieves relevant chunks for each, and deduplicates results. Compare with single-query retrieval.",
+        "expected_output": "Retrieval results showing improved recall from multi-query approach"
+      },
+      {
+        "title": "Build a Self-RAG System",
+        "difficulty": "Hard",
+        "pattern": "Self-Reflective RAG",
+        "hint": "After generating, check if answer is supported by retrieved context. If not, re-retrieve and regenerate.",
+        "description": "Build a Self-RAG system that generates an answer, evaluates faithfulness against retrieved context, and re-retrieves with refined queries if the answer is unsupported. Track improvement across retry iterations.",
+        "expected_output": "Faithfulness scores before and after self-correction with iteration traces"
+      }
+    ]
+  }
+]
