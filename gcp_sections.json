@@ -1,0 +1,99 @@
+[
+  {
+    "subheading": "Compute Engine & GKE",
+    "explanation": "Compute Engine provides VMs with machine types from micro to high-memory and GPU-optimized. Preemptible/Spot VMs offer up to 91% discount for fault-tolerant workloads. GKE is the managed Kubernetes service — Autopilot mode eliminates node management entirely.",
+    "example": "```bash\n# Create instance\ngcloud compute instances create web-server \\\n  --zone=us-central1-a --machine-type=e2-medium \\\n  --image-family=ubuntu-2204-lts --image-project=ubuntu-os-cloud \\\n  --boot-disk-size=20GB --tags=http-server\n\n# Firewall\ngcloud compute firewall-rules create allow-http --allow=tcp:80,tcp:443 --target-tags=http-server\n\n# Instance template + managed group\ngcloud compute instance-templates create web-template \\\n  --machine-type=e2-medium --image-family=ubuntu-2204-lts \\\n  --metadata=startup-script='#!/bin/bash\\napt update && apt install -y nginx'\n\ngcloud compute instance-groups managed create web-group \\\n  --template=web-template --size=2 --zone=us-central1-a\n\n# Auto-scaling\ngcloud compute instance-groups managed set-autoscaling web-group \\\n  --min-num-replicas=2 --max-num-replicas=10 --target-cpu-utilization=0.7\n\n# GKE Autopilot\ngcloud container clusters create-auto my-cluster --region=us-central1\ngcloud container clusters get-credentials my-cluster --region=us-central1\nkubectl create deployment nginx --image=nginx:latest\nkubectl expose deployment nginx --port=80 --type=LoadBalancer\n\n# Spot VMs\ngcloud compute instances create spot-vm \\\n  --zone=us-central1-a --machine-type=e2-standard-4 --provisioning-model=SPOT\n```",
+    "key_takeaway": "GKE Autopilot for K8s without node management. Spot VMs for batch jobs (91% savings). Managed Instance Groups with auto-scaling for traditional VMs.",
+    "try_it": "Create a GKE Autopilot cluster, deploy an app with 3 replicas, expose via LoadBalancer."
+  },
+  {
+    "subheading": "Cloud Functions & Cloud Run",
+    "explanation": "Cloud Functions run event-driven code triggered by HTTP, Pub/Sub, Storage, and Firestore events. Cloud Run runs containerized applications with automatic scaling to zero. Cloud Run is more flexible (any container) while Cloud Functions is simpler.",
+    "example": "```bash\n# Deploy to Cloud Run\ngcloud run deploy my-service --source=. --region=us-central1 \\\n  --allow-unauthenticated --min-instances=0 --max-instances=100 --memory=512Mi\n\n# Cloud Run Jobs\ngcloud run jobs create data-import \\\n  --image=gcr.io/my-project/importer:latest --region=us-central1 --tasks=10 --parallelism=3\n\ngcloud run jobs execute data-import --region=us-central1\n\n# Traffic splitting\ngcloud run services update-traffic my-service \\\n  --to-revisions=my-service-00002-abc=20,my-service-00001-def=80\n\n# Environment variables\ngcloud run services update my-service --update-env-vars=DB_HOST=mydb,DATABASE_URL=postgres://...\n```\n\n```python\n# Cloud Function\nimport functions_framework\nfrom flask import jsonify\n\n@functions_framework.http\ndef hello_world(request):\n    name = request.args.get('name', 'World')\n    return jsonify({'message': f'Hello, {name}!'})\n```\n\n```dockerfile\nFROM python:3.12-slim\nWORKDIR /app\nCOPY requirements.txt .\nRUN pip install -r requirements.txt\nCOPY . .\nCMD [\"gunicorn\", \"-b\", \"0.0.0.0:8080\", \"main:app\"]\nEXPOSE 8080\n```",
+    "key_takeaway": "Cloud Run for containers (scale to zero, any language), Cloud Functions for event-driven. Cloud Run is more flexible — use it unless you need event triggers.",
+    "try_it": "Deploy a Flask API to Cloud Run from source. Configure auto-scaling and test traffic splitting."
+  },
+  {
+    "subheading": "Cloud SQL & Firestore",
+    "explanation": "Cloud SQL provides managed MySQL/PostgreSQL with automatic backups, replication, and patching. Firestore is a serverless NoSQL document database with real-time sync, offline support, and automatic scaling for mobile/web apps.",
+    "example": "```bash\n# Cloud SQL\ngcloud sql instances create my-instance \\\n  --database-version=POSTGRES_15 --tier=db-f1-micro --region=us-central1 --storage-size=10GB\n\ngcloud sql databases create mydb --instance=my-instance\ngcloud sql users create app-user --instance=my-instance --password=SecureP@ss123\n\n# Cloud SQL Proxy\ncloud-sql-proxy --port 5432 my-project:us-central1:my-instance\n\n# High availability\ngcloud sql instances patch my-instance --availability-type=REGIONAL\n```\n\n```python\n# Cloud SQL with Python\nimport sqlalchemy\nfrom google.cloud.sql.connector import Connector\n\nconnector = Connector()\ndef getconn():\n    return connector.connect('my-project:us-central1:my-instance', 'pg8000',\n        user='app-user', password='SecureP@ss123', db='mydb')\n\nengine = sqlalchemy.create_engine('postgresql+pg8000://', creator=getconn)\n\n# Firestore\nfrom google.cloud import firestore\ndb = firestore.Client(project='my-project')\n\ndb.collection('users').document('alice').set({\n    'name': 'Alice', 'email': 'alice@example.com',\n    'created': firestore.SERVER_TIMESTAMP\n})\n\nuser = db.collection('users').document('alice').get()\nprint(user.to_dict())\n\nfor doc in db.collection('users').where('age', '>', 25).order_by('age').limit(10).stream():\n    print(f'{doc.id}: {doc.to_dict()}')\n```",
+    "key_takeaway": "Cloud SQL for relational data with auto-backups and HA. Firestore for serverless NoSQL with real-time sync. Use Cloud SQL Proxy for secure connections.",
+    "try_it": "Create a Cloud SQL PostgreSQL instance, connect from Python, and perform CRUD operations."
+  },
+  {
+    "subheading": "Cloud Storage & BigQuery",
+    "explanation": "GCS provides object storage with Standard/Nearline/Coldline/Archive tiers. BigQuery is the serverless data warehouse for SQL analytics on petabytes. BigQuery ML lets you train ML models using SQL.",
+    "example": "```bash\n# GCS\ngsutil mb -l us-central1 -c standard gs://my-data-bucket\ngsutil cp ./report.pdf gs://my-data-bucket/reports/\ngsutil -m cp -r ./data/ gs://my-data-bucket/datasets/\ngsutil ls gs://my-data-bucket/reports/\n\n# Lifecycle\ncat > lifecycle.json << 'EOF'\n{\"lifecycle\":{\"rule\":[\n  {\"action\":{\"type\":\"SetStorageClass\",\"storageClass\":\"NEARLINE\"},\"condition\":{\"age\":30}},\n  {\"action\":{\"type\":\"SetStorageClass\",\"storageClass\":\"ARCHIVE\"},\"condition\":{\"age\":365}}\n]}}\nEOF\ngsutil lifecycle set lifecycle.json gs://my-data-bucket\n\n# BigQuery\nbq mk --location=us-central1 my_dataset\nbq query --use_legacy_sql=false '\nSELECT date, COUNT(*) as txns, SUM(amount) as total\nFROM `my-project.my_dataset.transactions`\nWHERE date >= \"2024-01-01\"\nGROUP BY date ORDER BY date DESC LIMIT 30'\n\n# BigQuery ML\nbq query --use_legacy_sql=false '\nCREATE OR REPLACE MODEL `my_dataset.user_churn`\nOPTIONS(model_type=\"logistic_reg\") AS\nSELECT is_churned, days_since_last_login, total_purchases\nFROM `my_dataset.training_data`'\n```",
+    "key_takeaway": "GCS for object storage with lifecycle policies. BigQuery for serverless SQL analytics at any scale. BigQuery ML trains models using SQL.",
+    "try_it": "Upload a CSV to GCS, load into BigQuery, run an aggregation query, export results back to GCS."
+  },
+  {
+    "subheading": "IAM & Service Accounts",
+    "explanation": "GCP IAM controls who can do what on which resources. Service accounts are machine identities. Workload Identity Federation lets external workloads access GCP without storing keys.",
+    "example": "```bash\n# Grant role\ngcloud projects add-iam-policy-binding my-project \\\n  --member=user:alice@contoso.com --role=roles/storage.objectViewer\n\n# Service account\ngcloud iam service-accounts create my-app-sa --display-name='My App SA'\n\n# Grant roles to SA\ngcloud projects add-iam-policy-binding my-project \\\n  --member=serviceAccount:my-app-sa@my-project.iam.gserviceaccount.com \\\n  --role=roles/cloudsql.client\n\n# Assign to VM\ngcloud compute instances create web-server \\\n  --service-account=my-app-sa@my-project.iam.gserviceaccount.com \\\n  --scopes=https://www.googleapis.com/auth/cloud-platform\n\n# Workload Identity Federation\ngcloud iam workload-identity-pools create my-pool --location=global\ngcloud iam workload-identity-pools providers create-aws my-aws \\\n  --location=global --workload-identity-pool=my-pool --account-id=123456789012\n```\n\n```python\nfrom google.auth import default\nfrom google.cloud import storage\n\ncredentials, project = default()\nclient = storage.Client(credentials=credentials, project=project)\n```",
+    "key_takeaway": "Use Workload Identity Federation instead of service account keys. Grant roles at narrowest scope. DefaultAzureCredential for local dev.",
+    "try_it": "Create a service account, grant it read access to a specific bucket, assign to a VM, verify access."
+  },
+  {
+    "subheading": "Cloud Build & CI/CD",
+    "explanation": "Cloud Build runs build steps in Docker containers, triggered by code pushes. Cloud Deploy provides managed delivery pipelines with promotion between environments. Artifact Registry stores container images.",
+    "example": "```yaml\n# cloudbuild.yaml\nsteps:\n  - name: 'python:3.12'\n    entrypoint: pip\n    args: ['install', '-r', 'requirements.txt', '-t', '.']\n  - name: 'python:3.12'\n    entrypoint: python\n    args: ['-m', 'pytest', 'tests/', '-v']\n  - name: 'gcr.io/cloud-builders/docker'\n    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/app:$SHORT_SHA', '.']\n  - name: 'gcr.io/cloud-builders/docker'\n    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/app:$SHORT_SHA']\n  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'\n    entrypoint: gcloud\n    args: ['run', 'deploy', 'my-app', '--image',\n           'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/app:$SHORT_SHA', '--region', 'us-central1']\nimages:\n  - 'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/app:$SHORT_SHA'\n```\n\n```bash\n# Artifact Registry\ngcloud artifacts repositories create my-repo --repository-format=docker --location=us-central1\n\n# Submit build\ngcloud builds submit --config=cloudbuild.yaml .\n\n# Create trigger\ngcloud builds triggers create github \\\n  --repo-name=my-app --owner=my-org --branch-pattern='^main$' --build-config=cloudbuild.yaml\n\n# Cloud Deploy\ncat > clouddeploy.yaml << 'EOF'\napiVersion: deploy.cloud.google.com/v1\nkind: DeliveryPipeline\nmetadata:\n  name: my-app-pipeline\nserialPipeline:\n  stages:\n  - targetId: dev\n  - targetId: staging\n  - targetId: production\nEOF\ngcloud deploy apply --file=clouddeploy.yaml --region=us-central1\n```",
+    "key_takeaway": "Cloud Build for CI (build, test, push images), Cloud Deploy for CD (promote environments). Use Artifact Registry for container images.",
+    "try_it": "Create a Cloud Build trigger that builds a Docker image on push to main and deploys to Cloud Run."
+  },
+  {
+    "subheading": "Practice Problems",
+    "explanation": "GCP interviews test your ability to design scalable, secure cloud architectures using managed services. Common scenarios involve choosing the right compute platform, configuring IAM properly, and building data pipelines with BigQuery and Pub/Sub. Cost optimization and networking are frequent topics.",
+    "example": "",
+    "key_takeaway": "Always prefer managed services over self-hosted, apply least-privilege IAM, and use VPC Service Controls for data exfiltration protection.",
+    "try_it": "Design a multi-tier architecture on GCP before checking the solutions below",
+    "complexity": "Varies by problem",
+    "practice_challenges": [
+      {
+        "title": "Static Website with CDN and HTTPS",
+        "difficulty": "Easy",
+        "pattern": "Cloud Storage + Cloud CDN + Load Balancer",
+        "hint": "Use a GCS bucket with a backend bucket behind an HTTPS load balancer, enable Cloud CDN on the backend",
+        "description": "You need to host a static website (HTML/CSS/JS) on GCP with global low-latency access and HTTPS. Configure a GCS bucket for static hosting, set up a global external HTTPS load balancer with a managed SSL certificate, enable Cloud CDN, and configure the bucket as a backend bucket.",
+        "example_input": "Bucket: gs://my-static-site, Domain: www.example.com, Files: index.html, styles.css, app.js",
+        "example_output": "HTTPS load balancer at www.example.com serving files from GCS with CDN caching and managed SSL cert"
+      },
+      {
+        "title": "Auto-Healing Managed Instance Group",
+        "difficulty": "Easy",
+        "pattern": "Instance Template + MIG + Health Check + Auto-scaling",
+        "hint": "Create an instance template with a startup script, attach it to a MIG with auto-healing enabled via an HTTP health check",
+        "description": "Deploy a web application on a Managed Instance Group that automatically replaces unhealthy instances and scales between 2 and 8 VMs based on CPU utilization (target 60%). Configure an HTTP health check on /health, use an instance template with a startup script that installs and starts the app, and attach a load balancer.",
+        "example_input": "Machine type: e2-medium, Zone: us-central1-a, App listens on port 8080, /health returns 200",
+        "example_output": "MIG with 2-8 instances, auto-healing via health check, load balancer distributes traffic, scales up when CPU > 60%"
+      },
+      {
+        "title": "Pub/Sub Data Pipeline with Cloud Functions",
+        "difficulty": "Medium",
+        "pattern": "Cloud Storage trigger → Pub/Sub → Cloud Function → BigQuery",
+        "hint": "Use a Cloud Storage notification to publish to Pub/Sub, then trigger a Cloud Function that parses the file and loads rows into BigQuery",
+        "description": "Build a data ingestion pipeline: when a CSV file is uploaded to a GCS bucket, a Cloud Storage notification publishes to a Pub/Sub topic. A Cloud Function triggered by that topic reads the CSV, transforms each row (adds a timestamp, validates fields), and inserts valid rows into a BigQuery table. Invalid rows go to a dead-letter table. Handle files up to 50MB.",
+        "example_input": "GCS bucket: gs://data-ingest, CSV: user_id,name,email,age — some rows have missing emails",
+        "example_output": "Valid rows land in BQ users table with loaded_at timestamp; rows with missing email land in users_dlq table"
+      },
+      {
+        "title": "Secure Multi-Environment Networking",
+        "difficulty": "Medium",
+        "pattern": "Shared VPC + VPC Peering + Private Google Access + IAM Conditions",
+        "hint": "Use Shared VPC with a host project, service projects for each environment, and VPC Service Controls to prevent data exfiltration",
+        "description": "Design a network architecture for dev, staging, and production environments. Each environment must be in its own VPC with private connectivity to Cloud SQL and BigQuery. Production must use VPC Service Controls to prevent data exfiltration. Implement Private Google Access so VMs without external IPs can reach GCP APIs. Dev team should only access dev resources using IAM conditions.",
+        "example_input": "Environments: dev, staging, prod. Services: Cloud SQL, BigQuery, GKE. Teams: dev-team@corp.com, sre-team@corp.com",
+        "example_output": "3 VPCs with Private Google Access, VPC Service Controls perimeter on prod, IAM conditions restricting dev-team to dev VPC resources only"
+      },
+      {
+        "title": "Zero-Downtime GKE Blue-Green Deployment",
+        "difficulty": "Hard",
+        "pattern": "GKE + Istio Service Mesh + Canary + Cloud Monitoring + Cloud Deploy",
+        "hint": "Use Istio VirtualService for traffic splitting between blue and green deployments, Cloud Deploy for promotion pipeline, and monitoring dashboards to validate before full rollout",
+        "description": "Implement a zero-downtime deployment pipeline for a microservices application on GKE. Use Istio for traffic management: route 10% of traffic to the new version (canary), monitor error rates and latency in Cloud Monitoring dashboards, and auto-promote to 100% if metrics are healthy for 10 minutes. If error rate exceeds 1%, automatically roll back. Use Cloud Deploy to manage the pipeline across dev → staging → production. Include PodDisruptionBudgets to ensure availability during node upgrades.",
+        "example_input": "App: payment-service, 3 replicas, SLA: 99.9%, max error rate: 1%, canary duration: 10min",
+        "example_output": "Cloud Deploy pipeline with canary → full rollout. Istio routes 10% → 100% traffic. Monitoring triggers rollback on 1%+ errors. PDB ensures min 2 pods during maintenance."
+      }
+    ]
+  }
+]
