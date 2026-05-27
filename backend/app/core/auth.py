@@ -80,8 +80,8 @@ async def get_current_user(
         payload = _decode_token(creds.credentials)
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError as e:
-        raise HTTPException(status_code=401, detail=f"Invalid token: {e}")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
 
     return AuthUser(
         sub=payload.get("sub", ""),

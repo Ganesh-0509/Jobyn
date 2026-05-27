@@ -4,7 +4,9 @@
     "private": true,
     "type": "module",
     "scripts": {
+        "predev": "node scripts/copy-onnx-assets.js",
         "dev": "vite --port 5173",
+        "prebuild": "node scripts/copy-onnx-assets.js",
         "build": "tsc && vite build",
         "preview": "vite preview"
     },

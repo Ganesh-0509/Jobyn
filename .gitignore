@@ -39,3 +39,22 @@ gen_batch*.py
 
 # Artifacts / evaluation output
 artifacts/
+
+# Council audit reports (internal reference only)
+council-report-*.html
+council-transcript-*.md
+COUNCIL-PLAN.md
+blog-*.md
+
+# Graphify knowledge graph output
+graphify-out/
+
+# OpenClaude local config
+.openclaude/
+
+# Local venv on Windows
+Scripts/
+Include/
+pyvenv.cfg
+lib64
+share/

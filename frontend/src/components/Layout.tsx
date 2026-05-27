@@ -51,7 +51,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
 
             {/* Navigation */}
             <ScrollArea className="flex-1 px-2 py-3">
-                <nav className="flex flex-col gap-0.5">
+                <nav aria-label="Main navigation" className="flex flex-col gap-0.5">
                     {NAV_ITEMS.map(({ to, label, Icon }) => (
                         <NavLink
                             key={to}
@@ -138,6 +138,9 @@ export default function Layout() {
 
     return (
         <TooltipProvider delay={200}>
+            <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none">
+                Skip to main content
+            </a>
             <div className="flex min-h-screen bg-background">
                 {/* Desktop Sidebar */}
                 <aside className="hidden lg:flex lg:w-[240px] lg:shrink-0 lg:flex-col lg:fixed lg:inset-y-0 lg:border-r lg:border-border/50 lg:bg-sidebar">
@@ -145,7 +148,7 @@ export default function Layout() {
                 </aside>
 
                 {/* Mobile Header + Sidebar */}
-                <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-border/50 bg-background/80 backdrop-blur-xl px-4 py-3">
+                <header role="banner" className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-border/50 bg-background/80 backdrop-blur-xl px-4 py-3">
                     <div className="flex items-center gap-3">
                         <LogoMark size={24} />
                         <span className="text-sm font-semibold tracking-tight">CampusSync</span>
@@ -161,10 +164,10 @@ export default function Layout() {
                             <SidebarContent onNavClick={() => setMobileOpen(false)} />
                         </SheetContent>
                     </Sheet>
-                </div>
+                </header>
 
                 {/* Main Content */}
-                <main className="flex-1 lg:pl-[240px]">
+                <main id="main-content" tabIndex={-1} className="flex-1 lg:pl-[240px]">
                     <div className="pt-[57px] lg:pt-0">
                         <AnimatePresence mode="wait">
                             <motion.div

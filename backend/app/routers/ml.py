@@ -8,10 +8,11 @@ Endpoints:
   POST /ml/recompute-model    → rebuild and persist hybrid_v1.json snapshot
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
 from app.core.settings import settings
+from app.core.auth import get_admin_user
 from app.ml_pipeline.data_loader     import load_dataset
 from app.ml_pipeline.similarity_engine import predict_role
 from app.ml_pipeline.skill_impact    import compute_skill_impact
@@ -136,7 +137,7 @@ def ml_predict_role(request: RolePredictRequest):
             "model_version": f"cross-role-validator-{settings.APP_VERSION}"
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 # ── POST /ml/project-score ─────────────────────────────────────────────────────
@@ -161,7 +162,7 @@ def ml_project_score(request: ScoreProjectRequest):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 # ── GET /ml/skill-impact ───────────────────────────────────────────────────────
@@ -192,13 +193,15 @@ def ml_skill_impact(live: bool = False):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import logging
+        logging.getLogger(__name__).error("predict-role error: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 # ── POST /ml/recompute-model ───────────────────────────────────────────────────
 
 @router.post("/recompute-model")
-def ml_recompute_model():
+def ml_recompute_model(current_user: dict = Depends(get_admin_user)):
     """
     Recompute all intelligence from the full dataset and save to hybrid_v1.json.
 
@@ -237,7 +240,9 @@ def ml_recompute_model():
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import logging
+        logging.getLogger(__name__).error("recompute-model error: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 # ── GET /ml/status ─────────────────────────────────────────────────────────────
@@ -257,7 +262,9 @@ def ml_status():
             "ready":            len(records) > 0,
         }
     except Exception as e:
-        return {"ready": False, "error": str(e)}
+        import logging
+        logging.getLogger(__name__).error("ml status error: %s", e, exc_info=True)
+        return {"ready": False, "error": "Status check failed"}
 
 
 # ── Model versioning endpoints ─────────────────────────────────────────────────
@@ -284,7 +291,7 @@ def ml_promote_version(tag: str):
         entry = _promote_version(tag)
         return {"status": "promoted", "version": entry}
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail="Resource not found.")
 
 
 @router.delete("/versions/{tag}")
@@ -294,4 +301,4 @@ def ml_delete_version(tag: str):
         _delete_version(tag)
         return {"status": "deleted", "tag": tag}
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid input provided.")

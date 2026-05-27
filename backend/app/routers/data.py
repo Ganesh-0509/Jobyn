@@ -7,21 +7,28 @@ Supabase REST API doesn't expose GROUP BY directly.
 
 from fastapi import APIRouter, HTTPException, Depends
 from collections import defaultdict
+import logging
 from app.core.supabase_client import get_supabase
+
+logger = logging.getLogger(__name__)
+
+
+
 from app.core.auth import get_current_user, AuthUser
 
 router = APIRouter()
 
 
 def _db_error(e: Exception) -> HTTPException:
+    logger.error("Database error: %s", e, exc_info=True)
     if isinstance(e, EnvironmentError):
         return HTTPException(
             status_code=500,
-            detail=f"Supabase not configured: {e}",
+            detail="Database service unavailable. Please try again later.",
         )
     return HTTPException(
         status_code=500,
-        detail=f"Database error: {e}",
+        detail="An internal error occurred. Please try again.",
     )
 
 

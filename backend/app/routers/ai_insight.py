@@ -412,7 +412,7 @@ async def submit_contribution(request: Request, req: ContributionRequest):
         }).execute()
         return {"status": "success", "message": "Contribution submitted for review."}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to submit contribution: {e}")
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 @router.get("/admin/contributions")
 async def get_pending_contributions(admin=Depends(get_admin_user)):
@@ -427,7 +427,7 @@ async def get_pending_contributions(admin=Depends(get_admin_user)):
         )
         return resp.data or []
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch contributions: {e}")
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 @router.post("/admin/contributions/{id}/approve")
 async def approve_contribution(id: int, admin=Depends(get_admin_user)):
@@ -448,7 +448,7 @@ async def approve_contribution(id: int, admin=Depends(get_admin_user)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Approval failed: {e}")
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 @router.post("/admin/contributions/{id}/reject")
 async def reject_contribution(id: int, admin=Depends(get_admin_user)):
@@ -461,7 +461,7 @@ async def reject_contribution(id: int, admin=Depends(get_admin_user)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Rejection failed: {e}")
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 @router.get("/admin/stats")
 async def get_admin_stats(admin=Depends(get_admin_user)):
@@ -524,7 +524,7 @@ async def ingest_course(request: Request, req: IngestCourseRequest, admin=Depend
     try:
         scraped_text = await scraper_service.fetch_clean_markdown(req.url)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="An internal error occurred. Please try again.")
         
     if not scraped_text or len(scraped_text) < 100:
         raise HTTPException(status_code=400, detail="Scraped resource content is too short or invalid.")
@@ -567,7 +567,7 @@ async def ingest_course(request: Request, req: IngestCourseRequest, admin=Depend
                 "inserted_chunks": inserted_count
             }
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"RAG ingestion failed: {e}")
+            raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
             
     # ──────────────────────────────────────────────────────────────────────────
     # PATHWAY B: Direct Static Course Compiler (Create 0ms cached learning hub)
@@ -718,7 +718,7 @@ async def ingest_course(request: Request, req: IngestCourseRequest, admin=Depend
             }
             
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Static course compilation failed: {e}")
+            raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 # ── Curriculum Graph Routes ──────────────────────────────────────────────────

@@ -63,7 +63,7 @@ def predict_endpoint(body: ResumeInput) -> ResumePrediction:
         log.exception("Prediction failed for input: %s", body.model_dump())
         raise HTTPException(
             status_code = 500,
-            detail      = f"Inference failed: {str(e)}",
+            detail      = "An internal error occurred. Please try again.",
         )
 
     elapsed_ms = t()

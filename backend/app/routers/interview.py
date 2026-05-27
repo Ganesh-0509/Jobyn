@@ -58,7 +58,7 @@ def get_question(role: str = "Software Developer"):
             "role":       role,
         }
     except Exception as e:
-        raise HTTPException(500, str(e))
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 # ── GET /interview/questions/{role} ───────────────────────────

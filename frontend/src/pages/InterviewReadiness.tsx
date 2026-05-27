@@ -8,7 +8,7 @@ import {
     AlertCircle, TrendingUp, MessageSquare, Brain, ChevronDown,
     Flame, Lightbulb,
 } from 'lucide-react'
-import { BASE } from '../api/client'
+import { apiFetch } from '../api/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -146,9 +146,8 @@ export default function InterviewReadiness() {
     const fetchQuestion = async () => {
         setLoading(true); setResult(null); setTranscript(''); setFetchError(null)
         try {
-            const res = await fetch(`${BASE}/interview/question?role=${encodeURIComponent(role)}`)
-            if (!res.ok) throw new Error('Failed to fetch question')
-            setQuestion(await res.json())
+            const data = await apiFetch<Question>(`/interview/question?role=${encodeURIComponent(role)}`)
+            setQuestion(data)
             setPhase('questioning')
         } catch (err: unknown) {
             setFetchError(err instanceof Error ? err.message : 'Could not load question.')
@@ -159,13 +158,10 @@ export default function InterviewReadiness() {
         if (!question || !transcript.trim()) return
         setEval(true)
         try {
-            const res = await fetch(`${BASE}/interview/evaluate`, {
+            const data: EvalResult = await apiFetch('/interview/evaluate', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ role, question_id: question.id, answer: transcript }),
+                body: { role, question_id: question.id, answer: transcript },
             })
-            if (!res.ok) throw new Error()
-            const data: EvalResult = await res.json()
             setResult(data)
             setPhase('done')
             const record: SessionRecord = {

@@ -5,7 +5,6 @@ import { ToastProvider } from './context/ToastContext'
 import { PrivacyProvider } from './context/PrivacyContext'
 import Layout from './components/Layout'
 import ErrorBoundary from './components/ErrorBoundary'
-import { Toaster } from './components/ui/sonner'
 import React, { Suspense, lazy, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import LogoMark from './components/LogoMark'
@@ -48,6 +47,14 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
     return <>{children}</>
 }
 
+/** Guard: redirect non-admin users to dashboard */
+function RequireAdmin({ children }: { children: React.ReactNode }) {
+    const { user, loading } = useAuth()
+    if (loading) return <PageLoader />
+    if (!user?.isAdmin) return <Navigate to="/dashboard" replace />
+    return <>{children}</>
+}
+
 /** Guard: redirect authenticated users to dashboard */
 function GuestOnly({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth()
@@ -82,7 +89,7 @@ function AppRoutes() {
                         <Route path="/resume-comparison" element={<ResumeComparison />} />
                         <Route path="/industry-alignment" element={<IndustryAlignment />} />
                         <Route path="/my-projects" element={<MyProjects />} />
-                        <Route path="/admin" element={<AdminDashboard />} />
+                        <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
                         <Route path="/settings" element={<Settings />} />
                     </Route>
 
@@ -145,7 +152,6 @@ export default function App() {
                             <ToastProvider>
                                 <div className="relative">
                                     <AppRoutes />
-                                    <Toaster />
 
                                     <AnimatePresence>
                                         {appLoading && (

@@ -8,7 +8,7 @@ import ProjectGeneratorModal from '../components/ProjectGeneratorModal'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { BASE } from '../api/client'
+import { apiFetch } from '../api/client'
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } }
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as const } } }
@@ -22,14 +22,9 @@ export default function SkillGap() {
   const [activeProject, setActiveProject] = useState<{ role: string; skills: string[] } | null>(null)
 
   useEffect(() => {
-    const controller = new AbortController()
-    fetch(`${BASE}/interview/dependencies`, { signal: controller.signal })
-      .then(r => r.json())
-      .then(d => setDeps(d))
-      .catch((err) => {
-        if (err.name !== 'AbortError') setDepsError(true)
-      })
-    return () => controller.abort()
+    apiFetch<Record<string, string[]>>('/interview/dependencies')
+      .then((d) => setDeps(d))
+      .catch(() => setDepsError(true))
   }, [])
 
   const coreMissing = (analysis?.missing_core_skills ?? []).filter((s: string) => !masteredSkills.includes(s))

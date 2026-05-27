@@ -43,7 +43,7 @@ def post_feedback(body: FeedbackRequest):
         )
         return {"status": "recorded", "feedback": record}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 @router.get("/summary")
@@ -52,7 +52,7 @@ def feedback_summary():
     try:
         return get_feedback_summary()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 @router.get("/corrections")
@@ -65,4 +65,4 @@ def feedback_corrections():
     try:
         return {"corrections": get_correction_pairs()}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")

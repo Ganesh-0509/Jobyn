@@ -47,7 +47,7 @@ interface FetchOptions extends Omit<RequestInit, 'body'> {
 /** Sleep helper for exponential backoff */
 function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)) }
 
-async function apiFetch<T>(path: string, opts: FetchOptions = {}): Promise<T> {
+export async function apiFetch<T>(path: string, opts: FetchOptions = {}): Promise<T> {
     const { body, noAuth, rawBody, retries = 0, ...init } = opts
     const headers: Record<string, string> = {}
 

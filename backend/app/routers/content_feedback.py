@@ -47,7 +47,7 @@ def post_content_feedback(body: ContentFeedbackRequest):
         )
         return {"status": "recorded", "feedback": record}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 @router.get("/summary")
@@ -56,7 +56,7 @@ def content_feedback_summary(skill: str | None = Query(None)):
     try:
         return get_content_feedback_summary(skill=skill)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 @router.get("/low-rated")
@@ -65,4 +65,4 @@ def low_rated_content(threshold: float = Query(3.0)):
     try:
         return {"low_rated": get_low_rated_content(threshold=threshold)}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")

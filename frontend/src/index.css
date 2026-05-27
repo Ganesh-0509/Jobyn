@@ -69,12 +69,12 @@
   --card-foreground: #1E1B18;
   --popover: #FFFFFF;
   --popover-foreground: #1E1B18;
-  --primary: #C2593F;             /* Rich warm copper terracotta */
+  --primary: #A84832;             /* Rich warm copper terracotta — darkened for WCAG AA 4.5:1 */
   --primary-foreground: #FAF8F5;
   --secondary: #F3ECE3;           /* Soft warm sandstone */
   --secondary-foreground: #3C3530;
   --muted: #F3ECE3;
-  --muted-foreground: #6B645E;    /* Taupe slate */
+  --muted-foreground: #5C5650;    /* Taupe slate — darkened for WCAG AA 4.5:1 */
   --accent: #0F766E;              /* Elegant deep teal/emerald */
   --accent-foreground: #FFFFFF;
   --destructive: #EF4444;

@@ -185,9 +185,9 @@ async def upload_resume(
                     analysis_id = resp_a.data[0]["id"]
 
             except EnvironmentError as e:
-                db_warning = f"Supabase not configured — result not saved. {e}"
+                db_warning = "Supabase not configured — result not saved."
             except Exception as e:
-                db_warning = f"DB save failed (scoring still valid): {e}"
+                db_warning = "DB save failed (scoring still valid)."
 
         result["resume_id"]   = resume_id
         result["analysis_id"] = analysis_id
@@ -199,9 +199,9 @@ async def upload_resume(
         return result
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid input provided.")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 @router.get("/roles")
