@@ -1,6 +1,6 @@
 from datetime import date
 from fastapi import APIRouter, HTTPException, Request, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from app.services.ai_service import ai_service
 from app.services.interview_service import interview_service
@@ -8,7 +8,7 @@ from app.services.curriculum_graph import (
     get_prerequisites, get_unlocked_skills, get_learning_path,
     get_curriculum_overview, can_unlock, CURRICULUM_GRAPH,
 )
-from app.core.rate_limiter import ai_limit, heavy_limit
+from app.core.rate_limiter import ai_limit, heavy_limit, user_ai_limit
 from app.services.knowledge_service import knowledge_service
 from app.core.auth import get_admin_user, get_current_user, AuthUser
 
@@ -20,7 +20,7 @@ class ForecastRequest(BaseModel):
 
 class ChatRequest(BaseModel):
     skill: str
-    query: str
+    query: str = Field(..., max_length=10000)
     history: Optional[List[dict]] = []
     mastered_skills: Optional[List[str]] = []
 

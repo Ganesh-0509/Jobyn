@@ -9,7 +9,7 @@ Endpoints:
 """
 
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.core.settings import settings
 from app.core.auth import get_admin_user
@@ -35,7 +35,7 @@ class RolePredictRequest(BaseModel):
     project_score_percent: float = 0
     ats_score_percent: float = 0
     structure_score_percent: float = 0
-    raw_text: str = ""
+    raw_text: str = Field("", max_length=500000)
     sections_detected: list[str] = []
     current_role: str = ""
 

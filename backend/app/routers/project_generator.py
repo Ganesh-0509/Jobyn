@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List
 
 from app.services.project_generator_service import project_generator_service
@@ -14,7 +14,7 @@ class ProjectRequest(BaseModel):
 
 class VerifyRequest(BaseModel):
     github_url: str
-    project_markdown: str
+    project_markdown: str = Field(..., max_length=100000)
     required_skills: List[str]
     role: str
 

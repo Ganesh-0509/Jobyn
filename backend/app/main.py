@@ -121,6 +121,21 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-XSS-Protection"] = "1; mode=block"
     return response
 
+# ── Request Body Size Limit Middleware ────────────────────────────────────
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request as StarletteRequest
+from starlette.responses import JSONResponse as StarletteJSONResponse
+
+class LimitUploadSize(BaseHTTPMiddleware):
+    async def dispatch(self, request: StarletteRequest, call_next):
+        if request.method == "POST":
+            content_length = request.headers.get("content-length")
+            if content_length and int(content_length) > 10_000_000:  # 10MB
+                return StarletteJSONResponse(status_code=413, content={"detail": "Request too large"})
+        return await call_next(request)
+
+app.add_middleware(LimitUploadSize)
+
 # ── Auth & Request Auditing Middleware ───────────────────────────────────────
 @app.middleware("http")
 async def audit_auth_requests(request: Request, call_next):
