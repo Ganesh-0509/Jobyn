@@ -6,9 +6,10 @@ GET  /content-feedback/summary  → aggregated feedback stats
 GET  /content-feedback/low-rated → content candidates for regeneration
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel, Field
 
+from app.core.auth import get_current_user, AuthUser
 from app.services.content_feedback_service import (
     submit_content_feedback,
     get_content_feedback_summary,
@@ -33,7 +34,7 @@ class ContentFeedbackRequest(BaseModel):
 
 
 @router.post("")
-def post_content_feedback(body: ContentFeedbackRequest):
+def post_content_feedback(body: ContentFeedbackRequest, current_user: AuthUser = Depends(get_current_user)):
     """Submit feedback on study content quality."""
     try:
         record = submit_content_feedback(
@@ -43,7 +44,7 @@ def post_content_feedback(body: ContentFeedbackRequest):
             rating=body.rating,
             comment=body.comment,
             content_type=body.content_type,
-            user_email=body.user_email,
+            user_email=current_user.email,
         )
         return {"status": "recorded", "feedback": record}
     except Exception as e:

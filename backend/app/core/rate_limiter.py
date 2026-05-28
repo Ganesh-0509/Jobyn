@@ -13,6 +13,7 @@ from slowapi.errors import RateLimitExceeded
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from app.core.settings import settings
+import jwt as _jwt
 
 limiter = Limiter(key_func=get_remote_address, default_limits=[settings.RATE_LIMIT_DEFAULT])
 
@@ -20,6 +21,22 @@ limiter = Limiter(key_func=get_remote_address, default_limits=[settings.RATE_LIM
 upload_limit = limiter.limit(settings.RATE_LIMIT_UPLOAD)
 ai_limit     = limiter.limit(settings.RATE_LIMIT_AI)
 heavy_limit  = limiter.limit(settings.RATE_LIMIT_HEAVY)
+
+
+def get_user_key(request: Request):
+    """Rate-limit key: authenticated user's JWT sub, else IP."""
+    auth = request.headers.get("authorization", "")
+    if auth.startswith("Bearer "):
+        try:
+            payload = _jwt.decode(auth[7:], options={"verify_signature": False})
+            return payload.get("sub", get_remote_address(request))
+        except Exception:
+            pass
+    return get_remote_address(request)
+
+# Per-user limiter for AI endpoints (separate from IP-based limiter)
+user_limiter = Limiter(key_func=get_user_key, default_limits=["30/minute"])
+user_ai_limit = user_limiter.limit("30/minute")
 
 
 async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):

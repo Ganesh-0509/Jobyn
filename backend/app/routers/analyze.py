@@ -18,6 +18,7 @@ from app.utils.validation import validate_email, validate_resume_text, sanitize_
 from app.core.rate_limiter import upload_limit
 from typing import Optional
 import logging
+import magic
 
 log = logging.getLogger("analyze")
 
@@ -57,6 +58,18 @@ async def upload_resume(
 
     try:
         file_bytes = await file.read()
+
+        # MIME type validation — reject files that claim to be PDF/DOCX but aren't
+        mime_type = magic.from_buffer(file_bytes, mime=True)
+        allowed_mimes = [
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ]
+        if mime_type not in allowed_mimes:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid file type. Only PDF and DOCX files are accepted.",
+            )
 
         # Guard against oversized uploads
         from app.core.settings import settings as _settings
@@ -198,6 +211,8 @@ async def upload_resume(
 
         return result
 
+    except HTTPException:
+        raise  # Re-raise FastAPI HTTP exceptions (400, 413, etc.) without masking them
     except ValueError as e:
         raise HTTPException(status_code=400, detail="Invalid input provided.")
     except Exception as e:

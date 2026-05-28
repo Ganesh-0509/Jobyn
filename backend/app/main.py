@@ -1,3 +1,12 @@
+import os
+import sentry_sdk
+
+sentry_sdk.init(
+    dsn=os.getenv("SENTRY_DSN", ""),
+    environment=os.getenv("ENV", "development"),
+    traces_sample_rate=0.1,
+)
+
 """
 main.py — application entry point (Phase 4B — ML Inference Layer).
 
@@ -27,7 +36,6 @@ from app.core.supabase_client import check_connection
 from app.model_loader import load_models, is_loaded, get_metadata
 from app.routers import analyze
 from app.routers import data as data_router
-import os
 from app.routers import ml as ml_router
 from app.routers import inference as inference_router
 from app.routers import interview as interview_router
@@ -42,6 +50,15 @@ logging.basicConfig(
 )
 
 log = logging.getLogger("main")
+
+# ── Sentry ────────────────────────────────────────────────────────────────────
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=os.getenv("ENV", "development"),
+        traces_sample_rate=0.1,
+    )
 
 # ---- Env‑var check ----------------------------------------------------------
 if not os.getenv("BYTEZ_API_KEY"):
@@ -108,8 +125,20 @@ app.add_middleware(
     allow_headers     = ["*"],
 )
 
+# ── Request Body Size Limit Middleware ────────────────────────────────────
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class LimitUploadSize(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if request.method == "POST":
+            content_length = request.headers.get("content-length")
+            if content_length and int(content_length) > 10_000_000:  # 10MB
+                return JSONResponse(status_code=413, content={"detail": "Request too large"})
+        return await call_next(request)
+
+app.add_middleware(LimitUploadSize)
 
 # ── HTTP Response Security Headers Middleware ────────────────────────────────
 @app.middleware("http")
@@ -120,21 +149,6 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     return response
-
-# ── Request Body Size Limit Middleware ────────────────────────────────────
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request as StarletteRequest
-from starlette.responses import JSONResponse as StarletteJSONResponse
-
-class LimitUploadSize(BaseHTTPMiddleware):
-    async def dispatch(self, request: StarletteRequest, call_next):
-        if request.method == "POST":
-            content_length = request.headers.get("content-length")
-            if content_length and int(content_length) > 10_000_000:  # 10MB
-                return StarletteJSONResponse(status_code=413, content={"detail": "Request too large"})
-        return await call_next(request)
-
-app.add_middleware(LimitUploadSize)
 
 # ── Auth & Request Auditing Middleware ───────────────────────────────────────
 @app.middleware("http")

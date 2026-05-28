@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 
-from app.core.auth import get_current_user, AuthUser
+from app.core.auth import get_current_user, get_admin_user, AuthUser
 
 router = APIRouter()
 
@@ -146,7 +146,7 @@ def compare_roles(resume_id: int, user: AuthUser = Depends(get_current_user)):
 # ── GET /analytics/role-stats ──────────────────────────────────────────────────
 
 @router.get("/analytics/role-stats")
-def role_stats():
+def role_stats(current_user: AuthUser = Depends(get_current_user)):
     """
     Aggregated analytics across all analyses in the database:
       - Average / min / max score per role
@@ -253,7 +253,7 @@ def get_latest_session(email: str, user: AuthUser = Depends(get_current_user)):
 # ── GET /export/dataset ────────────────────────────────────────────────────────
 
 @router.get("/export/dataset")
-def export_dataset():
+def export_dataset(current_user: AuthUser = Depends(get_admin_user)):
     """
     Full ML-ready dataset — all analyses joined with their resume skills.
     Suitable for future model training or offline analysis.
@@ -348,6 +348,39 @@ def delete_resume(resume_id: int, user: AuthUser = Depends(get_current_user)):
         # 2. Delete resume
         sb.table("resumes").delete().eq("id", resume_id).execute()
         return {"status": "deleted", "id": resume_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise _db_error(e)
+
+
+@router.delete("/user/data")
+def delete_user_data(user: AuthUser = Depends(get_current_user)):
+    """Delete all data associated with the authenticated user (GDPR right to erasure)."""
+    try:
+        sb = get_supabase()
+        user_email = user.email
+
+        tables = [
+            "resumes",
+            "role_analyses",
+            "prediction_feedback",
+            "user_study_progress",
+            "user_quiz_attempts",
+            "content_feedback",
+            "contributions",
+        ]
+
+        deleted = {}
+        for table in tables:
+            try:
+                resp = sb.table(table).delete().eq("user_email", user_email).execute()
+                deleted[table] = len(resp.data) if resp.data else 0
+            except Exception:
+                deleted[table] = "error"
+
+        return {"detail": "All your data has been deleted.", "tables_cleared": deleted}
+
     except HTTPException:
         raise
     except Exception as e:

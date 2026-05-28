@@ -6,9 +6,10 @@ GET  /feedback/summary  → aggregated feedback statistics
 GET  /feedback/corrections → labelled correction pairs for retraining
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 
+from app.core.auth import get_current_user, AuthUser
 from app.services.feedback_service import (
     submit_feedback,
     get_feedback_summary,
@@ -30,7 +31,7 @@ class FeedbackRequest(BaseModel):
 
 
 @router.post("")
-def post_feedback(body: FeedbackRequest):
+def post_feedback(body: FeedbackRequest, current_user: AuthUser = Depends(get_current_user)):
     """Submit a prediction correction or confirmation."""
     try:
         record = submit_feedback(
@@ -39,7 +40,7 @@ def post_feedback(body: FeedbackRequest):
             score_feedback=body.score_feedback,
             comment=body.comment,
             analysis_id=body.analysis_id,
-            user_email=body.user_email,
+            user_email=current_user.email,
         )
         return {"status": "recorded", "feedback": record}
     except Exception as e:

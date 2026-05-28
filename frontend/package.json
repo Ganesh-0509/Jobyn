@@ -13,6 +13,7 @@
     "dependencies": {
         "@base-ui/react": "^1.5.0",
         "@fontsource-variable/geist": "^5.2.9",
+        "@sentry/react": "^8.55.2",
         "@supabase/supabase-js": "^2.98.0",
         "@tailwindcss/vite": "^4.3.0",
         "@xyflow/react": "^12.10.1",

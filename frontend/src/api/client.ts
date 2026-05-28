@@ -541,7 +541,7 @@ export async function rejectContribution(id: number): Promise<{ status: string }
 }
 
 export async function getFullDataset(): Promise<AdminStudent[]> {
-    const data = await apiFetch<{ dataset?: AdminStudent[] }>('/export/dataset', { noAuth: true })
+    const data = await apiFetch<{ dataset?: AdminStudent[] }>('/export/dataset')
     return data.dataset || []
 }
 

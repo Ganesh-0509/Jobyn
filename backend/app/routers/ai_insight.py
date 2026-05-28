@@ -109,6 +109,7 @@ def _resolve_full_path(
 
 @router.post("/smart-plan")
 @heavy_limit
+@user_ai_limit
 async def build_smart_plan(request: Request, req: SmartPlanRequest):
     """
     Build a dependency-aware learning plan.  Returns an ordered list of
@@ -184,6 +185,7 @@ async def build_smart_plan(request: Request, req: SmartPlanRequest):
 
 @router.post("/market-forecast")
 @ai_limit
+@user_ai_limit
 async def get_forecast(request: Request, req: ForecastRequest):
     """Get a dynamic market forecast."""
     if not req.role or not req.missing_skills:
@@ -192,6 +194,7 @@ async def get_forecast(request: Request, req: ForecastRequest):
 
 @router.get("/study/notes")
 @ai_limit
+@user_ai_limit
 async def get_study_notes(request: Request, skill: str, existing_skills: Optional[str] = None):
     """Generates study notes for a specific skill (intro + first section)."""
     if not skill:
@@ -210,6 +213,7 @@ class SubmitQuizGradeRequest(BaseModel):
 
 @router.get("/study/section")
 @ai_limit
+@user_ai_limit
 async def get_study_section(request: Request, skill: str, section_idx: int, existing_skills: Optional[str] = None):
     """Generates a single study section on-demand for progressive loading."""
     if not skill:
@@ -220,6 +224,7 @@ async def get_study_section(request: Request, skill: str, section_idx: int, exis
 
 @router.get("/study/quiz")
 @ai_limit
+@user_ai_limit
 async def get_study_quiz(request: Request, skill: str, section_idx: Optional[int] = None):
     """Generates a general verification quiz or a targeted section quiz."""
     if not skill:
@@ -319,6 +324,7 @@ async def submit_quiz_grade(req: SubmitQuizGradeRequest, user: AuthUser = Depend
 
 @router.post("/study/chat")
 @ai_limit
+@user_ai_limit
 async def study_chat(request: Request, req: ChatRequest):
     """Provides a chat interface for a specific skill."""
     if not req.skill or not req.query:
@@ -353,6 +359,7 @@ class InterviewEndRequest(BaseModel):
 
 @router.post("/interview/start")
 @ai_limit
+@user_ai_limit
 async def start_interview(request: Request, req: InterviewStartRequest):
     """Start a mock interview session — returns the first question."""
     if not req.skill:
@@ -362,6 +369,7 @@ async def start_interview(request: Request, req: InterviewStartRequest):
 
 @router.post("/interview/answer")
 @ai_limit
+@user_ai_limit
 async def evaluate_interview_answer(request: Request, req: InterviewAnswerRequest):
     """Evaluate the candidate's answer and return a follow-up question."""
     if not req.skill or not req.answer:
@@ -378,6 +386,7 @@ async def evaluate_interview_answer(request: Request, req: InterviewAnswerReques
 
 @router.post("/interview/end")
 @ai_limit
+@user_ai_limit
 async def end_interview(request: Request, req: InterviewEndRequest):
     """End the interview and return a comprehensive scorecard."""
     if not req.history:

@@ -4,7 +4,7 @@ from typing import List
 
 from app.services.project_generator_service import project_generator_service
 from app.services.project_verifier_service import project_verifier_service
-from app.core.rate_limiter import ai_limit, heavy_limit
+from app.core.rate_limiter import ai_limit, heavy_limit, user_ai_limit
 
 router = APIRouter(prefix="/projects", tags=["Project Generation"])
 
@@ -20,6 +20,7 @@ class VerifyRequest(BaseModel):
 
 @router.post("/generate")
 @ai_limit
+@user_ai_limit
 async def generate_project(request: Request, req: ProjectRequest):
     """
     Generates a custom capstone project using an LLM to help

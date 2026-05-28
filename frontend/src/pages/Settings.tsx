@@ -26,6 +26,7 @@ export default function Settings() {
   const [healthLoading, setHealthLoading] = useState(true)
   const [notifications, setNotifications] = useState(() => getItem<string>('notifs') !== 'false')
   const [privacyMode, setPrivacyMode] = useState(() => getItem<string>('privacy') === 'true')
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => { getHealth().then(h => setHealth(h)).catch(() => {}).finally(() => setHealthLoading(false)) }, [])
 
@@ -209,6 +210,30 @@ export default function Settings() {
               )}
               <Button variant="destructive" size="sm" onClick={clear} disabled={!analysis} className="gap-1.5">
                 <Trash2 className="size-3.5" /> Clear All Data
+              </Button>
+              <Separator className="my-3" />
+              <p className="text-xs text-muted-foreground mb-2">
+                Permanently delete all your data from our servers (resumes, analyses, progress, contributions). This cannot be undone.
+              </p>
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={deleting}
+                onClick={async () => {
+                  if (!confirm('Are you sure you want to delete ALL your data from our servers? This action cannot be undone.')) return
+                  setDeleting(true)
+                  try {
+                    const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+                    const token = localStorage.getItem('sb-access-token') || ''
+                    const res = await fetch(`${API}/user/data`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
+                    if (res.ok) { clear(); alert('All your data has been deleted from our servers.') }
+                    else { alert('Failed to delete data. Please try again.') }
+                  } catch { alert('Network error. Please try again.') }
+                  finally { setDeleting(false) }
+                }}
+                className="gap-1.5"
+              >
+                <Trash2 className="size-3.5" /> {deleting ? 'Deleting...' : 'Delete All My Data (GDPR)'}
               </Button>
             </CardContent>
           </Card>

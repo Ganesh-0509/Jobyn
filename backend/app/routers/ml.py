@@ -35,7 +35,7 @@ class RolePredictRequest(BaseModel):
     project_score_percent: float = 0
     ats_score_percent: float = 0
     structure_score_percent: float = 0
-    raw_text: str = Field("", max_length=500000)
+    raw_text: str = Field(default="", max_length=500000)
     sections_detected: list[str] = []
     current_role: str = ""
 
@@ -285,7 +285,7 @@ def ml_active_version():
 
 
 @router.post("/versions/{tag}/promote")
-def ml_promote_version(tag: str):
+def ml_promote_version(tag: str, current_user: dict = Depends(get_admin_user)):
     """Rollback / promote a specific model version to active."""
     try:
         entry = _promote_version(tag)
@@ -295,7 +295,7 @@ def ml_promote_version(tag: str):
 
 
 @router.delete("/versions/{tag}")
-def ml_delete_version(tag: str):
+def ml_delete_version(tag: str, current_user: dict = Depends(get_admin_user)):
     """Delete a non-active model version and its archive."""
     try:
         _delete_version(tag)
