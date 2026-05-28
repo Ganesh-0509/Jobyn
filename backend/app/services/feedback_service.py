@@ -69,18 +69,22 @@ def submit_feedback(
 
 # ── Aggregation helpers ────────────────────────────────────────────────────────
 
-def get_feedback_summary() -> dict:
+def get_feedback_summary(page: int = 1, per_page: int = 50) -> dict:
     """
     Return aggregated feedback stats:
       - total count
       - count of corrections (predicted ≠ correct)
       - score_feedback distribution
+
+    Paginated: page/per_page control the underlying query size.
     """
     sb = get_supabase()
-    result = sb.table("prediction_feedback").select("*").execute()
-    rows = result.data or []
+    offset = (page - 1) * per_page
 
-    total = len(rows)
+    result = sb.table("prediction_feedback").select("*", count="exact").range(offset, offset + per_page - 1).execute()
+    rows = result.data or []
+    total = result.count or len(rows)
+
     corrections = sum(1 for r in rows if r.get("correct_role"))
     confirmations = total - corrections
 
@@ -95,20 +99,31 @@ def get_feedback_summary() -> dict:
         "corrections": corrections,
         "confirmations": confirmations,
         "score_distribution": score_dist,
+        "page": page,
+        "per_page": per_page,
     }
 
 
-def get_correction_pairs() -> list[dict]:
+def get_correction_pairs(page: int = 1, per_page: int = 50) -> dict:
     """
-    Return all feedback rows where the user provided a different correct_role.
+    Return feedback rows where the user provided a different correct_role.
 
     Useful for retraining: each row is a labelled sample the model got wrong.
+    Returns paginated results with total count.
     """
     sb = get_supabase()
+    offset = (page - 1) * per_page
+
     result = (
         sb.table("prediction_feedback")
-        .select("predicted_role, correct_role, analysis_id, user_email, created_at")
+        .select("predicted_role, correct_role, analysis_id, user_email, created_at", count="exact")
         .not_.is_("correct_role", "null")
+        .range(offset, offset + per_page - 1)
         .execute()
     )
-    return result.data or []
+    return {
+        "corrections": result.data or [],
+        "total": result.count or 0,
+        "page": page,
+        "per_page": per_page,
+    }

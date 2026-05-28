@@ -6,7 +6,7 @@ GET  /feedback/summary  → aggregated feedback statistics
 GET  /feedback/corrections → labelled correction pairs for retraining
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel, Field
 
 from app.core.auth import get_current_user, AuthUser
@@ -48,22 +48,28 @@ def post_feedback(body: FeedbackRequest, current_user: AuthUser = Depends(get_cu
 
 
 @router.get("/summary")
-def feedback_summary():
-    """Return aggregated feedback statistics."""
+def feedback_summary(
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(50, ge=1, le=200, description="Items per page"),
+):
+    """Return aggregated feedback statistics (paginated)."""
     try:
-        return get_feedback_summary()
+        return get_feedback_summary(page=page, per_page=per_page)
     except Exception as e:
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 @router.get("/corrections")
-def feedback_corrections():
+def feedback_corrections(
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(50, ge=1, le=200, description="Items per page"),
+):
     """
-    Return all correction pairs where predicted ≠ correct.
-    
+    Return correction pairs where predicted ≠ correct (paginated).
+
     Each record is a labelled sample for retraining.
     """
     try:
-        return {"corrections": get_correction_pairs()}
+        return get_correction_pairs(page=page, per_page=per_page)
     except Exception as e:
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")

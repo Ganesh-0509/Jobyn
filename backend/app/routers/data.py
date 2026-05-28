@@ -5,7 +5,7 @@ All reads are from Supabase. Aggregations are done in Python since
 Supabase REST API doesn't expose GROUP BY directly.
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from collections import defaultdict
 import logging
 from app.core.supabase_client import get_supabase
@@ -146,29 +146,42 @@ def compare_roles(resume_id: int, user: AuthUser = Depends(get_current_user)):
 # ── GET /analytics/role-stats ──────────────────────────────────────────────────
 
 @router.get("/analytics/role-stats")
-def role_stats(current_user: AuthUser = Depends(get_current_user)):
+def role_stats(
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(50, ge=1, le=200, description="Items per page"),
+    current_user: AuthUser = Depends(get_current_user),
+):
     """
     Aggregated analytics across all analyses in the database:
       - Average / min / max score per role
       - Top 10 most frequently missing skills
       - Top 10 most commonly detected skills
 
-    Optimized: selects only needed columns instead of SELECT *.
+    Paginated: use page/per_page to control response size.
     """
     try:
         sb = get_supabase()
+        offset = (page - 1) * per_page
 
-        # Only fetch the columns we actually aggregate on
-        analyses = (
+        # Fetch paginated analyses
+        analyses_resp = (
             sb.table("role_analyses")
-            .select("role, final_score, missing_core_skills, missing_optional_skills")
-            .execute().data or []
+            .select("role, final_score, missing_core_skills, missing_optional_skills", count="exact")
+            .range(offset, offset + per_page - 1)
+            .execute()
         )
-        resumes = (
+        analyses = analyses_resp.data or []
+        total_analyses = analyses_resp.count or len(analyses)
+
+        # Fetch paginated resumes
+        resumes_resp = (
             sb.table("resumes")
-            .select("detected_skills")
-            .execute().data or []
+            .select("detected_skills", count="exact")
+            .range(offset, offset + per_page - 1)
+            .execute()
         )
+        resumes = resumes_resp.data or []
+        total_resumes = resumes_resp.count or len(resumes)
 
         # ── Per-role aggregation ─────────────────────────────────────────────
         role_buckets: dict = defaultdict(list)
@@ -202,8 +215,10 @@ def role_stats(current_user: AuthUser = Depends(get_current_user)):
         top_detected = sorted(detected_counter.items(), key=lambda x: -x[1])[:10]
 
         return {
-            "total_analyses":    len(analyses),
-            "total_resumes":     len(resumes),
+            "total_analyses":    total_analyses,
+            "total_resumes":     total_resumes,
+            "page":              page,
+            "per_page":          per_page,
             "role_averages":     role_averages,
             "top_missing_skills":  [{"skill": s, "count": c} for s, c in top_missing],
             "top_detected_skills": [{"skill": s, "count": c} for s, c in top_detected],
@@ -253,18 +268,31 @@ def get_latest_session(email: str, user: AuthUser = Depends(get_current_user)):
 # ── GET /export/dataset ────────────────────────────────────────────────────────
 
 @router.get("/export/dataset")
-def export_dataset(current_user: AuthUser = Depends(get_admin_user)):
+def export_dataset(
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(50, ge=1, le=200, description="Items per page"),
+    current_user: AuthUser = Depends(get_admin_user),
+):
     """
-    Full ML-ready dataset — all analyses joined with their resume skills.
+    ML-ready dataset — paginated analyses joined with their resume skills.
     Suitable for future model training or offline analysis.
     """
     try:
         sb = get_supabase()
+        offset = (page - 1) * per_page
 
-        # Fetch all analyses ordered by newest first
-        all_analyses = (sb.table("role_analyses").select("*").order("created_at", desc=True).execute().data or [])
-        
-        # Keep only the latest analysis per resume_id
+        # Fetch paginated analyses ordered by newest first
+        analyses_resp = (
+            sb.table("role_analyses")
+            .select("*", count="exact")
+            .order("created_at", desc=True)
+            .range(offset, offset + per_page - 1)
+            .execute()
+        )
+        all_analyses = analyses_resp.data or []
+        total_count = analyses_resp.count or len(all_analyses)
+
+        # Keep only the latest analysis per resume_id (within this page)
         seen_resumes = set()
         analyses = []
         for a in all_analyses:
@@ -272,9 +300,10 @@ def export_dataset(current_user: AuthUser = Depends(get_admin_user)):
                 seen_resumes.add(a["resume_id"])
                 analyses.append(a)
 
-        # Fetch resume detected_skills in one query and build a lookup map
-        resumes_resp = sb.table("resumes").select("id, filename, detected_skills").execute()
-        resume_map   = {r["id"]: r for r in (resumes_resp.data or [])}
+        # Fetch resume detected_skills for the resumes in this page
+        resume_ids = [a["resume_id"] for a in analyses]
+        resumes_resp = sb.table("resumes").select("id, filename, detected_skills").in_("id", resume_ids).execute()
+        resume_map = {r["id"]: r for r in (resumes_resp.data or [])}
 
         dataset = []
         for a in analyses:
@@ -297,7 +326,7 @@ def export_dataset(current_user: AuthUser = Depends(get_admin_user)):
                 "analyzed_at":               a["created_at"],
             })
 
-        return {"total": len(dataset), "dataset": dataset}
+        return {"total": total_count, "page": page, "per_page": per_page, "dataset": dataset}
 
     except Exception as e:
         raise _db_error(e)

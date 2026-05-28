@@ -540,9 +540,9 @@ export async function rejectContribution(id: number): Promise<{ status: string }
     return apiFetch<{ status: string }>(`/ai/admin/contributions/${id}/reject`, { method: 'POST' })
 }
 
-export async function getFullDataset(): Promise<AdminStudent[]> {
-    const data = await apiFetch<{ dataset?: AdminStudent[] }>('/export/dataset')
-    return data.dataset || []
+export async function getFullDataset(page = 1, perPage = 50): Promise<{ students: AdminStudent[]; total: number }> {
+    const data = await apiFetch<{ dataset?: AdminStudent[]; total?: number }>(`/export/dataset?page=${page}&per_page=${perPage}`)
+    return { students: data.dataset || [], total: data.total || 0 }
 }
 
 export async function getLatestSession(email: string): Promise<{ analysis: UploadResult | null; prediction: PredictResult | null }> {

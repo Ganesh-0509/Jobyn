@@ -39,6 +39,29 @@ function PageLoader() {
     )
 }
 
+/** Per-feature error boundary — isolates crashes to a single route */
+function FeatureErrorBoundary({ children, featureName }: { children: React.ReactNode; featureName: string }) {
+    return (
+        <ErrorBoundary fallback={
+            <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
+                <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-destructive/10">
+                    <span className="text-2xl">!</span>
+                </div>
+                <h2 className="font-heading text-lg font-bold">{featureName} encountered an error</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Your data is safe. Try refreshing.</p>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground"
+                >
+                    Reload Page
+                </button>
+            </div>
+        }>
+            {children}
+        </ErrorBoundary>
+    )
+}
+
 /** Guard: redirect unauthenticated users to login */
 function RequireAuth({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth()
@@ -79,18 +102,18 @@ function AppRoutes() {
 
                     {/* Authenticated — wrapped in Layout */}
                     <Route element={<RequireAuth><Layout /></RequireAuth>}>
-                        <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="/resume-analyzer" element={<ResumeAnalyzer />} />
-                        <Route path="/readiness-score" element={<ReadinessScore />} />
-                        <Route path="/skill-gap" element={<SkillGap />} />
-                        <Route path="/improvement-plan" element={<ImprovementPlan />} />
-                        <Route path="/interview-readiness" element={<InterviewReadiness />} />
-                        <Route path="/progress-tracking" element={<ProgressTracking />} />
-                        <Route path="/resume-comparison" element={<ResumeComparison />} />
-                        <Route path="/industry-alignment" element={<IndustryAlignment />} />
-                        <Route path="/my-projects" element={<MyProjects />} />
-                        <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
-                        <Route path="/settings" element={<Settings />} />
+                        <Route path="/dashboard" element={<FeatureErrorBoundary featureName="Dashboard"><Dashboard /></FeatureErrorBoundary>} />
+                        <Route path="/resume-analyzer" element={<FeatureErrorBoundary featureName="Resume Analyzer"><ResumeAnalyzer /></FeatureErrorBoundary>} />
+                        <Route path="/readiness-score" element={<FeatureErrorBoundary featureName="Readiness Score"><ReadinessScore /></FeatureErrorBoundary>} />
+                        <Route path="/skill-gap" element={<FeatureErrorBoundary featureName="Skill Gap"><SkillGap /></FeatureErrorBoundary>} />
+                        <Route path="/improvement-plan" element={<FeatureErrorBoundary featureName="Improvement Plan"><ImprovementPlan /></FeatureErrorBoundary>} />
+                        <Route path="/interview-readiness" element={<FeatureErrorBoundary featureName="Interview Readiness"><InterviewReadiness /></FeatureErrorBoundary>} />
+                        <Route path="/progress-tracking" element={<FeatureErrorBoundary featureName="Progress Tracking"><ProgressTracking /></FeatureErrorBoundary>} />
+                        <Route path="/resume-comparison" element={<FeatureErrorBoundary featureName="Resume Comparison"><ResumeComparison /></FeatureErrorBoundary>} />
+                        <Route path="/industry-alignment" element={<FeatureErrorBoundary featureName="Industry Alignment"><IndustryAlignment /></FeatureErrorBoundary>} />
+                        <Route path="/my-projects" element={<FeatureErrorBoundary featureName="My Projects"><MyProjects /></FeatureErrorBoundary>} />
+                        <Route path="/admin" element={<RequireAdmin><FeatureErrorBoundary featureName="Admin Dashboard"><AdminDashboard /></FeatureErrorBoundary></RequireAdmin>} />
+                        <Route path="/settings" element={<FeatureErrorBoundary featureName="Settings"><Settings /></FeatureErrorBoundary>} />
                     </Route>
 
                     {/* 404 */}

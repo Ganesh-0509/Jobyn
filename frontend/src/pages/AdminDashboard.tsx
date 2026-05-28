@@ -28,19 +28,22 @@ export default function AdminDashboard() {
   const [selectedView, setSelectedView] = useState<string | null>(null)
   const [viewingStudent, setViewingStudent] = useState<AdminStudent | null>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
+  const [page, setPage] = useState(1)
+  const [totalStudents, setTotalStudents] = useState(0)
+  const perPage = 50
 
   const fetchData = async (showLoading = true) => {
     if (showLoading) setLoading(true)
     setError(null)
     try {
-      const [s, c, d] = await Promise.all([getAdminStats(), getPendingContributions(), getFullDataset()])
-      setStats(s); setContributions(c); setStudents(d)
+      const [s, c, d] = await Promise.all([getAdminStats(), getPendingContributions(), getFullDataset(page, perPage)])
+      setStats(s); setContributions(c); setStudents(d.students); setTotalStudents(d.total)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load admin data')
     } finally { setLoading(false) }
   }
 
-  useEffect(() => { fetchData(false) }, [])
+  useEffect(() => { fetchData(false) }, [page])
   useEffect(() => { if (viewingStudent) overlayRef.current?.focus() }, [viewingStudent])
 
   const handleApprove = async (id: number) => { await approveContribution(id); fetchData() }
@@ -75,7 +78,7 @@ export default function AdminDashboard() {
                   <p className="text-xs text-muted-foreground">Performance tracking across all registered users</p>
                 </div>
               </div>
-              <Badge variant="outline">Total: {stats?.active_students ?? 0}</Badge>
+              <Badge variant="outline">Total: {totalStudents}</Badge>
             </div>
           </CardHeader>
           <CardContent>
@@ -118,8 +121,12 @@ export default function AdminDashboard() {
                   ))}
                 </tbody>
               </table>
-              <div className="border-t bg-muted/20 p-3 text-center text-xs text-muted-foreground">
-                Showing {students.length} historical analyses
+              <div className="flex items-center justify-between border-t bg-muted/20 p-3 text-xs text-muted-foreground">
+                <span>Showing {(page - 1) * perPage + 1}–{Math.min(page * perPage, totalStudents)} of {totalStudents}</span>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Previous</Button>
+                  <Button variant="outline" size="sm" disabled={page * perPage >= totalStudents} onClick={() => setPage(p => p + 1)}>Next</Button>
+                </div>
               </div>
             </div>
 
