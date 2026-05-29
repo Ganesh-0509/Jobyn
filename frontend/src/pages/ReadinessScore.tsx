@@ -5,7 +5,7 @@ import { useResume, getReadinessClass } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
 import { uploadResume, predictResume } from '../api/client'
 import CircularProgress from '../components/CircularProgress'
-import { Cpu, Cloud, Zap, TrendingUp, AlertCircle, Shield, ArrowRight } from 'lucide-react'
+import { Cpu, Cloud, Zap, TrendingUp, AlertCircle, Shield, ArrowRight, FlaskConical, ThumbsUp, ThumbsDown } from 'lucide-react'
 import { usePrivacy } from '../context/PrivacyContext'
 import { predictOnDevice, isOnDeviceReady } from '../utils/onDevicePredictor'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -31,6 +31,7 @@ export default function ReadinessScore() {
   const navigate = useNavigate()
   const [switching, setSwitching] = useState(false)
   const [switchError, setSwitchError] = useState<string | null>(null)
+  const [outcomeSubmitted, setOutcomeSubmitted] = useState(false)
 
   if (!analysis) {
     return (
@@ -83,13 +84,19 @@ export default function ReadinessScore() {
 
               {prediction && (
                 <>
-                  <Badge variant="outline" className={`gap-1.5 ${prediction.model_version.includes('onnx') ? 'border-success/30 text-success' : 'border-primary/30 text-primary'}`}>
-                    {prediction.model_version.includes('onnx') ? <Shield className="size-3" /> : <Cloud className="size-3" />}
-                    {prediction.model_version.includes('onnx') ? 'Verified AI Engine' : 'Cloud Intelligence'}
-                    {prediction.inference_time_ms != null && prediction.inference_time_ms > 0 && (
-                      <span className="opacity-60">&middot; {prediction.inference_time_ms.toFixed(1)}ms</span>
-                    )}
-                  </Badge>
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    <Badge variant="outline" className={`gap-1.5 ${prediction.model_version.includes('onnx') ? 'border-success/30 text-success' : 'border-primary/30 text-primary'}`}>
+                      {prediction.model_version.includes('onnx') ? <Shield className="size-3" /> : <Cloud className="size-3" />}
+                      {prediction.model_version.includes('onnx') ? 'Verified AI Engine' : 'Cloud Intelligence'}
+                      {prediction.inference_time_ms != null && prediction.inference_time_ms > 0 && (
+                        <span className="opacity-60">&middot; {prediction.inference_time_ms.toFixed(1)}ms</span>
+                      )}
+                    </Badge>
+                    <Badge variant="outline" className="gap-1.5 border-warning/30 text-warning">
+                      <FlaskConical className="size-3" />
+                      ML Predictions — Beta
+                    </Badge>
+                  </div>
 
                   <div className={`w-full rounded-xl border p-4 ${score < 50 ? 'border-warning/30 bg-warning/5' : 'border-primary/15 bg-primary/5'}`}>
                     <div className="flex items-center gap-2.5">
@@ -114,6 +121,57 @@ export default function ReadinessScore() {
                         : (bestFit?.reasoning || prediction.explanation || `Your profile shows strong semantic alignment with the ${prediction.predicted_role} career path.`)
                       }
                     </div>
+                    <div className="mt-2 rounded-lg border border-warning/20 bg-warning/5 px-3 py-2 text-[11px] leading-relaxed text-warning/80">
+                      This prediction is based on training data from 57,100 resumes. Use as a directional indicator, not a definitive assessment.
+                    </div>
+                    {!outcomeSubmitted && (
+                      <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+                        <span>Was this prediction helpful?</span>
+                        <button
+                          className="inline-flex items-center gap-1 rounded-md border border-border/50 px-2 py-0.5 text-xs hover:bg-success/10 hover:text-success transition-colors"
+                          onClick={async () => {
+                            try {
+                              const { apiFetch } = await import('../api/client')
+                              await apiFetch('/ml/outcome', {
+                                method: 'POST',
+                                rawBody: JSON.stringify({
+                                  predicted_role: prediction.predicted_role,
+                                  confidence: prediction.confidence,
+                                  actual_role: analysis?.role || '',
+                                  helpful: true,
+                                }),
+                              })
+                              setOutcomeSubmitted(true)
+                            } catch { setOutcomeSubmitted(true) }
+                          }}
+                        >
+                          <ThumbsUp className="size-3" /> Yes
+                        </button>
+                        <button
+                          className="inline-flex items-center gap-1 rounded-md border border-border/50 px-2 py-0.5 text-xs hover:bg-destructive/10 hover:text-destructive transition-colors"
+                          onClick={async () => {
+                            try {
+                              const { apiFetch } = await import('../api/client')
+                              await apiFetch('/ml/outcome', {
+                                method: 'POST',
+                                rawBody: JSON.stringify({
+                                  predicted_role: prediction.predicted_role,
+                                  confidence: prediction.confidence,
+                                  actual_role: analysis?.role || '',
+                                  helpful: false,
+                                }),
+                              })
+                              setOutcomeSubmitted(true)
+                            } catch { setOutcomeSubmitted(true) }
+                          }}
+                        >
+                          <ThumbsDown className="size-3" /> No
+                        </button>
+                      </div>
+                    )}
+                    {outcomeSubmitted && (
+                      <div className="mt-2 text-[11px] text-success/70">Thanks for your feedback!</div>
+                    )}
 
                     {bestFit && bestFit.predicted_role !== analysis?.role && (
                       <>
@@ -164,7 +222,7 @@ export default function ReadinessScore() {
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-medium text-foreground">{b.label}</span>
                     <span className="tabular-nums text-muted-foreground">
-                      {Math.round(b.pct)}% <span className="text-[10px] opacity-60">(&times;{b.weight}%)</span>
+                      {Math.round(b.pct)}% <span className="text-xs opacity-60">(&times;{b.weight}%)</span>
                     </span>
                   </div>
                   <Progress value={Math.min(100, Math.round(b.pct))} className="h-2" />
@@ -199,7 +257,7 @@ export default function ReadinessScore() {
                   <div className={`text-sm font-bold ${c.label === current ? 'text-primary' : 'text-foreground'}`}>{c.label}</div>
                   <div className="text-xs text-muted-foreground">{c.range}</div>
                   {c.label === current && (
-                    <Badge className="mt-1.5 text-[10px]">Current</Badge>
+                    <Badge className="mt-1.5 text-xs">Current</Badge>
                   )}
                 </div>
               ))}

@@ -4,9 +4,10 @@ import { useResume } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
 import { loadHistory } from '../utils/history'
 import {
-    Star, Award, Zap, Trophy, TrendingUp, Target,
-    ChevronRight, BookOpen, Flame, Shield, Cpu,
+    Award, Zap, Trophy, TrendingUp, Target,
+    ChevronRight, BookOpen, Shield, Cpu,
     BarChart2, Lock, CheckCircle, Brain, Sparkles,
+    FileUp, Search, Mic, FolderGit2,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -42,21 +43,12 @@ function resolveCategory(skill: string): string {
     return 'other'
 }
 
-const XP_PER_SKILL_MASTERED = 50
-const XP_FOR_RESUME_UPLOAD  = 100
-const XP_PER_HISTORY_ENTRY  = 20
-const XP_PER_COMPLETED_TASK = 10
-const XP_PER_LEVEL = 150
-
-const MILESTONE_DEFS = [
-    { icon: Star,   label: 'Resume Insight',   test: (_s: number, a: boolean) => a, sub: 'Profile analyzed' },
-    { icon: Award,  label: 'Growing Talent',    test: (s: number) => s >= 50,       sub: '50% readiness' },
-    { icon: Zap,    label: 'Placement Ready',   test: (s: number) => s >= 75,       sub: '75% readiness' },
-    { icon: Trophy, label: 'Industry Elite',    test: (s: number) => s >= 90,       sub: '90% readiness' },
-]
-
-function computeStreak(hist: { label: string }[]): number {
-    return hist.length
+interface MilestoneDef {
+    id: string
+    label: string
+    icon: React.ComponentType<any>
+    achieved: boolean
+    sub: string
 }
 
 const fadeUp = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } }
@@ -109,35 +101,36 @@ export default function ProgressTracking() {
     const totalSkills   = catStats.reduce((a, c) => a + c.skills.length, 0)
     const overallPct    = totalSkills > 0 ? Math.round((totalVerified / totalSkills) * 100) : 0
 
-    const totalXp = useMemo(() => {
-        let xp = 0
-        if (analysis) xp += XP_FOR_RESUME_UPLOAD
-        xp += masteredSkills.length * XP_PER_SKILL_MASTERED
-        xp += (completedTasks?.length ?? 0) * XP_PER_COMPLETED_TASK
-        xp += Math.max(0, hist.length - 1) * XP_PER_HISTORY_ENTRY
-        return xp
-    }, [analysis, masteredSkills, completedTasks, hist])
+    const milestones: MilestoneDef[] = useMemo(() => [
+        { id: 'first_upload', label: 'First Resume Upload', icon: FileUp, achieved: !!analysis, sub: 'Upload your resume' },
+        { id: 'first_score', label: 'Got Your Readiness Score', icon: Target, achieved: !!analysis?.final_score, sub: 'Get scored' },
+        { id: 'skill_gap_identified', label: 'Identified Skill Gaps', icon: Search, achieved: !!(analysis?.missing_core_skills?.length || analysis?.missing_optional_skills?.length), sub: 'Find what to improve' },
+        { id: 'first_interview', label: 'Practiced First Interview', icon: Mic, achieved: !!localStorage.getItem('interview_session_count'), sub: 'Try interview practice' },
+        { id: 'first_project', label: 'Generated First Project', icon: FolderGit2, achieved: (completedTasks?.length ?? 0) > 0, sub: 'Build a project' },
+        { id: 'ready_to_apply', label: 'Ready to Apply (80%+)', icon: CheckCircle, achieved: score >= 80, sub: 'Reach 80% readiness' },
+    ], [analysis, completedTasks, score])
 
-    const level     = Math.floor(totalXp / XP_PER_LEVEL) + 1
-    const xpInLevel = totalXp % XP_PER_LEVEL
-    const xpPct     = Math.round((xpInLevel / XP_PER_LEVEL) * 100)
-
-    const milestones = MILESTONE_DEFS.map(m => ({ ...m, done: m.test(score, !!analysis) }))
-    const milestonePct = milestones.filter(m => m.done).length / milestones.length
+    const milestonePct = milestones.filter(m => m.achieved).length / milestones.length
 
     const velocity = hist.length >= 2 ? hist[hist.length - 1].value - hist[0].value : null
-    const streak = computeStreak(hist)
 
-    const nextSkill = useMemo(() => {
+    const nextSkills = useMemo(() => {
         const masLower = new Set(masteredSkills.map(s => s.toLowerCase()))
         const detLower = new Set((analysis?.detected_skills ?? []).map(s => s.toLowerCase()))
+        const result: string[] = []
         for (const s of analysis?.missing_core_skills ?? []) {
-            if (!masLower.has(s.toLowerCase()) && !detLower.has(s.toLowerCase())) return s
+            if (!masLower.has(s.toLowerCase()) && !detLower.has(s.toLowerCase())) {
+                result.push(s)
+                if (result.length >= 3) return result
+            }
         }
         for (const s of analysis?.missing_optional_skills ?? []) {
-            if (!masLower.has(s.toLowerCase()) && !detLower.has(s.toLowerCase())) return s
+            if (!masLower.has(s.toLowerCase()) && !detLower.has(s.toLowerCase())) {
+                result.push(s)
+                if (result.length >= 3) return result
+            }
         }
-        return null
+        return result
     }, [analysis, masteredSkills])
 
     const verifiedAll = roleSkills.all.filter(s => isVerified(s))
@@ -150,15 +143,15 @@ export default function ProgressTracking() {
                         <Lock className="size-10 text-muted-foreground" />
                     </div>
                     <h1 className="font-heading text-2xl font-bold tracking-tight">Growth Tracking Locked</h1>
-                    <p className="mt-2 text-sm text-muted-foreground">Upload your resume to unlock real-time growth analytics, XP leveling, skill density mapping, and career milestones.</p>
+                    <p className="mt-2 text-sm text-muted-foreground">Upload your resume to unlock real-time growth analytics, skill density mapping, and career milestones.</p>
                     <Button className="mt-6 gap-2" onClick={() => navigate('/resume-analyzer')}>
                         <Sparkles className="size-4" /> Analyze Your Resume
                     </Button>
                     <div className="mt-10 grid gap-4 sm:grid-cols-3">
                         {[
                             { icon: BarChart2, title: 'Skill Radar', desc: 'Interactive skill coverage map across all domains' },
-                            { icon: Trophy,    title: 'XP Leveling',  desc: 'Earn XP for mastering skills and completing tasks' },
-                            { icon: Flame,     title: 'Velocity',     desc: 'See how your readiness score changes over time' },
+                            { icon: Trophy,    title: 'Milestones',  desc: 'Track career milestones from upload to ready-to-apply' },
+                            { icon: TrendingUp, title: 'Velocity',  desc: 'See how your readiness score changes over time' },
                         ].map(f => (
                             <Card key={f.title} className="premium-hover-card text-center">
                                 <CardContent className="pt-6">
@@ -176,21 +169,20 @@ export default function ProgressTracking() {
 
     return (
         <div className="mx-auto max-w-5xl space-y-6">
-            {/* XP Bar */}
+            {/* Career Progress Summary */}
             <motion.div {...fadeUp}>
-                <Card className="premium-hover-card bg-gradient-to-r from-amber-500/5 to-primary/5">
+                <Card className="premium-hover-card bg-gradient-to-r from-primary/5 to-violet/5">
                     <CardContent className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-4">
-                            <Badge variant="outline" className="border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-                                LVL {level}
-                            </Badge>
-                            <div className="min-w-0 flex-1">
-                                <Progress value={xpPct} className="h-2" />
-                                <p className="mt-1 text-xs text-muted-foreground">{xpInLevel} / {XP_PER_LEVEL} XP</p>
+                            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
+                                <Trophy className="size-5 text-primary" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold">{milestones.filter(m => m.achieved).length} of {milestones.length} Career Milestones</p>
+                                <p className="text-xs text-muted-foreground">Complete milestones to track your career readiness</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1"><Flame className="size-3.5 text-amber-500" /> {streak} session{streak !== 1 && 's'}</span>
                             <span className="flex items-center gap-1">
                                 <TrendingUp className={`size-3.5 ${velocity !== null && velocity > 0 ? 'text-success' : 'text-muted-foreground'}`} />
                                 {velocity !== null ? `${velocity > 0 ? '+' : ''}${velocity} pts` : '-'}
@@ -198,17 +190,6 @@ export default function ProgressTracking() {
                         </div>
                     </CardContent>
                 </Card>
-            </motion.div>
-
-            {/* XP Breakdown */}
-            <motion.div {...fadeUp} transition={{ delay: 0.05 }}>
-                <div className="flex flex-wrap items-center gap-2 text-xs">
-                    <Badge variant="secondary">Resume +{XP_FOR_RESUME_UPLOAD}</Badge>
-                    <Badge variant="secondary">Skills +{masteredSkills.length * XP_PER_SKILL_MASTERED}</Badge>
-                    <Badge variant="secondary">Tasks +{(completedTasks?.length ?? 0) * XP_PER_COMPLETED_TASK}</Badge>
-                    {hist.length > 1 && <Badge variant="secondary">Iterations +{(hist.length - 1) * XP_PER_HISTORY_ENTRY}</Badge>}
-                    <span className="font-mono text-xs font-semibold text-muted-foreground">= {totalXp} XP Total</span>
-                </div>
             </motion.div>
 
             {/* Hero Stats */}
@@ -232,7 +213,7 @@ export default function ProgressTracking() {
                             </svg>
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
                                 <span className="font-heading text-2xl font-bold">{overallPct}%</span>
-                                <span className="text-[10px] text-muted-foreground">Coverage</span>
+                                <span className="text-xs text-muted-foreground">Coverage</span>
                             </div>
                         </div>
                     </Card>
@@ -246,15 +227,50 @@ export default function ProgressTracking() {
                         <p className="text-xs text-muted-foreground">Readiness Score</p>
                     </Card>
                     <Card
-                        className={`premium-hover-card flex flex-col items-center justify-center py-6 text-center ${nextSkill ? 'cursor-pointer border-primary/20 hover:border-primary/40' : ''}`}
-                        onClick={() => nextSkill && setSelectedSkill(nextSkill)}
+                        className={`premium-hover-card flex flex-col items-center justify-center py-6 text-center ${nextSkills.length > 0 ? 'cursor-pointer border-primary/20 hover:border-primary/40' : ''}`}
+                        onClick={() => nextSkills[0] && setSelectedSkill(nextSkills[0])}
                     >
                         <Target className="mb-1 size-5 text-primary" />
                         <p className="text-xs text-muted-foreground">Next Target</p>
-                        <p className="mt-1 text-sm font-semibold text-primary">{nextSkill ?? 'All caught up!'}</p>
+                        <p className="mt-1 text-sm font-semibold text-primary">{nextSkills[0] ?? 'All caught up!'}</p>
                     </Card>
                 </div>
             </motion.div>
+
+            {/* Next 3 Skills */}
+            {nextSkills.length > 0 && (
+                <motion.div {...fadeUp} transition={{ delay: 0.12 }}>
+                    <Card className="premium-hover-card border-primary/20 bg-gradient-to-r from-primary/5 to-violet/5">
+                        <CardContent className="pt-6">
+                            <div className="mb-3 flex items-center gap-2">
+                                <Target className="size-4 text-primary" />
+                                <h2 className="font-heading text-sm font-semibold">Next 3 Skills to Learn</h2>
+                            </div>
+                            <div className="grid gap-2 sm:grid-cols-3">
+                                {nextSkills.map((skill, i) => (
+                                    <button
+                                        key={skill}
+                                        type="button"
+                                        className="group flex items-center gap-3 rounded-lg border border-border/50 bg-background/60 p-3 text-left transition-all hover:border-primary/30 hover:bg-primary/5"
+                                        onClick={() => setSelectedSkill(skill)}
+                                    >
+                                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                                            {i + 1}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-sm font-semibold capitalize">{skill}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {i === 0 ? 'High priority' : i === 1 ? 'Medium priority' : 'Good to have'}
+                                            </p>
+                                        </div>
+                                        <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                                    </button>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </motion.div>
+            )}
 
             {/* Skill Radar */}
             <motion.div {...fadeUp} transition={{ delay: 0.15 }}>
@@ -289,7 +305,7 @@ export default function ProgressTracking() {
                                                 strokeDasharray={`${(cat.pct / 100) * 88} 88`}
                                             />
                                         </svg>
-                                        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold" style={{ color: cat.color }}>{cat.pct}%</span>
+                                        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold" style={{ color: cat.color }}>{cat.pct}%</span>
                                     </div>
                                     <ChevronRight className={`size-4 shrink-0 text-muted-foreground transition-transform ${isOpen ? 'rotate-90' : ''}`} />
                                 </button>
@@ -335,7 +351,7 @@ export default function ProgressTracking() {
                 <div className="mb-3 flex items-center gap-2">
                     <Trophy className="size-4 text-muted-foreground" />
                     <h2 className="font-heading text-lg font-semibold">Career Milestones</h2>
-                    <span className="text-xs text-muted-foreground">{milestones.filter(m => m.done).length} of {milestones.length} unlocked</span>
+                    <span className="text-xs text-muted-foreground">{milestones.filter(m => m.achieved).length} of {milestones.length} unlocked</span>
                 </div>
                 <Card className="premium-hover-card">
                     <CardContent className="pt-6">
@@ -346,18 +362,18 @@ export default function ProgressTracking() {
                             <div className="relative flex justify-between">
                                 {milestones.map((m, i) => {
                                     const Icon = m.icon
-                                    const isNext = !m.done && (i === 0 || milestones[i - 1].done)
+                                    const isNext = !m.achieved && (i === 0 || milestones[i - 1].achieved)
                                     return (
-                                        <div key={i} className="flex flex-col items-center">
+                                        <div key={m.id} className="flex flex-col items-center">
                                             <div className={`flex size-8 items-center justify-center rounded-full border-2 transition-colors ${
-                                                m.done ? 'border-primary bg-primary/10 text-primary'
+                                                m.achieved ? 'border-primary bg-primary/10 text-primary'
                                                     : isNext ? 'border-primary/40 bg-background text-primary/60'
                                                     : 'border-muted bg-background text-muted-foreground'
                                             }`}>
                                                 <Icon className="size-3.5" />
                                             </div>
                                             <p className="mt-2 text-center text-[11px] font-semibold">{m.label}</p>
-                                            <p className="text-[10px] text-muted-foreground">{m.done ? 'Done' : m.sub}</p>
+                                            <p className="text-xs text-muted-foreground">{m.achieved ? 'Done' : m.sub}</p>
                                         </div>
                                     )
                                 })}

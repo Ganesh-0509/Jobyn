@@ -14,8 +14,9 @@ import { Separator } from './ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from './ui/tooltip'
 import { Avatar, AvatarFallback } from './ui/avatar'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from './ui/sheet'
+import { FEATURE_FLAGS, type FeatureFlag } from '../config/features'
 
-const NAV_ITEMS = [
+const NAV_ITEMS: { to: string; label: string; Icon: typeof LayoutDashboard; flag?: FeatureFlag }[] = [
     { to: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
     { to: '/resume-analyzer', label: 'Resume Analyzer', Icon: FileText },
     { to: '/readiness-score', label: 'Readiness Score', Icon: BarChart2 },
@@ -23,7 +24,7 @@ const NAV_ITEMS = [
     { to: '/improvement-plan', label: 'Improvement Plan', Icon: CheckSquare },
     { to: '/interview-readiness', label: 'Interview Prep', Icon: MessageSquare },
     { to: '/progress-tracking', label: 'Progress', Icon: TrendingUp },
-    { to: '/resume-comparison', label: 'Comparison', Icon: GitCompare },
+    { to: '/resume-comparison', label: 'Comparison', Icon: GitCompare, flag: 'RESUME_COMPARISON' },
     { to: '/industry-alignment', label: 'Industry', Icon: Building2 },
     { to: '/my-projects', label: 'Projects', Icon: Blocks },
     { to: '/admin', label: 'Admin', Icon: Shield },
@@ -43,7 +44,8 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
                 <LogoMark size={28} />
                 <div>
                     <div className="text-sm font-semibold tracking-tight text-foreground">CampusSync</div>
-                    <div className="text-[10px] font-medium uppercase tracking-widest text-cyan">Edge AI</div>
+                    <div className="text-xs font-medium uppercase tracking-widest text-cyan">Edge AI</div>
+                    <div className="text-[10px] text-muted-foreground/70 mt-0.5">Upload your resume. Get hired faster.</div>
                 </div>
             </div>
 
@@ -52,7 +54,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
             {/* Navigation */}
             <ScrollArea className="flex-1 px-2 py-3">
                 <nav aria-label="Main navigation" className="flex flex-col gap-0.5">
-                    {NAV_ITEMS.map(({ to, label, Icon }) => (
+                    {NAV_ITEMS.filter(({ flag }) => !flag || FEATURE_FLAGS[flag]).map(({ to, label, Icon }) => (
                         <NavLink
                             key={to}
                             to={to}
@@ -105,7 +107,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
                         </Avatar>
                         <div className="flex-1 min-w-0">
                             <div className="text-xs font-medium text-foreground truncate">{user.name}</div>
-                            <div className="text-[10px] text-muted-foreground truncate">{user.email}</div>
+                            <div className="text-xs text-muted-foreground truncate">{user.email}</div>
                         </div>
                         <Tooltip>
                             <TooltipTrigger

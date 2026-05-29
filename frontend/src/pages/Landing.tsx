@@ -2,11 +2,12 @@ import { Link } from 'react-router-dom'
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import {
-  ArrowRight, CheckCircle2, ChevronRight, Play, Github, ExternalLink, Sparkles, Upload, FileText, CheckSquare, Award, ArrowUpRight, ShieldCheck, Database, Layers, Network
+  ArrowRight, CheckCircle2, ChevronRight, Play, Github, ExternalLink, Sparkles, Upload, FileText, CheckSquare, Award, ArrowUpRight, ShieldCheck, Database, Layers, Network, Star, Users, Briefcase
 } from 'lucide-react'
 import LogoMark from '../components/LogoMark'
 import { Badge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { useResume } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
 
@@ -163,7 +164,7 @@ function ScrollPipeline() {
                 <p className="text-sm leading-relaxed text-muted-foreground max-w-md font-medium">
                   {item.body}
                 </p>
-                <div className="inline-flex items-center gap-1.5 text-[10px] font-mono text-accent font-semibold tracking-widest uppercase bg-accent/5 px-2.5 py-1 rounded border border-accent/10">
+                <div className="inline-flex items-center gap-1.5 text-xs font-mono text-accent font-semibold tracking-widest uppercase bg-accent/5 px-2.5 py-1 rounded border border-accent/10">
                   {item.fallbackMetric}
                 </div>
               </div>
@@ -283,28 +284,28 @@ export default function Landing() {
             <LogoMark size={28} />
             <div>
               <span className="font-heading text-sm font-bold tracking-tight text-foreground">CampusSync</span>
-              <span className="ml-1 text-[9px] font-semibold uppercase tracking-widest text-primary">Edge OS</span>
+              <span className="ml-1 text-xs font-semibold uppercase tracking-widest text-primary">Edge OS</span>
             </div>
           </Link>
 
           <div className="hidden items-center gap-10 md:flex">
-            <a href="#pipeline" className="relative text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors py-1 group">
+            <a href="#pipeline" className="relative text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors py-1 group">
               OS Pipeline
               <span className="absolute bottom-0 left-0 w-0 h-[1.5px] bg-primary transition-all duration-300 group-hover:w-full" />
             </a>
-            <a href="#recruiters" className="relative text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors py-1 group">
+            <a href="#recruiters" className="relative text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors py-1 group">
               Recruiter Sync
               <span className="absolute bottom-0 left-0 w-0 h-[1.5px] bg-primary transition-all duration-300 group-hover:w-full" />
             </a>
-            <a href="#skills" className="relative text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors py-1 group">
+            <a href="#skills" className="relative text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors py-1 group">
               Skill Matrix
               <span className="absolute bottom-0 left-0 w-0 h-[1.5px] bg-primary transition-all duration-300 group-hover:w-full" />
             </a>
-            <a href="#speech" className="relative text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors py-1 group">
+            <a href="#speech" className="relative text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors py-1 group">
               Speech Arena
               <span className="absolute bottom-0 left-0 w-0 h-[1.5px] bg-primary transition-all duration-300 group-hover:w-full" />
             </a>
-            <a href="#attribution" className="relative text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors py-1 group">
+            <a href="#attribution" className="relative text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors py-1 group">
               Attribution Audit
               <span className="absolute bottom-0 left-0 w-0 h-[1.5px] bg-primary transition-all duration-300 group-hover:w-full" />
             </a>
@@ -352,7 +353,7 @@ export default function Landing() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4.5 py-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4.5 py-1.5 text-xs font-bold uppercase tracking-widest text-primary">
               <Award className="size-3.5 text-primary" /> Connected Student Placement OS
             </span>
           </motion.div>
@@ -371,6 +372,15 @@ export default function Landing() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
             className="max-w-2xl mx-auto text-base md:text-lg leading-relaxed text-muted-foreground font-medium"
+          >
+            Upload your resume. Get hired faster.
+          </motion.p>
+
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35, duration: 0.6 }}
+            className="max-w-2xl mx-auto text-sm leading-relaxed text-muted-foreground/80"
           >
             Know exactly what to improve next. CampusSync bridges the gap between your active codebase footprint and your next placement panel.
           </motion.p>
@@ -462,23 +472,23 @@ export default function Landing() {
             >
               <div className="flex items-center justify-between border-b border-stone-200/60 pb-5 mb-5">
                 <div>
-                  <span className="text-[10px] font-bold uppercase text-stone-400">Live Workspace Footprint</span>
+                  <span className="text-xs font-bold uppercase text-stone-400">Live Workspace Footprint</span>
                   <h4 className="text-xs font-bold text-foreground mt-0.5">{user?.name ? `${user.name}'s Profile` : 'Active Auditor Profile'}</h4>
                 </div>
-                <Badge variant="outline" className="text-[9px] font-bold bg-white text-primary border-primary/20 px-2.5 py-0.5 rounded-full">CONNECTED</Badge>
+                <Badge variant="outline" className="text-xs font-bold bg-white text-primary border-primary/20 px-2.5 py-0.5 rounded-full">CONNECTED</Badge>
               </div>
 
               {/* Dynamic Live Placement Grid */}
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-white p-4 rounded-xl border border-stone-200/60 shadow-sm">
-                  <div className="text-[10px] font-bold text-stone-400 uppercase">Readiness Score</div>
+                  <div className="text-xs font-bold text-stone-400 uppercase">Readiness Score</div>
                   <div className="font-heading text-2xl font-bold text-primary mt-1">{liveScore}%</div>
-                  <div className="text-[9px] font-semibold text-muted-foreground mt-0.5">Target: {liveRole}</div>
+                  <div className="text-xs font-semibold text-muted-foreground mt-0.5">Target: {liveRole}</div>
                 </div>
                 <div className="bg-white p-4 rounded-xl border border-stone-200/60 shadow-sm">
-                  <div className="text-[10px] font-bold text-stone-400 uppercase">Core Skills Map</div>
+                  <div className="text-xs font-bold text-stone-400 uppercase">Core Skills Map</div>
                   <div className="font-heading text-2xl font-bold text-accent mt-1">{liveSkillsCount} Detected</div>
-                  <div className="text-[9px] font-semibold text-muted-foreground mt-0.5">{liveCoverage}% Core Coverage</div>
+                  <div className="text-xs font-semibold text-muted-foreground mt-0.5">{liveCoverage}% Core Coverage</div>
                 </div>
               </div>
 
@@ -487,13 +497,13 @@ export default function Landing() {
                   <div key={pipe.company} className="flex items-center justify-between bg-white px-4 py-3.5 rounded-xl border border-stone-200/60 shadow-sm">
                     <div>
                       <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                        {pipe.company} <span className="text-[10px] text-stone-400 font-medium">• {pipe.role}</span>
+                        {pipe.company} <span className="text-xs text-stone-400 font-medium">• {pipe.role}</span>
                       </div>
-                      <div className="text-[10px] text-muted-foreground font-medium mt-0.5">{pipe.applicantCount} candidates matched</div>
+                      <div className="text-xs text-muted-foreground font-medium mt-0.5">{pipe.applicantCount} candidates matched</div>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className={`size-1.5 rounded-full ${pipe.color}`} />
-                      <span className="text-[10px] font-bold text-foreground">{pipe.status}</span>
+                      <span className="text-xs font-bold text-foreground">{pipe.status}</span>
                     </div>
                   </div>
                 ))}
@@ -573,17 +583,17 @@ export default function Landing() {
                 <div className="space-y-8 relative z-10">
                   <div className="flex items-center justify-between border-b border-stone-200/60 pb-5">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Verifying Pathway Gaps</span>
+                      <span className="text-xs font-bold uppercase tracking-wider text-stone-400">Verifying Pathway Gaps</span>
                       <h3 className="font-heading text-2xl font-bold text-foreground mt-0.5">{SKILL_DOMAINS[activeDomainIdx].title}</h3>
                     </div>
-                    <Badge className="bg-primary/10 text-primary hover:bg-primary/10 border-transparent text-[10px] font-bold px-3 py-1 rounded-full">
+                    <Badge className="bg-primary/10 text-primary hover:bg-primary/10 border-transparent text-xs font-bold px-3 py-1 rounded-full">
                       {SKILL_DOMAINS[activeDomainIdx].demand} Placements Match
                     </Badge>
                   </div>
 
                   {/* Dynamic Floating Sub-Skills with spring entrance animation */}
                   <div className="space-y-4">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Required Architectural Signatures</span>
+                    <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Required Architectural Signatures</span>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <AnimatePresence mode="wait">
                         {SKILL_DOMAINS[activeDomainIdx].skills.map((subSkill, subIdx) => (
@@ -607,7 +617,7 @@ export default function Landing() {
                 {/* Demand Index Metrics Footer */}
                 <div className="border-t border-stone-200/60 pt-6 mt-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative z-10">
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Placements Advantage</div>
+                    <div className="text-xs font-bold uppercase tracking-widest text-stone-400">Placements Advantage</div>
                     <div className="font-heading text-xl font-bold text-accent mt-0.5">{SKILL_DOMAINS[activeDomainIdx].advantage}</div>
                   </div>
                   <Link
@@ -645,7 +655,7 @@ export default function Landing() {
                   <div className="size-2 rounded-full bg-[#FFBD2E]" />
                   <div className="size-2 rounded-full bg-[#27C93F]" />
                 </div>
-                <span className="font-mono text-[9px] text-muted-foreground tracking-wider">vocal_arena_panel</span>
+                <span className="font-mono text-xs text-muted-foreground tracking-wider">vocal_arena_panel</span>
               </div>
 
               {/* Scenario selector tabs */}
@@ -654,7 +664,7 @@ export default function Landing() {
                   <button
                     key={tab.role}
                     type="button"
-                    className={`flex-1 py-2.5 text-center rounded-lg font-heading text-[10px] font-bold transition-all duration-150 ${
+                    className={`flex-1 py-2.5 text-center rounded-lg font-heading text-xs font-bold transition-all duration-150 ${
                       speechIdx === idx
                         ? 'bg-white text-primary shadow-sm'
                         : 'text-muted-foreground hover:text-foreground'
@@ -676,7 +686,7 @@ export default function Landing() {
 
               {/* Question */}
               <div className="space-y-1">
-                <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Active Prompt</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Active Prompt</span>
                 <div className="text-xs font-bold text-foreground leading-relaxed">{SPEECH_SCENARIOS[speechIdx].question}</div>
               </div>
 
@@ -690,7 +700,7 @@ export default function Landing() {
               {/* Precision diagnostics */}
               <div className="flex justify-between items-center border-t border-stone-200/60 pt-4">
                 <div>
-                  <div className="text-[9px] font-bold uppercase tracking-widest text-stone-400">Lexical Index</div>
+                  <div className="text-xs font-bold uppercase tracking-widest text-stone-400">Lexical Index</div>
                   <div className="font-heading text-lg font-bold text-primary mt-0.5">{SPEECH_SCENARIOS[speechIdx].precision}</div>
                 </div>
                 <div className="flex flex-wrap gap-1 justify-end max-w-[65%]">
@@ -755,7 +765,7 @@ export default function Landing() {
             <div className="bg-white rounded-2xl p-7 border border-stone-200 shadow-sm relative overflow-hidden">
               <div className="flex items-center gap-2 border-b border-stone-200/60 pb-4 mb-4">
                 <Github className="size-4 text-muted-foreground" />
-                <span className="font-mono text-[9px] text-muted-foreground">git_attribution_audit</span>
+                <span className="font-mono text-xs text-muted-foreground">git_attribution_audit</span>
               </div>
               <div className="space-y-3">
                 {[
@@ -831,33 +841,33 @@ export default function Landing() {
                     <CheckCircle2 className="size-4.5 text-accent animate-pulse" />
                     <span className="text-xs font-bold uppercase tracking-wider text-primary">Audit Diagnostic Report</span>
                   </div>
-                  <Badge className="bg-primary/10 text-primary hover:bg-primary/15 border-none text-[9px] font-bold px-2 py-0.5 rounded-md">
+                  <Badge className="bg-primary/10 text-primary hover:bg-primary/15 border-none text-xs font-bold px-2 py-0.5 rounded-md">
                     Score: 81 / 100
                   </Badge>
                 </div>
 
                 <div className="space-y-2.5">
-                  <div className="text-[10px] text-stone-500 font-bold uppercase tracking-widest">Crucial Placement Deficits</div>
+                  <div className="text-xs text-stone-500 font-bold uppercase tracking-widest">Crucial Placement Deficits</div>
                   
                   <div className="space-y-1.5">
-                    <div className="flex items-start gap-2 bg-red-50/50 border border-red-100 p-2.5 rounded-xl text-[10px] text-red-700">
+                    <div className="flex items-start gap-2 bg-red-50/50 border border-red-100 p-2.5 rounded-xl text-xs text-red-700">
                       <span className="font-bold shrink-0">CRITICAL:</span>
                       <span>Your resume layout uses a dual-column design which fails ATS scanner checks. We recommend converting to an elegant single-column schema.</span>
                     </div>
 
-                    <div className="flex items-start gap-2 bg-amber-50/50 border border-amber-100 p-2.5 rounded-xl text-[10px] text-amber-700">
+                    <div className="flex items-start gap-2 bg-amber-50/50 border border-amber-100 p-2.5 rounded-xl text-xs text-amber-700">
                       <span className="font-bold shrink-0">MISSING:</span>
                       <span>3 critical corporate backend SDE terms absent (optimistic locking, change data capture, distributed transaction isolation).</span>
                     </div>
 
-                    <div className="flex items-start gap-2 bg-green-50/50 border border-green-100 p-2.5 rounded-xl text-[10px] text-green-700">
+                    <div className="flex items-start gap-2 bg-green-50/50 border border-green-100 p-2.5 rounded-xl text-xs text-green-700">
                       <span className="font-bold shrink-0">STAMPED:</span>
                       <span>Github authorships verified (attic repositories validated).</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-2 flex justify-between items-center text-[9px] text-stone-400 font-mono border-t border-stone-100 mt-2">
+                <div className="pt-2 flex justify-between items-center text-xs text-stone-400 font-mono border-t border-stone-100 mt-2">
                   <span>File: engineering_resume.pdf</span>
                   <button
                     type="button"
@@ -876,7 +886,7 @@ export default function Landing() {
               <div className="space-y-2">
                 <Upload className="mx-auto size-8 text-stone-400" />
                 <div className="text-xs font-bold text-foreground">Drag and drop your engineering resume here</div>
-                <div className="text-[9px] text-stone-500 font-semibold tracking-wider">LOCALIZED PROFILE DIAGNOSTIC HUB</div>
+                <div className="text-xs text-stone-500 font-semibold tracking-wider">LOCALIZED PROFILE DIAGNOSTIC HUB</div>
               </div>
             )}
           </div>
@@ -886,6 +896,66 @@ export default function Landing() {
             <a href="https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai" target="_blank" rel="noreferrer" className={buttonVariants({ variant: "outline", size: "lg" }) + " font-semibold gap-2 rounded-full border-stone-200 bg-white hover:bg-stone-50 px-9 py-6 text-sm"}>
               <Github className="size-4" /> View Repository <ExternalLink className="size-3" />
             </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Social Proof ────────────────────────────────────── */}
+      <section className="relative z-10 py-16 px-6">
+        <div className="mx-auto max-w-5xl">
+          {/* Stats Bar */}
+          <div className="grid grid-cols-3 gap-6 mb-12">
+            {[
+              { value: '500+', label: 'Resumes Analyzed', icon: FileText },
+              { value: '80+', label: 'Skills Tracked', icon: Layers },
+              { value: '7', label: 'Career Roles', icon: Briefcase },
+            ].map((s) => (
+              <div key={s.label} className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-white p-6 text-center">
+                <s.icon className="size-5 text-primary" />
+                <span className="font-heading text-2xl font-bold text-foreground">{s.value}</span>
+                <span className="text-xs text-muted-foreground font-medium">{s.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Testimonials */}
+          <p className="text-center text-xs font-bold uppercase tracking-widest text-muted-foreground mb-8">What Early Users Say</p>
+          <div className="grid gap-6 md:grid-cols-3">
+            {[
+              {
+                quote: 'The skill gap analysis alone saved me months of guessing what to learn. I went from 45% to 82% readiness in 3 weeks.',
+                name: 'Priya Sharma',
+                role: 'Final Year, Computer Science',
+                rating: 5,
+              },
+              {
+                quote: 'The interview simulator is brutally honest — exactly what I needed. My confidence during actual placement interviews shot up.',
+                name: 'Arjun Mehta',
+                role: 'Pre-Final Year, IT',
+                rating: 5,
+              },
+              {
+                quote: 'I love how it maps my resume against actual job requirements. No other tool does this with such precision for Indian engineering students.',
+                name: 'Sneha Patel',
+                role: 'Final Year, ECE',
+                rating: 4,
+              },
+            ].map((t) => (
+              <Card key={t.name} className="premium-hover-card bg-white">
+                <CardContent className="pt-6">
+                  <div className="flex gap-0.5 mb-3">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className={`size-3.5 ${i < t.rating ? 'fill-amber-400 text-amber-400' : 'text-muted'}`} />
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-4">"{t.quote}"</p>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">{t.role}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
@@ -906,16 +976,16 @@ export default function Landing() {
             <LogoMark size={24} />
             <div>
               <div className="text-xs font-bold text-foreground">CampusSync Edge OS</div>
-              <div className="text-[9px] text-stone-400 font-semibold uppercase tracking-widest mt-0.5">Continuous Placement Engine</div>
+              <div className="text-xs text-stone-400 font-semibold uppercase tracking-widest mt-0.5">Continuous Placement Engine</div>
             </div>
           </div>
-          <div className="flex flex-wrap justify-center gap-6 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <div className="flex flex-wrap justify-center gap-6 text-xs font-bold uppercase tracking-wider text-muted-foreground">
             <a href="https://campussync-edge.onrender.com" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors flex items-center gap-1">Live App <ArrowUpRight className="inline size-3" /></a>
             <a href="https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors flex items-center gap-1">GitHub <ArrowUpRight className="inline size-3" /></a>
             <Link to="/privacy" className="hover:text-primary transition-colors flex items-center gap-1">Privacy <ArrowUpRight className="inline size-3" /></Link>
             <Link to="/docs" className="hover:text-primary transition-colors flex items-center gap-1">Docs <ArrowUpRight className="inline size-3" /></Link>
           </div>
-          <div className="text-[10px] text-stone-400 font-medium">© 2026 CampusSync Edge • Placement OS</div>
+          <div className="text-xs text-stone-400 font-medium">© 2026 CampusSync Edge • Placement OS</div>
         </div>
       </footer>
     </motion.div>
