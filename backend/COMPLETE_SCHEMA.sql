@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS resumes (
 
 DO $$ BEGIN
     ALTER TABLE resumes ADD CONSTRAINT uq_resumes_filename_email UNIQUE (filename, user_email);
-EXCEPTION WHEN duplicate_object THEN NULL;
+EXCEPTION WHEN OTHERS THEN NULL;
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_resumes_user_email   ON resumes(user_email);
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS role_analyses (
 
 DO $$ BEGIN
     ALTER TABLE role_analyses ADD CONSTRAINT uq_role_analyses_resume UNIQUE (resume_id);
-EXCEPTION WHEN duplicate_object THEN NULL;
+EXCEPTION WHEN OTHERS THEN NULL;
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_role_analyses_resume_id   ON role_analyses(resume_id);
