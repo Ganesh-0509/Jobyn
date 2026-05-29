@@ -181,19 +181,6 @@ Run RandomForest inference on a feature vector. Returns predicted role, confiden
 
 **Auth**: None
 
-**Request Body**:
-
-```json
-{
-  "skills": ["python", "react", "sql", "git"],
-  "core_coverage": 0.65,
-  "optional_coverage": 0.40,
-  "project_score": 0.80,
-  "ats_score": 0.70,
-  "structure_score": 0.75
-}
-```
-
 ```bash
 curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
@@ -263,10 +250,6 @@ Returns skill impact rankings (delta from global mean score).
 
 **Auth**: None | **Query**: `?live=true` for live computation (default: cached)
 
-```bash
-curl http://localhost:8000/ml/skill-impact
-```
-
 #### `GET /ml/status` — ML Health Check
 
 ```bash
@@ -305,40 +288,25 @@ curl http://localhost:8000/ml/status
 
 ---
 
-### History & Analytics (`/history`, `/compare`, `/analytics`, `/export`)
+### History & Analytics
 
 #### `GET /history/{resume_id}` — Analysis History
 
-Chronological list of all role analyses for a resume.
-
 **Auth**: Required (IDOR-protected)
 
-```bash
-curl http://localhost:8000/history/42 \
-  -H "Authorization: Bearer <token>"
-```
-
 #### `GET /compare/{resume_id}` — Role Comparison
-
-Latest analysis score per role for a resume.
 
 **Auth**: Required (IDOR-protected)
 
 #### `GET /analytics/role-stats` — Platform Analytics
 
-Aggregated analytics: avg/min/max per role, top missing/detected skills.
-
 **Auth**: Required | **Query**: `?page=1&per_page=50`
 
 #### `GET /session/latest/{email}` — Latest Session
 
-Latest resume + analysis for a user.
-
 **Auth**: Required (email-level IDOR check)
 
 #### `GET /export/dataset` — Export ML Dataset
-
-ML-ready paginated dataset export.
 
 **Auth**: Admin | **Query**: `?page=1&per_page=50`
 
@@ -347,8 +315,6 @@ ML-ready paginated dataset export.
 **Auth**: Required (ownership check)
 
 #### `DELETE /history/resume/{resume_id}` — Delete Resume
-
-Deletes resume and all associated analyses.
 
 **Auth**: Required (ownership check)
 
@@ -400,108 +366,51 @@ curl -X POST http://localhost:8000/ai/smart-plan \
   }'
 ```
 
-**Response** (200):
-
-```json
-{
-  "schedule": [
-    {
-      "day": 1,
-      "skill": "docker",
-      "title": "Master Docker",
-      "prerequisites": [],
-      "unlocks": ["kubernetes"],
-      "difficulty": "Foundational",
-      "duration_minutes": 60,
-      "order": 0
-    }
-  ],
-  "total_skills": 3,
-  "target_skills": 3,
-  "prerequisite_skills": 0,
-  "total_days": 2,
-  "total_hours": 4.0,
-  "daily_hours": 2.0,
-  "recommended_daily_hours": 2.0,
-  "days_available": 19,
-  "deadline": "2026-06-15"
-}
-```
-
 #### `POST /ai/market-forecast` — Market Forecast
-
-Dynamic career market forecast powered by Gemini.
 
 **Auth**: None | **Rate Limit**: 20/min (AI) + 30/min (per-user)
 
 #### `GET /ai/study/notes` — Study Notes
 
-Generate study notes for a skill (intro + first section).
-
 **Auth**: None | **Rate Limit**: 20/min (AI) + 30/min (per-user) | **Query**: `?skill=python&existing_skills=git,sql`
 
 #### `GET /ai/study/section` — Study Section
-
-Generate a single study section (progressive loading).
 
 **Auth**: None | **Rate Limit**: 20/min (AI) + 30/min (per-user) | **Query**: `?skill=python&section_idx=0`
 
 #### `GET /ai/study/quiz` — Generate Quiz
 
-Section-specific or general quiz.
-
 **Auth**: None | **Rate Limit**: 20/min (AI) + 30/min (per-user) | **Query**: `?skill=python&section_idx=0`
 
 #### `POST /ai/study/progress` — Save Progress
 
-Mark a study section as completed.
-
 **Auth**: Required
-
-```bash
-curl -X POST http://localhost:8000/ai/study/progress \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{"skill": "python", "section_idx": 0}'
-```
 
 #### `GET /ai/study/progress` — Get Progress
 
-**Auth**: Required | **Query**: `?skill=python` (optional — omit for all skills)
+**Auth**: Required | **Query**: `?skill=python` (optional)
 
 #### `POST /ai/study/quiz/submit` — Submit Quiz Grade
-
-Logs quiz score and auto-registers progress on pass.
 
 **Auth**: Required
 
 #### `POST /ai/study/chat` — AI Chat Assistant
 
-Chat with an AI about a specific skill.
-
 **Auth**: None | **Rate Limit**: 20/min (AI) + 30/min (per-user)
 
 #### `POST /ai/study/contribute` — Submit Contribution
-
-Submit community study notes for review.
 
 **Auth**: None | **Rate Limit**: 30/min (heavy)
 
 #### `POST /ai/interview/start` — Start Interview
 
-Start an AI mock interview session.
-
 **Auth**: None | **Rate Limit**: 20/min (AI) + 30/min (per-user)
 
 #### `POST /ai/interview/answer` — Evaluate Answer
 
-Evaluate an interview answer and get a follow-up question.
-
 **Auth**: None | **Rate Limit**: 20/min (AI) + 30/min (per-user)
 
 #### `POST /ai/interview/end` — End Interview
-
-End interview and get a comprehensive scorecard.
 
 **Auth**: None | **Rate Limit**: 20/min (AI) + 30/min (per-user)
 
@@ -523,13 +432,9 @@ End interview and get a comprehensive scorecard.
 
 #### `POST /ai/admin/ingest-course` — Ingest Course
 
-Scrape an authority URL and compile a course (Pathway A: RAG, Pathway B: static).
-
 **Auth**: Admin | **Rate Limit**: 30/min (heavy)
 
 #### `GET /ai/curriculum/overview` — Curriculum Graph
-
-Full skill dependency graph + metadata.
 
 **Auth**: None
 
@@ -562,8 +467,6 @@ Full skill dependency graph + metadata.
 **Auth**: None
 
 #### `POST /interview/evaluate` — Evaluate Answer
-
-Score an answer using keyword/concept matching.
 
 **Auth**: None
 
@@ -607,8 +510,6 @@ curl -X POST http://localhost:8000/interview/evaluate \
 
 #### `POST /feedback` — Submit Feedback
 
-Submit a prediction correction or confirmation.
-
 **Auth**: Required
 
 #### `GET /feedback/summary` — Feedback Stats
@@ -616,8 +517,6 @@ Submit a prediction correction or confirmation.
 **Auth**: None | **Query**: `?page=1&per_page=50`
 
 #### `GET /feedback/corrections` — Correction Pairs
-
-Labelled correction pairs for model retraining.
 
 **Auth**: None | **Query**: `?page=1&per_page=50`
 
@@ -635,8 +534,6 @@ Labelled correction pairs for model retraining.
 
 #### `GET /content-feedback/low-rated` — Low-Rated Content
 
-Content below rating threshold — candidates for regeneration.
-
 **Auth**: None | **Query**: `?threshold=3.0`
 
 ---
@@ -644,8 +541,6 @@ Content below rating threshold — candidates for regeneration.
 ### Projects (`/projects`)
 
 #### `POST /projects/generate` — Generate Project
-
-AI-generated capstone project tailored to role and missing skills.
 
 **Auth**: None | **Rate Limit**: 20/min (AI) + 30/min (per-user)
 
@@ -656,8 +551,6 @@ curl -X POST http://localhost:8000/projects/generate \
 ```
 
 #### `POST /projects/verify` — Verify GitHub Repo
-
-Verify a GitHub repo against the project spec.
 
 **Auth**: None | **Rate Limit**: 30/min (heavy)
 
@@ -723,300 +616,6 @@ curl -X POST http://localhost:8000/projects/verify \
 |---|---|---|---|
 | `missing_core_skills` | `list[str]` | required | Core skills to learn |
 | `missing_optional_skills` | `list[str]` | `[]` | Optional skills |
-| `mastered_skills` | `list[str]` | `[]` | Already known skills |
-| `daily_hours` | `float` | `2.0` | Study hours per day |
-| `deadline` | `str?` | `null` | ISO date (e.g. `"2026-06-15"`) |
-
-### ChatRequest (`POST /ai/study/chat`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `skill` | `str` | required | Skill topic |
-| `query` | `str` | required | User question (max 10K chars) |
-| `history` | `list[dict]` | `[]` | Conversation history |
-| `mastered_skills` | `list[str]` | `[]` | Context for personalization |
-
-### InterviewStartRequest (`POST /ai/interview/start`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `skill` | `str` | required | Skill to interview on |
-| `difficulty` | `str` | `"medium"` | easy / medium / hard |
-| `role` | `str` | `""` | Target role |
-
-### InterviewAnswerRequest (`POST /ai/interview/answer`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `skill` | `str` | required | Skill context |
-| `question` | `str` | required | The question asked |
-| `answer` | `str` | required | User's answer |
-| `question_number` | `int` | `1` | Question number in session |
-| `difficulty` | `str` | `"medium"` | Difficulty level |
-| `history` | `list[dict]` | `[]` | Session history |
-
-### EvaluateRequest (`POST /interview/evaluate`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `role` | `str` | required | Role context |
-| `question_id` | `str` | required | Question identifier |
-| `answer` | `str` | required | User's answer text |
-
-### ProjectRequest (`POST /projects/generate`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `role` | `str` | required | Target role |
-| `skills` | `list[str]` | required | Skills to acquire |
-
-### VerifyRequest (`POST /projects/verify`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `github_url` | `str` | required | GitHub repository URL |
-| `project_markdown` | `str` | required | Original project spec (max 100K chars) |
-| `required_skills` | `list[str]` | required | Skills to demonstrate |
-| `role` | `str` | required | Target role |
-
-### FeedbackRequest (`POST /feedback`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `predicted_role` | `str` | required | What the model predicted |
-| `correct_role` | `str?` | `null` | What it should have been |
-| `score_feedback` | `str?` | `null` | too_high / too_low / accurate |
-| `comment` | `str?` | `null` | Free-text feedback |
-| `analysis_id` | `int?` | `null` | Associated analysis ID |
-
-### ContentFeedbackRequest (`POST /content-feedback`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `skill` | `str` | required | Skill being rated |
-| `section_idx` | `int?` | `null` | Section index |
-| `feedback_type` | `str` | required | rating / error_report / suggestion / quality_issue |
-| `rating` | `int?` | `null` | 1-5 stars |
-| `comment` | `str?` | `null` | Free-text |
-| `content_type` | `str` | `"section"` | section / overview / quiz |
-
----
-
-## Supported Roles
-
-| Role | Core Skills | Optional Skills |
-|---|---|---|
-| Software Developer | python, java, git, sql, docker, testing | kubernetes, aws, ci-cd, agile |
-| Frontend Developer | javascript, react, html, css, typescript | next.js, vue, svelte, testing, figma |
-| Backend Developer | python, sql, docker, rest, git | redis, aws, kubernetes, graphql, testing |
-| Full Stack Developer | javascript, react, python, sql, docker, git | typescript, aws, redis, testing, ci-cd |
-| Data Scientist | python, sql, statistics, machine-learning, pandas | deep-learning, nlp, spark, tensorflow, r |
-| ML Engineer | python, machine-learning, deep-learning, docker, mlops | kubernetes, tensorflow, pytorch, spark, onnx |
-| DevOps Engineer | docker, kubernetes, linux, ci-cd, aws | terraform, ansible, monitoring, gcp, security |
-
----
-
-## Scoring Formula
-
-```
-Final Score = (Core Coverage    x 0.35) +
-              (Optional Coverage x 0.10) +
-              (Project Score     x 0.25) +
-              (ATS Score         x 0.20) +
-              (Structure Score   x 0.10)
-```
-
-**Readiness Categories:**
-
-| Category | Score Range |
-|---|---|
-| Job Ready | >= 75 |
-| Improving | >= 45 |
-| Needs Development | < 45 |
-
-**Weighted Skill Coverage:** Skills marked as `high` importance in `scoring.json` count 1.5x, `medium` 1.0x, `low` 0.7x.
-
----
-
-## Request Body Schemas
-
-### ResumeInput (`POST /predict`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `skills` | `list[str]` | required | Extracted skills (lowercase) |
-| `project_score_percent` | `float` | `0` | Project quality score (0-100) |
-| `ats_score_percent` | `float` | `0` | ATS compliance score (0-100) |
-| `structure_score_percent` | `float` | `0` | Resume structure score (0-100) |
-| `raw_text` | `str` | `""` | Full resume text |
-| `sections_detected` | `list[str]` | `[]` | Resume sections found |
-| `current_role` | `str` | `""` | Current or target role |
-
-### RolePredictRequest (`POST /ml/predict-role`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `skills` | `list[str]` | required | Extracted skills |
-| `project_score_percent` | `float` | `0` | Project score |
-| `ats_score_percent` | `float` | `0` | ATS score |
-| `structure_score_percent` | `float` | `0` | Structure score |
-| `raw_text` | `str` | `""` | Resume text (max 500K chars) |
-| `sections_detected` | `list[str]` | `[]` | Detected sections |
-| `current_role` | `str` | `""` | Current role for comparison |
-
-### SmartPlanRequest (`POST /ai/smart-plan`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `missing_core_skills` | `list[str]` | required | Core skills to learn |
-| `missing_optional_skills` | `list[str]` | `[]` | Optional skills to learn |
-| `mastered_skills` | `list[str]` | `[]` | Already known skills |
-| `daily_hours` | `float` | `2.0` | Study hours per day |
-| `deadline` | `str?` | `null` | ISO date (e.g. `"2026-06-15"`) |
-
-### ChatRequest (`POST /ai/study/chat`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `skill` | `str` | required | Skill topic |
-| `query` | `str` | required | User question (max 10K chars) |
-| `history` | `list[dict]` | `[]` | Conversation history |
-| `mastered_skills` | `list[str]` | `[]` | Context for personalization |
-
-### InterviewStartRequest (`POST /ai/interview/start`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `skill` | `str` | required | Skill to interview on |
-| `difficulty` | `str` | `"medium"` | easy / medium / hard |
-| `role` | `str` | `""` | Target role |
-
-### InterviewAnswerRequest (`POST /ai/interview/answer`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `skill` | `str` | required | Skill context |
-| `question` | `str` | required | The question asked |
-| `answer` | `str` | required | User's answer |
-| `question_number` | `int` | `1` | Question number in session |
-| `difficulty` | `str` | `"medium"` | Difficulty level |
-| `history` | `list[dict]` | `[]` | Session history |
-
-### EvaluateRequest (`POST /interview/evaluate`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `role` | `str` | required | Role context |
-| `question_id` | `str` | required | Question identifier |
-| `answer` | `str` | required | User's answer text |
-
-### ProjectRequest (`POST /projects/generate`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `role` | `str` | required | Target role |
-| `skills` | `list[str]` | required | Skills to acquire |
-
-### VerifyRequest (`POST /projects/verify`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `github_url` | `str` | required | GitHub repository URL |
-| `project_markdown` | `str` | required | Original project spec (max 100K chars) |
-| `required_skills` | `list[str]` | required | Skills to demonstrate |
-| `role` | `str` | required | Target role |
-
-### FeedbackRequest (`POST /feedback`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `predicted_role` | `str` | required | What the model predicted |
-| `correct_role` | `str?` | `null` | What it should have been |
-| `score_feedback` | `str?` | `null` | too_high / too_low / accurate |
-| `comment` | `str?` | `null` | Free-text feedback |
-| `analysis_id` | `int?` | `null` | Associated analysis ID |
-
-### ContentFeedbackRequest (`POST /content-feedback`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `skill` | `str` | required | Skill being rated |
-| `section_idx` | `int?` | `null` | Section index |
-| `feedback_type` | `str` | required | rating / error_report / suggestion / quality_issue |
-| `rating` | `int?` | `null` | 1-5 stars |
-| `comment` | `str?` | `null` | Free-text |
-| `content_type` | `str` | `"section"` | section / overview / quiz |
-
----
-
-## Supported Roles
-
-| Role | Core Skills | Optional Skills |
-|---|---|---|
-| Software Developer | python, java, git, sql, docker, testing | kubernetes, aws, ci-cd, agile |
-| Frontend Developer | javascript, react, html, css, typescript | next.js, vue, svelte, testing, figma |
-| Backend Developer | python, sql, docker, rest, git | redis, aws, kubernetes, graphql, testing |
-| Full Stack Developer | javascript, react, python, sql, docker, git | typescript, aws, redis, testing, ci-cd |
-| Data Scientist | python, sql, statistics, machine-learning, pandas | deep-learning, nlp, spark, tensorflow, r |
-| ML Engineer | python, machine-learning, deep-learning, docker, mlops | kubernetes, tensorflow, pytorch, spark, onnx |
-| DevOps Engineer | docker, kubernetes, linux, ci-cd, aws | terraform, ansible, monitoring, gcp, security |
-
----
-
-## Scoring Formula
-
-```
-Final Score = (Core Coverage    x 0.35) +
-              (Optional Coverage x 0.10) +
-              (Project Score     x 0.25) +
-              (ATS Score         x 0.20) +
-              (Structure Score   x 0.10)
-```
-
-**Readiness Categories:**
-
-| Category | Score Range |
-|---|---|
-| Job Ready | >= 75 |
-| Improving | >= 45 |
-| Needs Development | < 45 |
-
-**Weighted Skill Coverage:** Skills marked as `high` importance in `scoring.json` count 1.5x, `medium` 1.0x, `low` 0.7x.
-
----
-
-## Request Body Schemas
-
-### ResumeInput (`POST /predict`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `skills` | `list[str]` | required | Extracted skills (lowercase) |
-| `project_score_percent` | `float` | `0` | Project quality score (0-100) |
-| `ats_score_percent` | `float` | `0` | ATS compliance score (0-100) |
-| `structure_score_percent` | `float` | `0` | Resume structure score (0-100) |
-| `raw_text` | `str` | `""` | Full resume text |
-| `sections_detected` | `list[str]` | `[]` | Resume sections found |
-| `current_role` | `str` | `""` | Current or target role |
-
-### RolePredictRequest (`POST /ml/predict-role`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `skills` | `list[str]` | required | Extracted skills |
-| `project_score_percent` | `float` | `0` | Project score |
-| `ats_score_percent` | `float` | `0` | ATS score |
-| `structure_score_percent` | `float` | `0` | Structure score |
-| `raw_text` | `str` | `""` | Resume text (max 500K chars) |
-| `sections_detected` | `list[str]` | `[]` | Detected sections |
-| `current_role` | `str` | `""` | Current role for comparison |
-
-### SmartPlanRequest (`POST /ai/smart-plan`)
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `missing_core_skills` | `list[str]` | required | Core skills to learn |
-| `missing_optional_skills` | `list[str]` | `[]` | Optional skills to learn |
 | `mastered_skills` | `list[str]` | `[]` | Already known skills |
 | `daily_hours` | `float` | `2.0` | Study hours per day |
 | `deadline` | `str?` | `null` | ISO date (e.g. `"2026-06-15"`) |
