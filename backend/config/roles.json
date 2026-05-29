@@ -16,19 +16,32 @@
             "oops"
         ],
         "optional": [
-            "docker",
+            "active directory",
+            "agile",
             "aws",
-            "react",
-            "typescript",
-            "generative ai",
-            "llm",
-            "prompt engineering",
-            "microservices",
-            "next.js",
             "c#",
+            "cisco",
+            "confluence",
+            "docker",
+            "exchange",
+            "generative ai",
             "golang",
+            "jira",
+            "llm",
+            "microservices",
+            "networking",
+            "next.js",
+            "office 365",
+            "postman",
+            "powershell",
+            "prompt engineering",
+            "react",
+            "selenium",
+            "servicenow",
             "testing",
-            "agile"
+            "typescript",
+            "vmware",
+            "windows server"
         ]
     },
     "Frontend Developer": {
@@ -43,17 +56,22 @@
             "tailwind"
         ],
         "optional": [
-            "next.js",
-            "redux",
-            "testing",
-            "figma",
-            "vue",
-            "generative ai",
+            "adobe",
+            "agile",
             "angular",
-            "svelte",
             "bootstrap",
+            "canva",
+            "figma",
+            "generative ai",
             "graphql",
-            "agile"
+            "illustrator",
+            "next.js",
+            "photoshop",
+            "redux",
+            "svelte",
+            "testing",
+            "ui/ux",
+            "vue"
         ]
     },
     "Backend Developer": {
@@ -134,18 +152,24 @@
             "data analysis"
         ],
         "optional": [
+            "big data",
+            "computer vision",
+            "data engineering",
             "deep learning",
-            "tensorflow",
-            "pytorch",
-            "r",
-            "spark",
-            "tableau",
-            "mlops",
+            "excel",
             "generative ai",
             "llm",
-            "data engineering",
+            "mlops",
             "nlp",
-            "computer vision"
+            "power bi",
+            "pytorch",
+            "r",
+            "sas",
+            "spark",
+            "spss",
+            "stata",
+            "tableau",
+            "tensorflow"
         ]
     },
     "ML Engineer": {
@@ -193,14 +217,21 @@
             "prometheus"
         ],
         "optional": [
-            "aws",
-            "gcp",
-            "jenkins",
-            "python",
-            "gitops",
-            "finops",
             "aiops",
-            "golang"
+            "aws",
+            "cisco",
+            "datadog",
+            "finops",
+            "gcp",
+            "gitops",
+            "golang",
+            "jenkins",
+            "macos",
+            "new relic",
+            "python",
+            "servicenow",
+            "splunk",
+            "windows"
         ]
     }
 }
