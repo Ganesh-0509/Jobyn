@@ -250,7 +250,7 @@ export default function InterviewReadiness() {
                             </svg>
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
                                 <span className="font-heading text-xl font-bold">{readiness}</span>
-                                <span className="text-[10px] text-muted-foreground">{readinessLabel}</span>
+                                <span className="text-xs text-muted-foreground">{readinessLabel}</span>
                             </div>
                         </div>
                     </CardContent>
@@ -270,7 +270,7 @@ export default function InterviewReadiness() {
                         <CardContent className="flex flex-col items-center gap-1 pt-4">
                             {s.icon}
                             <span className="font-heading text-lg font-bold">{s.num}</span>
-                            <span className="text-[10px] text-muted-foreground">{s.label}</span>
+                            <span className="text-xs text-muted-foreground">{s.label}</span>
                         </CardContent>
                     </Card>
                 ))}
@@ -365,8 +365,8 @@ export default function InterviewReadiness() {
                                             <Badge variant={
                                                 question.difficulty === 'Beginner' ? 'default' :
                                                 question.difficulty === 'Advanced' ? 'destructive' : 'secondary'
-                                            } className="text-[10px]">{question.difficulty}</Badge>
-                                            <span className="font-mono text-[10px] text-muted-foreground">{question.id}</span>
+                                            } className="text-xs">{question.difficulty}</Badge>
+                                            <span className="font-mono text-xs text-muted-foreground">{question.id}</span>
                                         </div>
                                         <p className="text-sm leading-relaxed">{question.question}</p>
                                     </CardContent>
@@ -415,7 +415,7 @@ export default function InterviewReadiness() {
                                         result.score >= 40 ? 'border-amber bg-amber/10' : 'border-crimson bg-crimson/10'
                                     }`}>
                                         <span className="font-heading text-2xl font-bold">{result.score}%</span>
-                                        <span className="text-[10px] font-semibold text-muted-foreground">{result.grade}</span>
+                                        <span className="text-xs font-semibold text-muted-foreground">{result.grade}</span>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
                                         {result.detected_concepts.length}/{result.total_concepts} concepts covered
@@ -430,7 +430,7 @@ export default function InterviewReadiness() {
                                             </div>
                                             <div className="flex flex-wrap gap-1">
                                                 {result.detected_concepts.length > 0
-                                                    ? result.detected_concepts.map(c => <Badge key={c} className="bg-mint/10 text-mint text-[10px]">{c}</Badge>)
+                                                    ? result.detected_concepts.map(c => <Badge key={c} className="bg-mint/10 text-mint text-xs">{c}</Badge>)
                                                     : <span className="text-xs text-muted-foreground">None detected</span>}
                                             </div>
                                         </CardContent>
@@ -442,7 +442,7 @@ export default function InterviewReadiness() {
                                             </div>
                                             <div className="flex flex-wrap gap-1">
                                                 {result.missing_concepts.length > 0
-                                                    ? result.missing_concepts.map(c => <Badge key={c} variant="destructive" className="text-[10px]">{c}</Badge>)
+                                                    ? result.missing_concepts.map(c => <Badge key={c} variant="destructive" className="text-xs">{c}</Badge>)
                                                     : <span className="text-xs text-muted-foreground">All covered!</span>}
                                             </div>
                                         </CardContent>
@@ -512,9 +512,9 @@ export default function InterviewReadiness() {
                                                     </p>
                                                 </div>
                                                 <div className="flex shrink-0 gap-1.5">
-                                                    <Badge className="bg-mint/10 text-mint text-[10px]">{s.conceptsCovered.length} covered</Badge>
+                                                    <Badge className="bg-mint/10 text-mint text-xs">{s.conceptsCovered.length} covered</Badge>
                                                     {s.conceptsMissed.length > 0 && (
-                                                        <Badge variant="destructive" className="text-[10px]">{s.conceptsMissed.length} missed</Badge>
+                                                        <Badge variant="destructive" className="text-xs">{s.conceptsMissed.length} missed</Badge>
                                                     )}
                                                 </div>
                                             </div>

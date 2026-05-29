@@ -8,6 +8,8 @@ import ErrorBoundary from './components/ErrorBoundary'
 import React, { Suspense, lazy, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import LogoMark from './components/LogoMark'
+import { FEATURE_FLAGS } from './config/features'
+import { Lock } from 'lucide-react'
 
 // ── Lazy-loaded pages (each becomes its own chunk) ──────────────
 const Landing = lazy(() => import('./pages/Landing'))
@@ -86,6 +88,18 @@ function GuestOnly({ children }: { children: React.ReactNode }) {
     return <>{children}</>
 }
 
+function ComingSoon({ feature }: { feature: string }) {
+    return (
+        <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-center">
+                <Lock className="size-12 mx-auto mb-4 text-muted-foreground" />
+                <h2 className="font-heading text-xl font-bold mb-2">{feature}</h2>
+                <p className="text-sm text-muted-foreground">This feature is being enhanced with real data. Coming soon.</p>
+            </div>
+        </div>
+    )
+}
+
 function AppRoutes() {
     const location = useLocation()
     return (
@@ -109,7 +123,7 @@ function AppRoutes() {
                         <Route path="/improvement-plan" element={<FeatureErrorBoundary featureName="Improvement Plan"><ImprovementPlan /></FeatureErrorBoundary>} />
                         <Route path="/interview-readiness" element={<FeatureErrorBoundary featureName="Interview Readiness"><InterviewReadiness /></FeatureErrorBoundary>} />
                         <Route path="/progress-tracking" element={<FeatureErrorBoundary featureName="Progress Tracking"><ProgressTracking /></FeatureErrorBoundary>} />
-                        <Route path="/resume-comparison" element={<FeatureErrorBoundary featureName="Resume Comparison"><ResumeComparison /></FeatureErrorBoundary>} />
+                        <Route path="/resume-comparison" element={<FeatureErrorBoundary featureName="Resume Comparison">{FEATURE_FLAGS.RESUME_COMPARISON ? <ResumeComparison /> : <ComingSoon feature="Resume Comparison" />}</FeatureErrorBoundary>} />
                         <Route path="/industry-alignment" element={<FeatureErrorBoundary featureName="Industry Alignment"><IndustryAlignment /></FeatureErrorBoundary>} />
                         <Route path="/my-projects" element={<FeatureErrorBoundary featureName="My Projects"><MyProjects /></FeatureErrorBoundary>} />
                         <Route path="/admin" element={<RequireAdmin><FeatureErrorBoundary featureName="Admin Dashboard"><AdminDashboard /></FeatureErrorBoundary></RequireAdmin>} />
@@ -266,7 +280,7 @@ export default function App() {
                                                         className="text-center mt-12 space-y-1.5"
                                                     >
                                                         <h4 className="font-heading text-stone-500 text-sm font-semibold tracking-wide">CampusSync Edge OS</h4>
-                                                        <p className="font-mono text-[9px] uppercase tracking-wider text-stone-400 animate-pulse">UNSEALING PLACEMENT CREDENTIALS...</p>
+                                                        <p className="font-mono text-[10px] uppercase tracking-wider text-stone-400 animate-pulse">UNSEALING PLACEMENT CREDENTIALS...</p>
                                                     </motion.div>
                                                 </div>
                                             </motion.div>

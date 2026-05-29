@@ -88,7 +88,7 @@ export default function Terms() {
                     </Link>
                     <span className="text-sm font-bold tracking-tight">CampusSync Terms of Service</span>
                 </div>
-                <Badge variant="outline" className="text-[10px] border-cyan/30 text-cyan">
+                <Badge variant="outline" className="text-xs border-cyan/30 text-cyan">
                     <Scale className="h-3 w-3 mr-1" /> Legal Framework
                 </Badge>
             </header>

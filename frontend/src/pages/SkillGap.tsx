@@ -129,7 +129,7 @@ export default function SkillGap() {
                         <span className="flex-1 text-sm font-semibold text-foreground">{g.skill}</span>
                         <Badge
                           variant={g.priority === 'Critical' ? 'destructive' : g.priority === 'High' ? 'secondary' : 'outline'}
-                          className="text-[10px]"
+                          className="text-xs"
                         >
                           {g.priority}
                         </Badge>
@@ -141,7 +141,7 @@ export default function SkillGap() {
                         <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-9">
                           <span className="text-[11px] text-muted-foreground">Prerequisites:</span>
                           {prereqs.map(p => (
-                            <Badge key={p} variant="outline" className="text-[10px] font-normal">
+                            <Badge key={p} variant="outline" className="text-xs font-normal">
                               {p}
                             </Badge>
                           ))}

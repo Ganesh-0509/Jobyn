@@ -107,7 +107,7 @@ export default function IndustryAlignment() {
                     </div>
                     <div className="text-right">
                       <div className={`font-heading text-3xl font-bold ${row.color}`}>{pct}%</div>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Alignment</p>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Alignment</p>
                     </div>
                   </div>
                   <Progress value={pct} className="mt-4 h-2.5" />

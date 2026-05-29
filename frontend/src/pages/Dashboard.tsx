@@ -5,7 +5,7 @@ import { useResume } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
 import { getAnalytics } from '../api/client'
 import { loadHistory, getHistoryOrDemo } from '../utils/history'
-import { Upload, AlertCircle, Lightbulb, Activity, TrendingUp, Trophy, ArrowRight, BarChart2, Zap, BookOpen } from 'lucide-react'
+import { Upload, AlertCircle, Lightbulb, Activity, TrendingUp, Trophy, ArrowRight, BarChart2, Zap, BookOpen, Target, CheckCircle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -48,6 +48,7 @@ export default function Dashboard() {
   const missingCore = useMemo(() => (analysis?.missing_core_skills ?? []).filter(s => !masteredLower.has(s.toLowerCase())), [analysis, masteredLower])
   const missingOpt = useMemo(() => (analysis?.missing_optional_skills ?? []).filter(s => !masteredLower.has(s.toLowerCase())), [analysis, masteredLower])
   const missingCount = missingCore.length + missingOpt.length
+  const isFirstTime = !analysis && !loading
   const originalCorePct = analysis?.core_coverage_percent ?? 0
   const totalCoreSkills = (analysis?.detected_skills?.length ?? 0) + (analysis?.missing_core_skills?.length ?? 0)
   const newlyMasteredCore = (analysis?.missing_core_skills ?? []).filter(s => masteredLower.has(s.toLowerCase())).length
@@ -112,6 +113,39 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* First-Time Welcome Guide */}
+      {isFirstTime && (
+        <motion.div variants={item}>
+          <Card className="premium-hover-card relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-violet/5">
+            <CardContent className="py-8 text-center">
+              <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary/10">
+                <Upload className="size-7 text-primary" />
+              </div>
+              <h2 className="font-heading text-xl font-bold tracking-tight sm:text-2xl">Welcome to CampusSync Edge</h2>
+              <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
+                Upload your resume to get personalized readiness scores, identify skill gaps,
+                and build a roadmap to land your dream tech job.
+              </p>
+              <Button size="lg" className="mt-6 gap-2" onClick={() => navigate('/resume-analyzer')}>
+                <Upload className="size-4" /> Upload Your Resume
+              </Button>
+              <div className="mt-8 flex flex-col sm:flex-row justify-center gap-6 sm:gap-10">
+                {[
+                  { step: '1', label: 'Upload resume', icon: Upload },
+                  { step: '2', label: 'Get scored', icon: Target },
+                  { step: '3', label: 'Improve & land the job', icon: CheckCircle },
+                ].map((s) => (
+                  <div key={s.step} className="flex items-center gap-2.5">
+                    <div className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{s.step}</div>
+                    <span className="text-sm font-medium text-muted-foreground">{s.label}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Analytics Error */}
       {analyticsError && (
@@ -194,9 +228,9 @@ export default function Dashboard() {
                 <div className="space-y-2.5">
                   {TOP_MISSING.map((item, i) => (
                     <div key={i} className="flex items-center gap-3 rounded-lg border border-border/50 bg-muted/30 px-3 py-2.5">
-                      <span className="flex size-5 shrink-0 items-center justify-center rounded-md bg-muted text-[10px] font-bold text-muted-foreground">{i + 1}</span>
+                      <span className="flex size-5 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-bold text-muted-foreground">{i + 1}</span>
                       <span className="flex-1 text-sm font-medium text-foreground">{item.skill}</span>
-                      <Badge variant={item.priority === 'Critical' ? 'destructive' : 'secondary'} className="text-[10px]">
+                      <Badge variant={item.priority === 'Critical' ? 'destructive' : 'secondary'} className="text-xs">
                         {item.priority}
                       </Badge>
                     </div>
@@ -232,7 +266,7 @@ export default function Dashboard() {
                   <CardDescription>Cross-Role Comparison</CardDescription>
                 </div>
               </div>
-              <Badge variant="outline" className="ml-auto border-primary/20 text-[10px] uppercase tracking-wider">Skill Similarity</Badge>
+              <Badge variant="outline" className="ml-auto border-primary/20 text-xs uppercase tracking-wider">Skill Similarity</Badge>
             </CardHeader>
             <CardContent>
               <div className="rounded-lg border border-border/50 bg-muted/30 p-4">

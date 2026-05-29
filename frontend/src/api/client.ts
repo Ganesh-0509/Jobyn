@@ -261,8 +261,11 @@ export async function getHealth(): Promise<HealthResult> {
 // ── AI Forecast ───────────────────────────────────────────────
 export interface ForecastResult {
     trend_title: string
-    growth_pct: number
+    growth_pct: number | null
     summary: string
+    median_salary_inr?: string
+    demand_level?: string
+    top_companies?: string[]
     sources: Array<{ name: string; url: string; insight: string }>
 }
 

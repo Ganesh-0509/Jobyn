@@ -145,7 +145,7 @@ export default function Settings() {
                   <div key={i} className="flex flex-col items-center gap-1 rounded-lg bg-muted/30 p-2.5 text-center">
                     <s.icon className="size-3.5 text-muted-foreground" />
                     <span className="text-sm font-bold text-foreground">{s.value}</span>
-                    <span className="text-[10px] text-muted-foreground">{s.label}</span>
+                    <span className="text-xs text-muted-foreground">{s.label}</span>
                   </div>
                 ))}
               </div>
@@ -163,7 +163,7 @@ export default function Settings() {
                 onChange={e => setDailyCommitment(Number(e.target.value))}
                 className="w-full accent-primary"
               />
-              <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+              <div className="mt-1 flex justify-between text-xs text-muted-foreground">
                 <span>1h</span>
                 <span className="font-bold text-primary">{dailyCommitment}h / day</span>
                 <span>6h</span>
@@ -203,7 +203,7 @@ export default function Settings() {
             <CardContent>
               {analysis && (
                 <div className="mb-3 flex items-center gap-2 rounded-lg bg-muted/30 p-3 text-xs">
-                  <Badge variant="outline" className="text-[10px]">Active Session</Badge>
+                  <Badge variant="outline" className="text-xs">Active Session</Badge>
                   <span className="font-mono text-foreground">{analysis.filename}</span>
                   <span className="text-muted-foreground">{analysis.role} · {analysis.final_score}%</span>
                 </div>
@@ -328,7 +328,7 @@ export default function Settings() {
             <CardContent className="space-y-2 text-xs">
               <p className="font-bold text-foreground">CampusSync Edge AI - v2.0</p>
               <p className="leading-relaxed text-muted-foreground">Locally cached ONNX model for classification + Gemini 2.0 Flash for semantic reasoning. Built to help students bridge the gap between academic skills and industry expectations.</p>
-              <p className="font-mono text-[10px] text-muted-foreground/60">FastAPI · React · Supabase · ONNX Runtime</p>
+              <p className="font-mono text-xs text-muted-foreground/60">FastAPI · React · Supabase · ONNX Runtime</p>
             </CardContent>
           </Card>
         </div>

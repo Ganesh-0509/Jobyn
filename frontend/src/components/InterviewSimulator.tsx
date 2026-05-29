@@ -182,8 +182,8 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
             {/* Status bar */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="font-mono text-[10px]">Q{currentQuestion.question_number}/{MAX_QUESTIONS}</Badge>
-                    <Badge variant="secondary" className="text-[10px]">{currentQuestion.category}</Badge>
+                    <Badge variant="outline" className="font-mono text-xs">Q{currentQuestion.question_number}/{MAX_QUESTIONS}</Badge>
+                    <Badge variant="secondary" className="text-xs">{currentQuestion.category}</Badge>
                 </div>
                 <div className="flex items-center gap-3 text-xs">
                     {sessionHistory.length > 0 && <span className="font-medium text-muted-foreground">Avg: {avgScore}/10</span>}
@@ -196,7 +196,7 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
             {/* Progress dots */}
             <div className="flex items-center gap-2">
                 {Array.from({ length: MAX_QUESTIONS }, (_, i) => (
-                    <div key={i} className={`flex size-7 items-center justify-center rounded-full text-[10px] font-bold ${
+                    <div key={i} className={`flex size-7 items-center justify-center rounded-full text-xs font-bold ${
                         i < sessionHistory.length ? 'bg-primary/20 text-primary'
                             : i === sessionHistory.length ? 'bg-primary text-primary-foreground ring-2 ring-primary/30'
                             : 'bg-muted text-muted-foreground'
@@ -239,7 +239,7 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
                     )}
                     <Button onClick={handleSubmitAnswer} disabled={!answer.trim()} className="gap-2">
                         <Send className="size-3.5" /> Submit Answer
-                        <kbd className="pointer-events-none ml-1 rounded border bg-primary-foreground/10 px-1 py-0.5 text-[10px] font-mono text-primary-foreground/70">Ctrl+Enter</kbd>
+                        <kbd className="pointer-events-none ml-1 rounded border bg-primary-foreground/10 px-1 py-0.5 text-xs font-mono text-primary-foreground/70">Ctrl+Enter</kbd>
                     </Button>
                 </div>
             </div>
@@ -263,7 +263,7 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
                             <span className={`font-heading text-2xl font-bold ${scoreColor}`}>{evaluation.score}</span>
-                            <span className="text-[10px] text-muted-foreground">/10</span>
+                            <span className="text-xs text-muted-foreground">/10</span>
                         </div>
                     </div>
                     {evaluation.interviewer_note && <p className="text-center text-xs italic text-muted-foreground">"{evaluation.interviewer_note}"</p>}
@@ -328,7 +328,7 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
                         <Card key={s.label} className="text-center">
                             <CardContent className="py-3">
                                 <p className={`font-heading text-xl font-bold ${s.color}`}>{s.value}</p>
-                                <p className="text-[10px] text-muted-foreground">{s.label}</p>
+                                <p className="text-xs text-muted-foreground">{s.label}</p>
                             </CardContent>
                         </Card>
                     ))}
@@ -372,7 +372,7 @@ export default function InterviewSimulator({ skill, onComplete }: InterviewSimul
                             {sessionHistory.map((h, i) => (
                                 <div key={i} className="rounded-lg border p-3">
                                     <div className="mb-2 flex items-center justify-between">
-                                        <Badge variant="outline" className="text-[10px]">Q{h.question_number}</Badge>
+                                        <Badge variant="outline" className="text-xs">Q{h.question_number}</Badge>
                                         <span className={`font-mono text-sm font-bold ${h.score >= 7 ? 'text-success' : h.score >= 5 ? 'text-amber-500' : 'text-destructive'}`}>{h.score}/10</span>
                                     </div>
                                     <p className="mb-1 text-xs font-medium">{h.question}</p>

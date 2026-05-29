@@ -7,16 +7,12 @@ import {
 import { useResume } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
 import {
-    Clock, Lock, Flame, PlayCircle, Trophy, Blocks,
-    Zap, Target, CalendarClock, TrendingUp, ChevronDown, ChevronUp,
+    Clock, Lock, PlayCircle, Trophy, Blocks,
+    Target, CalendarClock, TrendingUp, ChevronDown, ChevronUp,
     GitBranch, ExternalLink, Shield, Sparkles,
 } from 'lucide-react'
 import StudyHub from '../components/StudyHub'
 import ProjectGeneratorModal from '../components/ProjectGeneratorModal'
-import {
-    getStreakData, awardXP, getXPForNextLevel, getStreakMultiplier,
-    getLevelTitle, type StreakData,
-} from '../utils/streakTracker'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -48,21 +44,6 @@ export default function ImprovementPlan() {
     const [forecastLoading, setForecastLoading] = useState(false)
     const [forecastError, setForecastError] = useState<string | null>(null)
     const [forecastExpanded, setForecastExpanded] = useState(false)
-    const [streak, setStreak] = useState<StreakData>(() => getStreakData(user?.email))
-    const [xpToast, setXpToast] = useState<{ xp: number; action: string } | null>(null)
-    const toastTimer = useRef<ReturnType<typeof setTimeout>>()
-
-    const doAwardXP = (action: Parameters<typeof awardXP>[0], detail?: string) => {
-        const result = awardXP(action, user?.email, detail)
-        if (result.xpAwarded > 0) {
-            setStreak(result.streakData)
-            setXpToast({ xp: result.xpAwarded, action: detail || action })
-            clearTimeout(toastTimer.current)
-            toastTimer.current = setTimeout(() => setXpToast(null), 2500)
-        }
-    }
-
-    useEffect(() => { if (analysis) doAwardXP('daily_login', 'Opened Improvement Plan') }, []) // eslint-disable-line
 
     useEffect(() => {
         if (!analysis) return
@@ -103,10 +84,7 @@ export default function ImprovementPlan() {
 
     const canStudy = (item: SmartPlanItem) => item.prerequisites.every(p => masteredSkills.includes(p.toLowerCase()))
 
-    const handleVerified = (skill: string) => { markSkillMastered(skill.toLowerCase()); doAwardXP('quiz_passed', skill) }
-
-    const xpInfo = getXPForNextLevel(streak.totalXP)
-    const multiplier = getStreakMultiplier(streak.currentStreak)
+    const handleVerified = (skill: string) => { markSkillMastered(skill.toLowerCase()) }
 
     if (!analysis) {
         return (
@@ -125,7 +103,7 @@ export default function ImprovementPlan() {
                             <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-primary">What's Inside?</p>
                             <ul className="space-y-2 text-sm text-muted-foreground">
                                 <li>Smart dependency-aware learning path (powered by skill graph)</li>
-                                <li>Daily streak + XP gamification system</li>
+                                <li>Career milestone tracking</li>
                                 <li>Deadline mode — set your interview date, we adjust the plan</li>
                                 <li>AI Market Forecast with growth insights</li>
                                 <li>Integrated Study Hub + Project Verification</li>
@@ -139,49 +117,20 @@ export default function ImprovementPlan() {
 
     return (
         <div className="mx-auto max-w-4xl space-y-6">
-            {/* XP Toast */}
-            <AnimatePresence>
-                {xpToast && (
-                    <motion.div
-                        initial={{ opacity: 0, x: 80 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 80 }}
-                        className="fixed right-6 top-6 z-50 flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-amber-500/30"
-                    >
-                        <Zap className="size-4" /> +{xpToast.xp} XP
-                        {multiplier > 1 && <span className="text-xs opacity-90">({multiplier}x streak!)</span>}
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Streak + XP Banner */}
+            {/* Career Progress Banner */}
             <motion.div {...fadeUp}>
-                <Card className="premium-hover-card border-amber-500/10 bg-gradient-to-r from-amber-500/5 to-primary/5">
-                    <CardContent className="grid items-center gap-6 pt-6 sm:grid-cols-[auto_1fr_auto]">
-                        <div className="flex flex-col items-center">
-                            <div className={`flex size-14 items-center justify-center rounded-full border-2 ${streak.currentStreak > 0 ? 'border-amber-500/40 bg-amber-500/15' : 'border-transparent bg-muted'}`}>
-                                <Flame className="size-7" style={{ color: streak.currentStreak > 0 ? '#f59e0b' : 'var(--muted-foreground)' }} />
-                            </div>
-                            <p className="mt-1 font-heading text-xl font-extrabold">{streak.currentStreak}</p>
-                            <p className="text-[10px] uppercase text-muted-foreground">Day Streak</p>
+                <Card className="premium-hover-card border-primary/10 bg-gradient-to-r from-primary/5 to-violet/5">
+                    <CardContent className="flex items-center gap-6 pt-6">
+                        <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                            <Trophy className="size-6 text-primary" />
                         </div>
-                        <div>
-                            <div className="mb-2 flex items-center gap-2">
-                                <Badge variant="outline" className="border-primary/30 bg-primary/10 text-[10px] font-bold text-primary">LVL {streak.level}</Badge>
-                                <span className="text-sm font-bold">{getLevelTitle(streak.level)}</span>
-                                {multiplier > 1 && (
-                                    <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-[10px] font-bold text-amber-500">{multiplier}x MULTIPLIER</Badge>
-                                )}
-                            </div>
-                            <Progress value={xpInfo.progress} className="mb-1 h-2" />
-                            <div className="flex justify-between text-[11px] text-muted-foreground">
-                                <span>{streak.totalXP} XP total</span>
-                                <span>{xpInfo.next - streak.totalXP} XP to Level {streak.level + 1}</span>
-                            </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold">{totalMastered} skill{totalMastered !== 1 && 's'} mastered</p>
+                            <p className="text-xs text-muted-foreground">Complete your learning path to reach career readiness</p>
                         </div>
-                        <div className="flex gap-6 text-center">
-                            <div><p className="font-heading text-lg font-extrabold text-success">{totalMastered}</p><p className="text-[10px] text-muted-foreground">Skills</p></div>
-                            <div><p className="font-heading text-lg font-extrabold text-primary">{streak.longestStreak}</p><p className="text-[10px] text-muted-foreground">Best Streak</p></div>
+                        <div className="text-right">
+                            <p className="font-heading text-2xl font-bold text-primary">{planItems.length > 0 ? Math.round((totalMastered / planItems.length) * 100) : 0}%</p>
+                            <p className="text-xs text-muted-foreground">Progress</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -267,29 +216,49 @@ export default function ImprovementPlan() {
                             <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-success/10 text-lg">📈</div>
                             <div className="min-w-0 flex-1">
                                 <div className="mb-1 flex items-center gap-2">
-                                    <Badge variant="secondary" className="bg-success/10 text-success text-[10px]">AI MARKET FORECAST</Badge>
+                                    <Badge variant="secondary" className="bg-success/10 text-success text-xs">AI MARKET FORECAST</Badge>
                                     <span className="text-xs font-bold text-success">{aiForecast.growth_pct != null ? `+${aiForecast.growth_pct}% Opportunity` : 'Analyzing...'}</span>
+                                    {aiForecast.demand_level && aiForecast.demand_level !== 'N/A' && (
+                                        <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">{aiForecast.demand_level} Demand</Badge>
+                                    )}
                                 </div>
                                 <p className="text-sm text-muted-foreground">{aiForecast.summary}</p>
+                                {aiForecast.median_salary_inr && aiForecast.median_salary_inr !== 'N/A' && (
+                                    <p className="mt-1 text-xs font-medium text-foreground">Median Salary: {aiForecast.median_salary_inr}</p>
+                                )}
                             </div>
                             {forecastExpanded ? <ChevronUp className="size-4 shrink-0 text-muted-foreground" /> : <ChevronDown className="size-4 shrink-0 text-muted-foreground" />}
                         </CardContent>
                         <AnimatePresence>
-                            {forecastExpanded && aiForecast.sources?.length > 0 && (
+                            {forecastExpanded && (
                                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                                     <Separator />
-                                    <CardContent className="space-y-2 pt-4">
-                                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Verification Sources</p>
-                                        {aiForecast.sources.map((src, i) => (
-                                            <div key={i} className="flex items-start gap-3 rounded-lg border border-success/10 bg-success/5 p-3">
-                                                <TrendingUp className="mt-0.5 size-3.5 shrink-0 text-success" />
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="text-xs font-semibold">{src.name}</p>
-                                                    <p className="text-xs text-muted-foreground">{src.insight}</p>
-                                                    {src.url && <a href={src.url} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"><ExternalLink className="size-3" /> View Source</a>}
+                                    <CardContent className="space-y-3 pt-4">
+                                        {aiForecast.top_companies && aiForecast.top_companies.length > 0 && (
+                                            <div>
+                                                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Top Hiring Companies</p>
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {aiForecast.top_companies.map((c, i) => (
+                                                        <Badge key={i} variant="secondary" className="text-xs">{c}</Badge>
+                                                    ))}
                                                 </div>
                                             </div>
-                                        ))}
+                                        )}
+                                        {aiForecast.sources?.length > 0 && (
+                                            <div>
+                                                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Verification Sources</p>
+                                                {aiForecast.sources.map((src, i) => (
+                                                    <div key={i} className="flex items-start gap-3 rounded-lg border border-success/10 bg-success/5 p-3 mb-2">
+                                                        <TrendingUp className="mt-0.5 size-3.5 shrink-0 text-success" />
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="text-xs font-semibold">{src.name}</p>
+                                                            <p className="text-xs text-muted-foreground">{src.insight}</p>
+                                                            {src.url && <a href={src.url} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"><ExternalLink className="size-3" /> View Source</a>}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </CardContent>
                                 </motion.div>
                             )}
@@ -311,7 +280,7 @@ export default function ImprovementPlan() {
                         ].map(s => (
                             <Card key={s.label} className="premium-hover-card text-center"><CardContent className="py-3">
                                 <p className={`font-heading text-xl font-bold ${s.color}`}>{s.value}</p>
-                                <p className="text-[10px] text-muted-foreground">{s.label}</p>
+                                <p className="text-xs text-muted-foreground">{s.label}</p>
                             </CardContent></Card>
                         ))}
                     </div>
@@ -338,7 +307,7 @@ export default function ImprovementPlan() {
                             return (
                                 <div key={day} className="relative pl-8">
                                     <div className="absolute left-3 top-0 bottom-0 w-px bg-border" />
-                                    <div className="absolute left-0 top-1 flex size-6 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary ring-2 ring-background">D{day}</div>
+                                    <div className="absolute left-0 top-1 flex size-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary ring-2 ring-background">D{day}</div>
                                     <div className="mb-3 flex items-center gap-3">
                                         <h3 className="font-heading text-base font-semibold">Day {day}</h3>
                                         <span className="text-xs text-muted-foreground">{tasks.reduce((acc, t) => acc + t.duration_minutes, 0)} mins</span>
@@ -353,9 +322,9 @@ export default function ImprovementPlan() {
                                                         <CardContent className="pt-5">
                                                             <div className="mb-3 flex items-center justify-between">
                                                                 <div className="flex flex-wrap items-center gap-1.5">
-                                                                    <Badge variant={task.difficulty === 'Advanced' ? 'destructive' : task.difficulty === 'Intermediate' ? 'default' : 'secondary'} className="text-[10px]">{task.difficulty}</Badge>
-                                                                    {task.is_prerequisite && !task.is_target_skill && <Badge variant="secondary" className="bg-violet-500/10 text-violet-500 text-[10px]">PREREQUISITE</Badge>}
-                                                                    {task.is_target_skill && <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px]"><Target className="mr-1 size-2.5" /> TARGET</Badge>}
+                                                                    <Badge variant={task.difficulty === 'Advanced' ? 'destructive' : task.difficulty === 'Intermediate' ? 'default' : 'secondary'} className="text-xs">{task.difficulty}</Badge>
+                                                                    {task.is_prerequisite && !task.is_target_skill && <Badge variant="secondary" className="bg-violet-500/10 text-violet-500 text-xs">PREREQUISITE</Badge>}
+                                                                    {task.is_target_skill && <Badge variant="secondary" className="bg-primary/10 text-primary text-xs"><Target className="mr-1 size-2.5" /> TARGET</Badge>}
                                                                 </div>
                                                                 <span className="flex items-center gap-1 text-xs text-muted-foreground"><Clock className="size-3" /> {task.duration_minutes}m</span>
                                                             </div>
@@ -365,18 +334,18 @@ export default function ImprovementPlan() {
                                                                     {task.prerequisites.length > 0 && (
                                                                         <div className="flex flex-wrap items-center gap-1.5">
                                                                             <Shield className="size-3 text-muted-foreground" />
-                                                                            <span className="text-[10px] text-muted-foreground">Requires:</span>
+                                                                            <span className="text-xs text-muted-foreground">Requires:</span>
                                                                             {task.prerequisites.map(p => {
                                                                                 const met = masteredSkills.includes(p.toLowerCase())
-                                                                                return <Badge key={p} variant="secondary" className={`text-[10px] ${met ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>{met ? '✓' : '○'} {p}</Badge>
+                                                                                return <Badge key={p} variant="secondary" className={`text-xs ${met ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>{met ? '✓' : '○'} {p}</Badge>
                                                                             })}
                                                                         </div>
                                                                     )}
                                                                     {task.unlocks.length > 0 && (
                                                                         <div className="flex flex-wrap items-center gap-1.5">
                                                                             <GitBranch className="size-3 text-primary" />
-                                                                            <span className="text-[10px] text-muted-foreground">Unlocks:</span>
-                                                                            {task.unlocks.map(u => <Badge key={u} variant="secondary" className="bg-primary/10 text-primary text-[10px]">{u}</Badge>)}
+                                                                            <span className="text-xs text-muted-foreground">Unlocks:</span>
+                                                                            {task.unlocks.map(u => <Badge key={u} variant="secondary" className="bg-primary/10 text-primary text-xs">{u}</Badge>)}
                                                                         </div>
                                                                     )}
                                                                 </div>
@@ -384,7 +353,7 @@ export default function ImprovementPlan() {
                                                             {isLocked ? (
                                                                 <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium"><Lock className="size-3.5" /> Complete prerequisites first</div>
                                                             ) : isMastered ? (
-                                                                <div className="flex items-center gap-2 text-sm font-bold text-success"><Trophy className="size-4" /> Verified Mastery <span className="ml-auto text-xs font-normal text-muted-foreground">+50 XP</span></div>
+                                                                <div className="flex items-center gap-2 text-sm font-bold text-success"><Trophy className="size-4" /> Verified Mastery</div>
                                                             ) : (
                                                                 <div className="flex flex-col gap-2">
                                                                     <Button size="sm" className="w-full justify-center gap-2" onClick={() => setActiveStudy(task.skill)}><PlayCircle className="size-4" /> Start AI Study Hub</Button>

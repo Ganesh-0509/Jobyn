@@ -148,7 +148,7 @@ export default function Privacy() {
                     </Link>
                     <span className="text-sm font-bold tracking-tight">CampusSync Privacy Center</span>
                 </div>
-                <Badge variant="outline" className="text-[10px] border-mint/30 text-mint">
+                <Badge variant="outline" className="text-xs border-mint/30 text-mint">
                     <CheckCircle className="h-3 w-3 mr-1" /> Compliance Audited
                 </Badge>
             </header>

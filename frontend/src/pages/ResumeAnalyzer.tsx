@@ -246,7 +246,7 @@ export default function ResumeAnalyzer() {
           <Card className="premium-hover-card relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 to-violet/5">
             {analysis.auto_detected && (
               <div className="absolute right-4 top-4">
-                <Badge variant="outline" className="gap-1 border-primary/30 text-[10px] uppercase tracking-wider">
+                <Badge variant="outline" className="gap-1 border-primary/30 text-xs uppercase tracking-wider">
                   <Sparkles className="size-3" /> AI Auto-Detected
                 </Badge>
               </div>
@@ -266,7 +266,7 @@ export default function ResumeAnalyzer() {
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <span className="font-heading text-2xl font-bold text-foreground">{analysis.final_score}</span>
-                  <span className="text-[10px] text-muted-foreground">Score</span>
+                  <span className="text-xs text-muted-foreground">Score</span>
                 </div>
               </div>
 
@@ -286,7 +286,7 @@ export default function ResumeAnalyzer() {
                   <div key={m.label} className="rounded-lg border border-border/50 bg-muted/30 p-2.5 text-center">
                     <m.icon className="mx-auto size-3.5 text-muted-foreground" />
                     <div className="mt-1 font-heading text-lg font-bold text-foreground">{m.value}%</div>
-                    <div className="text-[10px] text-muted-foreground">{m.label}</div>
+                    <div className="text-xs text-muted-foreground">{m.label}</div>
                     <Progress value={m.value} className="mt-1.5 h-1" />
                   </div>
                 ))}
@@ -343,7 +343,7 @@ export default function ResumeAnalyzer() {
                       <div className="space-y-2.5">
                         {roleMatches.map((rm, i) => (
                           <div key={rm.role} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 ${i === 0 ? 'border border-primary/20 bg-primary/5' : 'bg-muted/30'}`}>
-                            <div className="flex size-6 shrink-0 items-center justify-center rounded-md text-[10px] font-bold">
+                            <div className="flex size-6 shrink-0 items-center justify-center rounded-md text-xs font-bold">
                               {i === 0 ? <Sparkles className="size-3.5 text-primary" /> : `#${i + 1}`}
                             </div>
                             <span className="flex-1 text-sm font-medium text-foreground">{rm.role}</span>

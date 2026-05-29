@@ -91,7 +91,7 @@ export default function MyProjects() {
             className={`rounded-lg border p-3 text-center transition-all ${bg} ${filterStatus === key ? `border-${color.replace('text-', '')}/50 ring-1 ring-${color.replace('text-', '')}/20` : 'border-border'}`}
           >
             <div className={`text-2xl font-bold ${color}`}>{counts[key as keyof typeof counts] ?? 0}</div>
-            <div className="text-[10px] text-muted-foreground">{label}</div>
+            <div className="text-xs text-muted-foreground">{label}</div>
           </button>
         ))}
       </div>
@@ -102,7 +102,7 @@ export default function MyProjects() {
           <span className="font-semibold text-foreground">How verification works:</span>
           {['Save a project', 'Build & push to GitHub', 'Submit repo URL for AI verification'].map((step, i) => (
             <span key={i} className="inline-flex items-center gap-1.5">
-              <span className="flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{i + 1}</span>
+              <span className="flex size-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">{i + 1}</span>
               {step}
               {i < 2 && <span className="text-border">→</span>}
             </span>

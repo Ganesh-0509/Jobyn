@@ -108,7 +108,7 @@ export default function AdminDashboard() {
                       </td>
                       <td className="p-3">
                         <div className="flex gap-1">
-                          {s.detected_skills.slice(0, 3).map(sk => <Badge key={sk} variant="outline" className="text-[10px]">{sk}</Badge>)}
+                          {s.detected_skills.slice(0, 3).map(sk => <Badge key={sk} variant="outline" className="text-xs">{sk}</Badge>)}
                         </div>
                       </td>
                       <td className="p-3 font-mono text-xs text-muted-foreground">#{s.analysis_id}</td>
@@ -151,11 +151,11 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <Card className="premium-hover-card mb-4"><CardContent className="p-4">
-                      <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-primary">Target Role Profile</p>
+                      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-primary">Target Role Profile</p>
                       <p className="mb-3 font-heading text-lg font-bold">{viewingStudent.role}</p>
                       <div className="grid grid-cols-2 gap-3">
-                        <div className="rounded-lg bg-muted/30 p-2.5"><p className="text-[10px] text-muted-foreground">Readiness</p><p className="text-sm font-bold">{viewingStudent.final_score}%</p></div>
-                        <div className="rounded-lg bg-muted/30 p-2.5"><p className="text-[10px] text-muted-foreground">ATS Score</p><p className="text-sm font-bold">{viewingStudent.ats_score_percent}%</p></div>
+                        <div className="rounded-lg bg-muted/30 p-2.5"><p className="text-xs text-muted-foreground">Readiness</p><p className="text-sm font-bold">{viewingStudent.final_score}%</p></div>
+                        <div className="rounded-lg bg-muted/30 p-2.5"><p className="text-xs text-muted-foreground">ATS Score</p><p className="text-sm font-bold">{viewingStudent.ats_score_percent}%</p></div>
                       </div>
                     </CardContent></Card>
                     <div className="mb-4">
@@ -216,8 +216,8 @@ export default function AdminDashboard() {
             <Card className="premium-hover-card"><CardContent className="p-5">
               <div className="mb-3 flex items-center gap-2.5"><Cpu className="size-4 text-violet-500" /><span className="text-sm font-bold">Neural Processing Units</span></div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-muted/30 p-3"><p className="text-[10px] text-muted-foreground">Students</p><p className="text-lg font-bold">{stats?.active_students ?? '--'}</p></div>
-                <div className="rounded-lg bg-green-500/5 p-3"><p className="text-[10px] text-green-500">Courses Cached</p><p className="text-lg font-bold text-green-500">{stats?.total_courses_cached ?? '--'}</p></div>
+                <div className="rounded-lg bg-muted/30 p-3"><p className="text-xs text-muted-foreground">Students</p><p className="text-lg font-bold">{stats?.active_students ?? '--'}</p></div>
+                <div className="rounded-lg bg-green-500/5 p-3"><p className="text-xs text-green-500">Courses Cached</p><p className="text-lg font-bold text-green-500">{stats?.total_courses_cached ?? '--'}</p></div>
               </div>
             </CardContent></Card>
             <Card className="premium-hover-card"><CardContent className="p-5">
@@ -267,10 +267,10 @@ export default function AdminDashboard() {
                   <div className={`flex size-8 items-center justify-center rounded-lg ${m.bg}`}>
                     <m.icon className={`size-4 ${m.color}`} />
                   </div>
-                  {m.extra && <span className={`text-[10px] font-bold ${m.color}`}>{m.extra}</span>}
+                  {m.extra && <span className={`text-xs font-bold ${m.color}`}>{m.extra}</span>}
                 </div>
                 <div className="font-heading text-2xl font-black text-foreground">{m.value}</div>
-                <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{m.label}</p>
+                <p className="mt-0.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{m.label}</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -301,7 +301,7 @@ export default function AdminDashboard() {
                         <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">{c.topic.charAt(0).toUpperCase()}</div>
                         <div>
                           <p className="text-sm font-bold">{c.topic.toUpperCase()}</p>
-                          <p className="text-[10px] text-muted-foreground">By <span className="font-semibold text-foreground">{c.submitted_by}</span> · {new Date(c.created_at).toLocaleDateString()}</p>
+                          <p className="text-xs text-muted-foreground">By <span className="font-semibold text-foreground">{c.submitted_by}</span> · {new Date(c.created_at).toLocaleDateString()}</p>
                         </div>
                       </div>
                       <div className="flex gap-1.5">
@@ -344,7 +344,7 @@ export default function AdminDashboard() {
                   <div key={i} className="flex-1 rounded-t bg-violet-500/30" style={{ height: `${h}%` }} />
                 ))}
               </div>
-              <p className="mt-2 text-center text-[10px] text-muted-foreground">Traffic intensity (Last 12 Hours)</p>
+              <p className="mt-2 text-center text-xs text-muted-foreground">Traffic intensity (Last 12 Hours)</p>
             </CardContent>
           </Card>
         </div>
