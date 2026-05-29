@@ -112,15 +112,32 @@ def _cache_set(key: str, value: Dict, ttl_seconds: int = settings.RAG_CACHE_TTL)
         log.warning("Cache write error: %s", e)
 
 
+# ── Gemini LLM Adapter ────────────────────────────────────────────────────────
+def _gemini_generate(prompt: str) -> Optional[str]:
+    """Generate text using Gemini directly (no Bytez required)."""
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        log.warning("GEMINI_API_KEY not set — LLM generation unavailable.")
+        return None
+    try:
+        from google import genai
+        client = genai.Client(api_key=api_key)
+        res = client.models.generate_content(
+            model=settings.GEMINI_MODEL,
+            contents=prompt,
+        )
+        return res.text
+    except Exception as e:
+        log.error("Gemini generation failed: %s", e)
+        return None
+
+
 # ── Judge Model ───────────────────────────────────────────────────────────────
-async def _judge_content(reference: str, generated: str, model) -> str:
+async def _judge_content(reference: str, generated: str, model=None) -> str:
     """
     Asks the LLM to verify that generated content doesn't contradict the reference.
     Returns: 'valid', 'minor_inconsistency', or 'major_contradiction'.
     """
-    if not model:
-        return "valid"
-
     judge_prompt = f"""
 You are a technical fact-checker.
 
@@ -134,8 +151,14 @@ Does the generated content contradict the reference material?
 Return ONLY ONE of these exact strings: valid | minor_inconsistency | major_contradiction
 """
     try:
-        res = model.run([{"role": "user", "content": judge_prompt}])
-        content = extract_content(res).strip().lower()
+        if model:
+            res = model.run([{"role": "user", "content": judge_prompt}])
+            content = extract_content(res).strip().lower()
+        else:
+            text = _gemini_generate(judge_prompt)
+            if not text:
+                return "valid"
+            content = text.strip().lower()
         if "major" in content:
             return "major_contradiction"
         if "minor" in content:
@@ -234,15 +257,18 @@ RULES:
   5. Practice Problems (2-3 problems with hints)
 """
 
-    # Step 3 — LLM generation (with model fallback)
+    # Step 3 — LLM generation (Bytez model or Gemini fallback)
     result = None
-    if model:
-        try:
+    try:
+        if model:
             res = model.run([{"role": "user", "content": prompt}])
             content = extract_content(res)
+        else:
+            content = _gemini_generate(prompt)
+        if content:
             result = parse_json_from_llm(content)
-        except Exception as e:
-            log.error("RAG LLM generation failed: %s", e)
+    except Exception as e:
+        log.error("RAG LLM generation failed: %s", e)
 
     if result is None:
         return {"skill": skill, "is_fallback": True, "sources": sources}
@@ -256,11 +282,15 @@ RULES:
         if verdict == "major_contradiction":
             log.warning("Judge detected major contradiction for [%s] — regenerating...", skill)
             try:
-                res2 = model.run([{"role": "user", "content": prompt}])
-                content2 = extract_content(res2)
-                parsed2 = parse_json_from_llm(content2)
-                if parsed2:
-                    result = parsed2
+                if model:
+                    res2 = model.run([{"role": "user", "content": prompt}])
+                    content2 = extract_content(res2)
+                else:
+                    content2 = _gemini_generate(prompt)
+                if content2:
+                    parsed2 = parse_json_from_llm(content2)
+                    if parsed2:
+                        result = parsed2
                 result["_judge_verdict"] = "regenerated"
             except Exception as e:
                 log.error("Regeneration failed: %s", e)

@@ -6,6 +6,7 @@ from typing import Optional, Dict, Any, List
 from app.services.gemini_service import gemini_service
 from app.services.bytez_service import bytez_service
 from app.services.knowledge_service import knowledge_service
+from app.services import rag_service
 from app.utils.llm_utils import extract_content, parse_json_from_llm
 
 log = logging.getLogger("ai_service")
@@ -324,26 +325,43 @@ class AIService:
         return None
 
     async def get_study_materials(self, skill: str, existing_skills: str = "") -> Dict[str, Any]:
-        """Retrieve syllabus, overview, and starting section dynamically."""
+        """Retrieve syllabus, overview, and starting section dynamically.
+
+        Flow: knowledge_cache → RAG pipeline (PGVector + Gemini) → Gemini direct → fallback
+        """
         # 1. Fetch cached syllabus first
         sections = await self.get_or_create_syllabus(skill)
         sub_roadmap = [{"title": s["title"], "duration": s["duration"]} for s in sections]
 
-        # 2. Check full cached intro
+        # 2. Check full cached intro (L1 Redis + L2 Supabase)
         cached = knowledge_service.get_cached_knowledge(skill, "study")
         if cached and cached.get("quick_summary"):
             cached["sub_roadmap"] = sub_roadmap
             cached["total_sections"] = len(sections)
             return cached
 
-        # 3. Compile dynamically via Gemini intro-first
+        # 3. Try RAG pipeline (PGVector retrieval → Gemini with context → judge)
+        try:
+            rag_result = await rag_service.generate_rag_tutorial(skill, existing_skills)
+            if rag_result and not rag_result.get("is_fallback"):
+                rag_result["sub_roadmap"] = sub_roadmap
+                rag_result["total_sections"] = len(sections)
+                knowledge_service.cache_knowledge(skill, rag_result, "study")
+                log.info("RAG pipeline produced content for [%s] (%d sources)", skill, len(rag_result.get("sources", [])))
+                return rag_result
+            else:
+                log.info("RAG fallback for [%s] — trying direct Gemini.", skill)
+        except Exception as e:
+            log.warning("RAG pipeline failed for [%s]: %s — falling back to direct Gemini.", skill, e)
+
+        # 4. Compile dynamically via Gemini (no RAG context)
         if self.gemini_key:
             intro = await self._gemini_study_intro(skill, sections, existing_skills)
             if intro:
                 knowledge_service.cache_knowledge(skill, intro, "study")
                 return intro
 
-        # 4. Fallback study container
+        # 5. Fallback study container
         return {
             "skill": skill,
             "quick_summary": f"Fundamentals and study guide for {skill}.",

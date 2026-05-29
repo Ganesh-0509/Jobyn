@@ -48,17 +48,34 @@ class GeminiService:
         Role: {role}
         Top missing skills: {skills_str}
 
-        Act as a tech recruitment analyst. Generate a career readiness forecast for 2026.
-        Identify the projected demand growth (%) for this role with the aforementioned skills.
-        Provide 2-3 specific "Verification Sources" (real articles, reports, or platforms).
-        
+        Act as a senior tech recruitment analyst specializing in the Indian engineering job market.
+        Generate a career readiness forecast for 2026.
+
+        Use these REAL data sources to ground your analysis:
+        - Bureau of Labor Statistics (BLS) Occupational Outlook Handbook
+        - LinkedIn Jobs & Emerging Jobs Report (India)
+        - Indeed India Salary & Hiring Trends
+        - Glassdoor India Tech Salary Data
+        - Stack Overflow Developer Survey 2025
+        - NASSCOM India Tech Industry Reports
+        - GitHub Octoverse Language & Repository Trends
+
+        For the role "{role}" with missing skills [{skills_str}], provide:
+        1. Projected demand growth (%) for this role in India over the next 2 years
+        2. Median salary range in INR (lakhs per annum) for entry-level positions
+        3. Top hiring companies in India for this role
+        4. How acquiring the missing skills impacts employability
+
         Return valid JSON only in this format:
         {{
-          "trend_title": "Gemini AI Market Insight — 2026",
+          "trend_title": "Market Forecast — {role} 2026",
           "growth_pct": number,
-          "summary": "Short 2 sentence analysis of demand.",
+          "median_salary_inr": "X-Y LPA",
+          "demand_level": "High | Very High | Moderate",
+          "top_companies": ["Company1", "Company2", "Company3"],
+          "summary": "2-3 sentence analysis grounded in real market data for India.",
           "sources": [
-            {{"name": "Source Name", "url": "URL", "insight": "Very short snippet"}}
+            {{"name": "Source Name", "url": "URL", "insight": "Specific data point or finding"}}
           ]
         }}
         """
@@ -102,11 +119,14 @@ class GeminiService:
 
     def _get_fallback(self, role: str, missing_skills: list) -> Dict[str, Any]:
         skill = missing_skills[0] if missing_skills else "general skills"
-        
+
         return {
             "is_fallback": True,
             "trend_title": "Market Forecast Unavailable",
             "growth_pct": None,
+            "median_salary_inr": "N/A",
+            "demand_level": "N/A",
+            "top_companies": [],
             "summary": f"Live market data is currently unavailable. Focus on strengthening your {skill} skills for {role} roles. Connect a Gemini API key for real-time AI-powered forecasts.",
             "sources": []
         }
