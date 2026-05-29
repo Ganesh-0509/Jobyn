@@ -5,6 +5,8 @@ Two public functions:
   transform_input(input_data, vocabulary) → np.ndarray
   predict_resume(input_data)              → dict
 
+Supports both ONNX (preferred) and sklearn (legacy) model formats.
+
 CRITICAL: The numeric feature ORDER must match the training pipeline exactly.
 
 Training pipeline (feature_engineering.py) appended numeric features as:
@@ -20,7 +22,10 @@ import logging
 
 import numpy as np
 
-from app.model_loader import get_role_model, get_score_model, get_vocabulary, get_metadata, get_vocab_index
+from app.model_loader import (
+    get_role_model, get_score_model, get_label_encoder,
+    get_vocabulary, get_vocab_index, get_metadata, is_onnx,
+)
 from app.inference_utils import clamp
 
 log = logging.getLogger("predictor")
@@ -53,21 +58,18 @@ def transform_input(input_data, vocabulary: list[str]) -> np.ndarray:
 
     Layout matches training exactly:
       [binary_skill_0, …, binary_skill_N,
-       core_cov/100, opt_cov/100, proj/100, ats/100, struct/100]
+       core_cov/100, opt_cov/100, project/100, ats/100, struct/100]
     """
-    # Binary skill vector — use pre-built index (O(1) per skill instead of rebuilding dict)
-    skill_set   = set(s.lower().strip() for s in input_data.skills)
     vocab_index = get_vocab_index()
+    skill_vec = [0.0] * len(vocabulary)
 
-    skill_vec = [0] * len(vocabulary)
-    for skill in skill_set:
-        idx = vocab_index.get(skill)
+    for skill in input_data.skills:
+        idx = vocab_index.get(skill.lower().strip())
         if idx is not None:
-            skill_vec[idx] = 1
+            skill_vec[idx] = 1.0
 
-    # Numeric features in exact training order, normalised to 0–1
     numeric = [
-        getattr(input_data, field) / 100.0
+        clamp(getattr(input_data, field, 0) / 100.0, 0.0, 1.0)
         for field in _NUMERIC_FIELD_ORDER
     ]
 
@@ -75,78 +77,132 @@ def transform_input(input_data, vocabulary: list[str]) -> np.ndarray:
     return np.array([feature_vector], dtype=np.float32)
 
 
-# ── Inference ─────────────────────────────────────────────────────────────────
+# ── Prediction (ONNX + sklearn) ────────────────────────────────────────────────
 
 def predict_resume(input_data) -> dict:
     """
-    Full inference pipeline:
+    End-to-end resume prediction.
 
-    1. Transform input → feature vector (matches training order)
-    2. Predict role via RandomForestClassifier
-    3. Extract max(predict_proba) as confidence
-    4. Predict score via RandomForestRegressor
-    5. Identify weak areas:
-         • Primary: numeric features < 50 → labelled weak
-         • Fallback: bottom-3 by feature importance from classifier
-
-    Returns:
-        {
-            predicted_role:  str,
-            confidence:      float,
-            resume_score:    float,
-            weak_areas:      list[str],
-        }
+    1. Transform input → feature vector (matches training order).
+    2. Predict role (classifier) + confidence.
+    3. Predict score (regressor).
+    4. Detect weak areas:
+         • Primary: numeric features < 50 → labelled weak.
+         • Fallback: bottom-3 by feature importance from classifier.
+    5. Return ResumePrediction dict.
     """
-    vocabulary          = get_vocabulary()
-    clf, label_encoder  = get_role_model()
-    reg                 = get_score_model()
-    meta                = get_metadata()
+    from app.schemas import ResumePrediction
+    from app.inference_utils import Timer
 
-    # ── 1. Feature vector ──────────────────────────────────────────────────────
+    vocabulary  = get_vocabulary()
+    le          = get_label_encoder()
+    metadata    = get_metadata()
+    using_onnx  = is_onnx()
+
+    # ── 1. Feature vector ──────────────────────────────────────────────────
     X = transform_input(input_data, vocabulary)
-    log.debug("Feature vector shape: %s, non-zero skills: %d",
-              X.shape, int(X[0, :len(vocabulary)].sum()))
 
-    # ── 2. Role prediction ─────────────────────────────────────────────────────
-    role_enc       = clf.predict(X)[0]
-    predicted_role = str(label_encoder.inverse_transform([role_enc])[0])
+    t = Timer()
 
-    # ── 3. Confidence ──────────────────────────────────────────────────────────
-    probabilities = clf.predict_proba(X)[0]
-    confidence    = float(np.max(probabilities))
+    # ── 2. Role prediction ─────────────────────────────────────────────────
+    if using_onnx:
+        role_session = get_role_model()
+        role_out = role_session.run(None, {"float_input": X})
+        # ONNX with zipmap=False: [label_indices, probabilities]
+        class_indices = role_out[0]    # shape (1,)
+        probabilities = role_out[1]    # shape (1, n_classes)
+        predicted_idx = int(class_indices[0])
+        predicted_role = le.inverse_transform([predicted_idx])[0]
+        confidence = float(probabilities[0][predicted_idx])
+    else:
+        clf = get_role_model()
+        predicted_role = clf.predict(X)[0]
+        proba = clf.predict_proba(X)[0]
+        confidence = float(np.max(proba))
 
-    # ── 4. Score prediction ────────────────────────────────────────────────────
-    raw_score    = float(reg.predict(X)[0])
-    resume_score = round(clamp(raw_score), 1)
+    # ── 3. Score prediction ────────────────────────────────────────────────
+    if using_onnx:
+        score_session = get_score_model()
+        score_out = score_session.run(None, {"float_input": X})
+        predicted_score = int(round(float(score_out[0][0])))
+    else:
+        reg = get_score_model()
+        predicted_score = int(round(float(reg.predict(X)[0])))
 
-    # ── 5. Weak area detection ─────────────────────────────────────────────────
-    weak_areas: list[str] = []
+    predicted_score = clamp(predicted_score, 0, 100)
 
+    # ── 4. Weak area detection ─────────────────────────────────────────────
+    weak_areas = _detect_weak_areas(
+        input_data, X, vocabulary,
+        using_onnx=using_onnx,
+    )
+
+    elapsed_ms = t.elapsed_ms()
+    version = metadata.get("version", "v2")
+    if using_onnx:
+        version += "-onnx"
+
+    return ResumePrediction(
+        predicted_role    = predicted_role,
+        confidence        = round(confidence, 4),
+        resume_score      = predicted_score,
+        weak_areas        = weak_areas,
+        model_version     = version,
+        inference_time_ms = round(elapsed_ms, 2),
+        explanation       = f"Based on analysis of {metadata.get('trained_on_records', '?')} resumes.",
+    )
+
+
+# ── Weak area detection ───────────────────────────────────────────────────────
+
+def _detect_weak_areas(input_data, X, vocabulary, using_onnx=False) -> list[str]:
+    """
+    Identify weak areas from resume.
+
+    Primary (fast, interpretable):
+      Any numeric feature < 50 → weak.
+
+    Fallback (when no numeric feature < threshold):
+      Bottom-3 by feature importance from classifier.
+    """
+    # Primary: check numeric values
+    weak = []
     for field in _NUMERIC_FIELD_ORDER:
-        value = getattr(input_data, field)
-        if value < _WEAK_THRESHOLD:
-            weak_areas.append(_NUMERIC_DISPLAY_NAMES[field])
+        val = getattr(input_data, field, 0)
+        if val < _WEAK_THRESHOLD:
+            display = _NUMERIC_DISPLAY_NAMES.get(field, field)
+            weak.append(display)
 
-    # Fallback: use classifier feature importance when nothing is explicitly weak
-    if not weak_areas:
-        importances      = clf.feature_importances_
-        n_skills         = len(vocabulary)
-        numeric_imp      = importances[n_skills:]  # last 5 entries = numeric features
+    if weak:
+        return weak[:3]
 
-        # Sort ascending (lowest importance = most under-developed)
-        ranked = sorted(
-            zip(numeric_imp, _NUMERIC_FIELD_ORDER),
-            key=lambda x: x[0],
-        )
-        weak_areas = [_NUMERIC_DISPLAY_NAMES[field] for _, field in ranked[:3]]
+    # Fallback: feature importance from classifier
+    try:
+        if using_onnx:
+            # ONNX doesn't expose feature importances — skip fallback
+            return []
+        clf = get_role_model()
+        importances = clf.feature_importances_
+        bottom_idx = np.argsort(importances)[:3]
+        return [
+            _idx_to_feature_name(i, vocabulary, input_data)
+            for i in bottom_idx
+        ]
+    except Exception:
+        pass
 
-    log.debug("Prediction — role: %s  conf: %.2f  score: %.1f  weak: %s",
-              predicted_role, confidence, resume_score, weak_areas)
+    return []
 
-    return {
-        "predicted_role": predicted_role,
-        "confidence":     round(confidence, 4),
-        "resume_score":   resume_score,
-        "weak_areas":     weak_areas[:3],
-        "model_version":  meta.get("version", "2.0"),
-    }
+
+def _idx_to_feature_name(idx: int, vocabulary: list[str], input_data) -> str:
+    """Map a feature vector index back to a human-readable name."""
+    n_skills = len(vocabulary)
+    if idx < n_skills:
+        skill = vocabulary[idx]
+        if skill in [s.lower().strip() for s in input_data.skills]:
+            return skill
+        return f"skill:{skill}"
+    num_idx = idx - n_skills
+    if 0 <= num_idx < len(_NUMERIC_FIELD_ORDER):
+        return _NUMERIC_DISPLAY_NAMES.get(_NUMERIC_FIELD_ORDER[num_idx], str(idx))
+    return str(idx)

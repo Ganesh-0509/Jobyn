@@ -8,12 +8,12 @@ sentry_sdk.init(
 )
 
 """
-main.py — application entry point (Phase 4B — ML Inference Layer).
+main.py — application entry point.
 
 Startup sequence:
   1. Validate JSON configs (skills/roles/scoring)
   2. Check Supabase connectivity (non-fatal warning)
-  3. Load v2 ML models (fatal if files missing)
+  3. Load v2 ML models — ONNX preferred, pickle fallback (warning if missing)
   4. Accept requests
 
 Middleware: CORS (explicit origin allowlist)

@@ -302,3 +302,31 @@ def ml_delete_version(tag: str, current_user: dict = Depends(get_admin_user)):
         return {"status": "deleted", "tag": tag}
     except ValueError as e:
         raise HTTPException(status_code=400, detail="Invalid input provided.")
+
+
+# ── POST /ml/outcome ──────────────────────────────────────────────────────────
+
+class OutcomeRequest(BaseModel):
+    predicted_role: str
+    confidence: float = Field(ge=0, le=1)
+    actual_role: str = ""
+    helpful: bool = True
+
+
+@router.post("/outcome")
+def ml_submit_outcome(req: OutcomeRequest):
+    """Collect user feedback on ML prediction quality for model improvement."""
+    try:
+        from app.core.supabase_client import get_supabase
+        sb = get_supabase()
+        sb.table("prediction_feedback").insert({
+            "predicted_role": req.predicted_role,
+            "correct_role":   req.actual_role if not req.helpful else None,
+            "score_feedback": "accurate" if req.helpful else None,
+            "comment":        f"confidence={req.confidence:.2f}",
+        }).execute()
+        return {"status": "recorded"}
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("outcome submission failed: %s", e)
+        return {"status": "recorded"}
