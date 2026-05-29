@@ -1,8 +1,9 @@
 """
-data_loader.py (v2) — unified loader for real + synthetic data.
+data_loader.py (v2) — unified loader for real training data.
 
-Adds load_combined_dataset() that fetches from both Supabase tables
-and applies sample weights (real=1.5, synthetic=1.0).
+Loads from resume_analysis_synthetic_v2 table which now contains
+29,000+ real resume datasets from HuggingFace (tech-only filtered).
+Records with data_type='real_dataset' get weight 1.5.
 
 Original load_dataset() is preserved for Phase 4A similarity engine.
 """
@@ -188,6 +189,26 @@ def load_combined_dataset() -> list[dict]:
 SYNTHETIC_V2_TABLE = "resume_analysis_synthetic_v2"
 
 
+def _fetch_all_rows(sb, table: str, select: str = "*") -> list[dict]:
+    """Fetch all rows from a Supabase table, handling pagination."""
+    all_rows = []
+    offset = 0
+    batch = 1000
+    while True:
+        resp = (
+            sb.table(table)
+            .select(select)
+            .range(offset, offset + batch - 1)
+            .execute()
+        )
+        rows = resp.data or []
+        all_rows.extend(rows)
+        if len(rows) < batch:
+            break
+        offset += batch
+    return all_rows
+
+
 def _fetch_real_records(sb) -> tuple[list[dict], int]:
     """Shared helper: fetch real role_analyses joined with resume skills."""
     analyses = (
@@ -235,25 +256,25 @@ def load_combined_dataset_v2() -> list[dict]:
 
         real_records, real_count = _fetch_real_records(sb)
 
-        # ── Synthetic v2 only ─────────────────────────────────────────────────
-        synthetic_rows = (
-            sb.table(SYNTHETIC_V2_TABLE)
-            .select("*")
-            .execute()
-            .data or []
-        )
-        synthetic_records: list[dict] = []
-        for row in synthetic_rows:
-            rec = _clean_record(row, WEIGHT_SYNTHETIC)
+        # ── Training data from v2 table ──────────────────────────────────────
+        training_rows = _fetch_all_rows(sb, SYNTHETIC_V2_TABLE)
+        training_records: list[dict] = []
+        for row in training_rows:
+            # Real dataset records get real weight; synthetic get synthetic weight
+            dtype = row.get("data_type", "synthetic_v2")
+            weight = WEIGHT_REAL if dtype == "real_dataset" else WEIGHT_SYNTHETIC
+            rec = _clean_record(row, weight)
             if rec:
-                synthetic_records.append(rec)
+                training_records.append(rec)
 
-        combined = real_records + synthetic_records
+        combined = real_records + training_records
 
+        real_dataset_count = sum(1 for r in training_records if r.get("sample_weight") == WEIGHT_REAL)
         logger.info(
             f"Dataset v2 loaded — "
-            f"{real_count} real (x{WEIGHT_REAL}) + "
-            f"{len(synthetic_records)} synthetic_v2 (x{WEIGHT_SYNTHETIC}) "
+            f"{real_count} user resumes (x{WEIGHT_REAL}) + "
+            f"{len(training_records)} training data ({real_dataset_count} real, "
+            f"{len(training_records) - real_dataset_count} synthetic) "
             f"= {len(combined)} total"
         )
         return combined
