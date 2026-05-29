@@ -390,23 +390,32 @@ def delete_user_data(user: AuthUser = Depends(get_current_user)):
         sb = get_supabase()
         user_email = user.email
 
-        tables = [
-            "resumes",
-            "role_analyses",
+        # Tables with user_email column — direct delete
+        tables_with_email = [
+            "resumes",              # FK cascade also deletes role_analyses
             "prediction_feedback",
             "user_study_progress",
             "user_quiz_attempts",
             "content_feedback",
-            "contributions",
         ]
 
         deleted = {}
-        for table in tables:
+        for table in tables_with_email:
             try:
                 resp = sb.table(table).delete().eq("user_email", user_email).execute()
                 deleted[table] = len(resp.data) if resp.data else 0
             except Exception:
                 deleted[table] = "error"
+
+        # contributions uses submitted_by, not user_email
+        try:
+            resp = sb.table("contributions").delete().eq("submitted_by", user_email).execute()
+            deleted["contributions"] = len(resp.data) if resp.data else 0
+        except Exception:
+            deleted["contributions"] = "error"
+
+        # role_analyses cascades from resumes delete (FK ON DELETE CASCADE)
+        deleted["role_analyses"] = "cascaded"
 
         return {"detail": "All your data has been deleted.", "tables_cleared": deleted}
 
