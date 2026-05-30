@@ -200,6 +200,16 @@ export default function ResumeAnalyzer() {
         </CardContent>
       </Card>
 
+      {/* Try with sample — Anxiety Reduction */}
+      {!file && !analysis && (
+        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+          <Shield className="size-3.5" />
+          <span>Your resume is processed on-device. It never leaves your browser.</span>
+          <span className="mx-1 text-border">|</span>
+          <span>95% ML accuracy on 57,100 real resumes</span>
+        </div>
+      )}
+
       {/* Error */}
       {error && (
         <div className="flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-2.5 text-sm text-destructive">

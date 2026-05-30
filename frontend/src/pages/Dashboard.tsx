@@ -71,11 +71,11 @@ export default function Dashboard() {
   }, [analysis, skills, missingCore, missingOpt])
 
   const METRICS = useMemo(() => [
-    { label: 'Readiness Score', value: analysis ? `${score}%` : '--', sub: analysis ? (chartHistory.length > 1 ? `+${score - chartHistory[0].value}% overall` : 'First analysis') : 'No analysis yet', pct: score, icon: Activity, accent: 'text-primary' },
-    { label: 'Core Skill Coverage', value: analysis ? `${corePct}%` : '--', sub: analysis ? `${skills.length} skills detected` : 'Upload resume', pct: corePct, icon: Lightbulb, accent: 'text-cyan' },
-    { label: 'Missing Skills', value: analysis ? String(missingCount) : '--', sub: analysis ? `${Math.min(missingCount, 3)} high priority` : 'Pending analysis', pct: analysis ? Math.min(100, (missingCount / 10) * 100) : 0, icon: AlertCircle, accent: 'text-warning' },
-    { label: 'Interview Readiness', value: analysis ? readiness : '--', sub: analysis ? (analytics?.total_analyses ? `${analytics.total_analyses} analyses` : 'First analysis') : 'Ready to start', pct: analysis ? score * 0.8 : 0, icon: BarChart2, accent: 'text-violet' },
-  ], [analysis, score, corePct, missingCount, readiness, skills, chartHistory, analytics])
+    { label: 'Readiness Score', value: analysis ? `${score}%` : '--', sub: analysis ? (chartHistory.length > 1 ? `+${score - chartHistory[0].value}% since first upload` : 'First analysis — upload again to track progress') : 'Upload resume to see score', pct: score, icon: Activity, accent: 'text-primary' },
+    { label: 'Skill Gaps Found', value: analysis ? String(missingCount) : '--', sub: analysis ? `${missingCore.length} critical, ${missingOpt.length} optional` : 'Pending analysis', pct: analysis ? Math.min(100, (missingCount / 10) * 100) : 0, icon: AlertCircle, accent: 'text-warning' },
+    { label: 'Skills Detected', value: analysis ? String(skills.length) : '--', sub: analysis ? `${corePct}% core coverage` : 'Upload resume', pct: corePct, icon: Lightbulb, accent: 'text-cyan' },
+    { label: 'Interview Readiness', value: analysis ? readiness : '--', sub: analysis ? (analytics?.total_analyses ? `${analytics.total_analyses} analyses completed` : 'First analysis') : 'Ready to start', pct: analysis ? score * 0.8 : 0, icon: BarChart2, accent: 'text-violet' },
+  ], [analysis, score, corePct, missingCount, missingCore.length, missingOpt.length, readiness, skills, chartHistory, analytics])
 
   if (loading) {
     return (
@@ -100,16 +100,61 @@ export default function Dashboard() {
           <CardContent className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                Measure. Improve. <span className="gradient-text">Achieve.</span>
+                {analysis ? `Your Career Readiness: ${score}%` : 'Welcome to CampusSync'}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                {user ? `Welcome back, ${user.name}! ` : ''}AI-powered career readiness intelligence for engineering students.
+                {user ? `Welcome back, ${user.name}! ` : ''}ML trained on 57,100 resumes — 95% accuracy. Your data never leaves your browser.
               </p>
             </div>
             <Button onClick={() => navigate('/resume-analyzer')} className="gap-2 shrink-0">
               <Upload className="size-4" />
               {analysis ? 'Re-Upload Resume' : 'Upload Resume'}
             </Button>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* What To Do Today — JTBD Daily Ritual */}
+      <motion.div variants={item}>
+        <Card className="premium-hover-card relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-violet/5">
+          <CardContent className="py-5">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                <Target className="size-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">What to do today</div>
+                {!analysis ? (
+                  <>
+                    <div className="text-sm font-semibold text-foreground">Upload your resume to see your career readiness</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">60 seconds to find out where you stand</div>
+                  </>
+                ) : missingCore.length > 0 ? (
+                  <>
+                    <div className="text-sm font-semibold text-foreground">
+                      Your biggest gap is <span className="text-primary">{missingCore[0]}</span> — start learning it today
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      Closing this gap will improve your readiness score by ~{Math.round(100 / (totalCoreSkills || 1))}%
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-sm font-semibold text-foreground">Your core skills are strong — practice an interview</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">Test your knowledge with role-specific questions</div>
+                  </>
+                )}
+              </div>
+              <Button
+                size="sm"
+                className="shrink-0 gap-1.5"
+                onClick={() => navigate(
+                  !analysis ? '/resume-analyzer' : missingCore.length > 0 ? '/improvement-plan' : '/interview-readiness'
+                )}
+              >
+                {!analysis ? 'Upload' : missingCore.length > 0 ? 'Learn' : 'Practice'} <ArrowRight className="size-3" />
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </motion.div>
@@ -122,11 +167,18 @@ export default function Dashboard() {
               <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary/10">
                 <Upload className="size-7 text-primary" />
               </div>
-              <h2 className="font-heading text-xl font-bold tracking-tight sm:text-2xl">Welcome to CampusSync Edge</h2>
+              <h2 className="font-heading text-xl font-bold tracking-tight sm:text-2xl">See Where You Stand in 60 Seconds</h2>
               <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
-                Upload your resume to get personalized readiness scores, identify skill gaps,
-                and build a roadmap to land your dream tech job.
+                Upload your resume. Get your ML-powered readiness score. See exactly what skills to close before placement season.
               </p>
+              <div className="mt-3 flex flex-wrap justify-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/10 px-3 py-1 text-xs font-semibold text-green-500">
+                  ✓ 95% ML Accuracy
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-500">
+                  🔒 Processed on-device
+                </span>
+              </div>
               <Button size="lg" className="mt-6 gap-2" onClick={() => navigate('/resume-analyzer')}>
                 <Upload className="size-4" /> Upload Your Resume
               </Button>

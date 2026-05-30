@@ -14,6 +14,10 @@ dist/
 # ML models — trained on deploy via render.yaml (too large for GitHub 100MB limit)
 backend/models/*.pkl
 backend/models/*.onnx
+frontend/public/models/role_model_v2.onnx
+
+# Analysis reports (internal reference only — not for GitHub)
+analysis/
 
 # Training data (305 MB)
 backend/data/

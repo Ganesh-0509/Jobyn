@@ -36,10 +36,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     /* ── Bootstrap: get existing session + subscribe to changes ── */
     useEffect(() => {
-        // 1. Get the current session on mount
+        // 1. Get the current session on mount (with 5s timeout fallback)
+        const timeout = setTimeout(() => {
+            setLoading(false) // unstick even if Supabase is unreachable
+        }, 5000)
+
         supabase.auth.getSession().then(({ data: { session: s } }) => {
+            clearTimeout(timeout)
             setSession(s)
             setUser(toAppUser(s?.user))
+            setLoading(false)
+        }).catch(() => {
+            clearTimeout(timeout)
             setLoading(false)
         })
 

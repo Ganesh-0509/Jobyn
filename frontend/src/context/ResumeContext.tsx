@@ -80,10 +80,12 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
         setCompletedTasks(loadJson(prefix + LS_KEY_TASKS) || [])
         setDailyCommitmentState(loadJson(prefix + LS_KEY_DAILY_COMMITMENT) || 2)
 
-        // If nothing in local storage, attempt recovery from backend
+        // If nothing in local storage, attempt recovery from backend (8s timeout)
         if (!localAnalysis && user.email) {
             setLoading(true)
+            const recoveryTimeout = setTimeout(() => setLoading(false), 8000)
             getLatestSession(user.email).then(async recovered => {
+                clearTimeout(recoveryTimeout)
                 if (recovered.analysis) {
                     setAnalysisState(recovered.analysis)
                     localStorage.setItem(prefix + LS_KEY_ANALYSIS, JSON.stringify(recovered.analysis))
@@ -120,7 +122,9 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
                 }
             }).catch(err => {
                 console.error("Session recovery failed:", err)
+                clearTimeout(recoveryTimeout)
             }).finally(() => {
+                clearTimeout(recoveryTimeout)
                 setLoading(false)
             })
         } else {

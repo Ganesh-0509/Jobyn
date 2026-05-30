@@ -52,9 +52,9 @@ export default function Hero() {
               margin: 0,
             }}
           >
-            Your placement journey,{' '}
+            57,100 resumes trained our AI.
             <br />
-            perfectly in <GradientText>sync</GradientText>.
+            Here's what it <GradientText>learned</GradientText>.
           </motion.h1>
 
           <motion.p
@@ -70,9 +70,8 @@ export default function Hero() {
               fontWeight: 500,
             }}
           >
-            From resume analysis to interview readiness —
-            everything you need to get placed,
-            inside one connected workspace.
+            ChatGPT gives you text. We give you a structured, tracked, verified roadmap.
+            Upload your resume. See your gaps. Close them before placement season.
           </motion.p>
 
           {/* CTA Row */}
@@ -144,39 +143,41 @@ export default function Hero() {
             </a>
           </motion.div>
 
-          {/* Social Proof */}
+          {/* Social Proof + Accuracy Badge */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.6 }}
-            style={{ display: 'flex', alignItems: 'center', gap: 14 }}
+            style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
           >
-            <div style={{ display: 'flex', marginRight: -8 }}>
-              {AVATARS.map((a, i) => (
-                <div
-                  key={a.initials}
-                  style={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: '50%',
-                    background: a.bg,
-                    border: '2px solid #060816',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: '#F8FAFC',
-                    marginLeft: i === 0 ? 0 : -10,
-                    zIndex: AVATARS.length - i,
-                  }}
-                >
-                  {a.initials}
-                </div>
-              ))}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '6px 12px', fontSize: 12, fontWeight: 600,
+                color: '#22C55E', background: 'rgba(34,197,94,0.1)',
+                border: '1px solid rgba(34,197,94,0.2)', borderRadius: 8,
+              }}>
+                ✓ 95% ML Accuracy
+              </span>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '6px 12px', fontSize: 12, fontWeight: 600,
+                color: '#3B82F6', background: 'rgba(59,130,246,0.1)',
+                border: '1px solid rgba(59,130,246,0.2)', borderRadius: 8,
+              }}>
+                🔒 Resume never leaves your browser
+              </span>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '6px 12px', fontSize: 12, fontWeight: 600,
+                color: '#8B5CF6', background: 'rgba(139,92,246,0.1)',
+                border: '1px solid rgba(139,92,246,0.2)', borderRadius: 8,
+              }}>
+                📊 57,100 resumes analyzed
+              </span>
             </div>
             <span style={{ fontSize: 13, color: '#64748B', fontWeight: 500 }}>
-              Trusted by <span style={{ color: '#94A3B8', fontWeight: 600 }}>25,000+</span> engineering students
+              Built for Indian engineering students preparing for campus placements
             </span>
           </motion.div>
         </div>

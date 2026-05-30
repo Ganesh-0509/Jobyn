@@ -4,6 +4,11 @@
     "ad",
     "ldap"
   ],
+  "adobe": [
+    "adobe",
+    "adobe creative cloud",
+    "adobe creative suite"
+  ],
   "agile": [
     "agile",
     "scrum",
@@ -52,6 +57,13 @@
     "zsh",
     "powershell"
   ],
+  "big data": [
+    "big data",
+    "hadoop",
+    "hive",
+    "spark",
+    "mapreduce"
+  ],
   "blockchain": [
     "blockchain",
     "web3",
@@ -78,6 +90,9 @@
     "c++",
     "cpp",
     "c plus plus"
+  ],
+  "canva": [
+    "canva"
   ],
   "cassandra": [
     "cassandra",
@@ -195,6 +210,11 @@
     "elk stack",
     "kibana"
   ],
+  "excel": [
+    "excel",
+    "microsoft excel",
+    "spreadsheet"
+  ],
   "exchange": [
     "exchange",
     "ms exchange",
@@ -210,10 +230,7 @@
     "fast api"
   ],
   "figma": [
-    "figma",
-    "ui design",
-    "ux design",
-    "ui/ux"
+    "figma"
   ],
   "finops": [
     "finops",
@@ -289,6 +306,10 @@
   "iis": [
     "iis",
     "internet information services"
+  ],
+  "illustrator": [
+    "illustrator",
+    "adobe illustrator"
   ],
   "iso": [
     "iso",
@@ -498,6 +519,10 @@
     "pci",
     "pci dss"
   ],
+  "photoshop": [
+    "photoshop",
+    "adobe photoshop"
+  ],
   "php": [
     "php",
     "laravel",
@@ -510,6 +535,11 @@
   ],
   "postman": [
     "postman"
+  ],
+  "power bi": [
+    "power bi",
+    "powerbi",
+    "microsoft power bi"
   ],
   "powershell": [
     "powershell",
@@ -594,6 +624,10 @@
     "sap",
     "sap erp"
   ],
+  "sas": [
+    "sas",
+    "statistical analysis system"
+  ],
   "scala": [
     "scala"
   ],
@@ -630,6 +664,10 @@
     "spring framework",
     "spring"
   ],
+  "spss": [
+    "spss",
+    "statistical package for the social sciences"
+  ],
   "sql": [
     "sql",
     "mysql",
@@ -638,6 +676,9 @@
     "sql server",
     "mssql",
     "tsql"
+  ],
+  "stata": [
+    "stata"
   ],
   "statistics": [
     "statistics",
@@ -670,8 +711,6 @@
   ],
   "tableau": [
     "tableau",
-    "power bi",
-    "powerbi",
     "data visualization"
   ],
   "tailwind": [
@@ -715,6 +754,13 @@
     "typescript",
     "ts",
     "tsx"
+  ],
+  "ui/ux": [
+    "ui/ux",
+    "ui design",
+    "ux design",
+    "user interface",
+    "user experience"
   ],
   "vector databases": [
     "vector database",

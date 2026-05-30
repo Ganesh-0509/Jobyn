@@ -139,11 +139,17 @@ function AppRoutes() {
 }
 
 export default function App() {
-    const [appLoading, setAppLoading] = useState(true)
+    const [appLoading, setAppLoading] = useState(() => {
+        // Skip splash if user has visited before
+        return !sessionStorage.getItem('cs_splash_seen')
+    })
     const [statusMessage, setStatusMessage] = useState('Initializing CampusSync Edge OS...')
     const [loadStep, setLoadStep] = useState(0)
 
     useEffect(() => {
+        if (!appLoading) return
+        sessionStorage.setItem('cs_splash_seen', '1')
+
         const statusMsgs = [
             'Mapping Corporate Placement Bridges...',
             'Verifying Attic Code signatures...',

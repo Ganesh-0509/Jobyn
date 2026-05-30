@@ -354,7 +354,7 @@ export default function Landing() {
             transition={{ delay: 0.1 }}
           >
             <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4.5 py-1.5 text-xs font-bold uppercase tracking-widest text-primary">
-              <Award className="size-3.5 text-primary" /> Connected Student Placement OS
+              <Award className="size-3.5 text-primary" /> AI Career Intelligence for Engineers
             </span>
           </motion.div>
 
@@ -364,7 +364,7 @@ export default function Landing() {
             transition={{ delay: 0.2, duration: 0.6 }}
             className="font-heading text-5xl font-light leading-[1.05] tracking-tight sm:text-7xl text-foreground max-w-4xl mx-auto"
           >
-            Everything placement-related, <span className="font-semibold italic text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">working in sync.</span>
+            57,100 resumes trained our AI. <span className="font-semibold italic text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">Here's what it learned.</span>
           </motion.h1>
 
           <motion.p
@@ -373,7 +373,7 @@ export default function Landing() {
             transition={{ delay: 0.3, duration: 0.6 }}
             className="max-w-2xl mx-auto text-base md:text-lg leading-relaxed text-muted-foreground font-medium"
           >
-            Upload your resume. Get hired faster.
+            ChatGPT gives text. We give a structured, tracked, verified roadmap.
           </motion.p>
 
           <motion.p
@@ -382,7 +382,7 @@ export default function Landing() {
             transition={{ delay: 0.35, duration: 0.6 }}
             className="max-w-2xl mx-auto text-sm leading-relaxed text-muted-foreground/80"
           >
-            Know exactly what to improve next. CampusSync bridges the gap between your active codebase footprint and your next placement panel.
+            Upload your resume. See your gaps. Close them before placement season. 95% ML accuracy — your resume data never leaves your browser.
           </motion.p>
 
           <motion.div
@@ -391,8 +391,26 @@ export default function Landing() {
             transition={{ delay: 0.4 }}
             className="flex flex-wrap justify-center gap-5 pt-4"
           >
-            <Link to="/signup" className={buttonVariants({ size: "lg" }) + " shadow-md font-semibold gap-2 rounded-full px-9 py-6 text-sm"}>Start Placement Audit</Link>
+            <Link to="/signup" className={buttonVariants({ size: "lg" }) + " shadow-md font-semibold gap-2 rounded-full px-9 py-6 text-sm"}>Get Your Resume Score</Link>
             <a href="#pipeline" className={buttonVariants({ variant: "outline", size: "lg" }) + " font-semibold rounded-full border-stone-200 bg-white hover:bg-stone-50 px-9 py-6 text-sm"}>Explore Flow</a>
+          </motion.div>
+
+          {/* Trust Badges */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.55, duration: 0.5 }}
+            className="flex flex-wrap justify-center gap-3 pt-2"
+          >
+            {[
+              { label: '95% ML Accuracy', color: 'text-green-500 bg-green-500/10 border-green-500/20' },
+              { label: 'Resume Never Leaves Browser', color: 'text-blue-500 bg-blue-500/10 border-blue-500/20' },
+              { label: '57,100 Resumes Analyzed', color: 'text-violet-500 bg-violet-500/10 border-violet-500/20' },
+            ].map((b) => (
+              <span key={b.label} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${b.color}`}>
+                {b.label}
+              </span>
+            ))}
           </motion.div>
         </div>
       </section>
@@ -906,8 +924,8 @@ export default function Landing() {
           {/* Stats Bar */}
           <div className="grid grid-cols-3 gap-6 mb-12">
             {[
-              { value: '500+', label: 'Resumes Analyzed', icon: FileText },
-              { value: '80+', label: 'Skills Tracked', icon: Layers },
+              { value: '57,100', label: 'Resumes Trained On', icon: FileText },
+              { value: '95%', label: 'ML Accuracy', icon: Layers },
               { value: '7', label: 'Career Roles', icon: Briefcase },
             ].map((s) => (
               <div key={s.label} className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-white p-6 text-center">
@@ -919,7 +937,7 @@ export default function Landing() {
           </div>
 
           {/* Testimonials */}
-          <p className="text-center text-xs font-bold uppercase tracking-widest text-muted-foreground mb-8">What Early Users Say</p>
+          <p className="text-center text-xs font-bold uppercase tracking-widest text-muted-foreground mb-8">What Beta Testers Say</p>
           <div className="grid gap-6 md:grid-cols-3">
             {[
               {
