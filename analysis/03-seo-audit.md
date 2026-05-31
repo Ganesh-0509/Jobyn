@@ -7,43 +7,37 @@
 
 ---
 
-## SEO Score: 2/10
+## SEO Score: 2/10 (Original) → 5/10 (Implemented 2026-05-31)
 
-| Category | Score | Status |
-|----------|-------|--------|
-| Technical SEO | 2/10 | SPA crawlability critical, no SSR |
-| On-Page SEO | 1/10 | No per-page meta, no keyword targeting |
-| Structured Data | 0/10 | Zero JSON-LD markup |
-| Content | 1/10 | 1 blog post, no content strategy |
-| Performance | 5/10 | Good code splitting, but 79MB ONNX WASM |
-| **Overall** | **2/10** | **Invisible to search engines** |
+| Category | Original | Verified | Status |
+|----------|----------|----------|--------|
+| Technical SEO | 2/10 | **5/10** | +3 — pre-rendering, sitemap, robots.txt all fixed |
+| On-Page SEO | 1/10 | **4/10** | +3 — react-helmet-async, per-page meta/OG/canonical |
+| Structured Data | 0/10 | **4/10** | +4 — SoftwareApplication + FAQPage JSON-LD on landing |
+| Content | 1/10 | **2/10** | No change — blog route still missing |
+| Performance | 5/10 | **4/10** | -1 — ONNX models dir adds 189MB unreported |
+| **Overall** | **2/10** | **5/10** | **+3 — Googlebot can now see and index content** |
+
+> Updated 2026-05-31: 1.1-1.6, 2.1-2.4 all implemented.
 
 ---
 
 ## 1. Technical SEO Audit
 
-### 1.1 SPA Crawlability — CRITICAL
+### 1.1 SPA Crawlability — FIXED (2026-05-31)
 
-**Finding:** CampusSync is a client-side rendered React SPA. Googlebot can render JavaScript, but with significant limitations:
-
-- **Rendering delay:** Googlebot queues JS pages for deferred rendering. Pages may not be indexed for days/weeks.
-- **No SSR/SSG:** No server-side rendering. The HTML sent to crawlers is just `<div id="root"></div>` with a script tag.
-- **Impact:** High. Google may fail to index dynamic content, especially on deeper pages.
-
-**Evidence (from `frontend/index.html`):**
-```html
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
-</body>
-```
-
-**Fix priority:** CRITICAL
-**Recommended fix:** Implement pre-rendering for the 5 public pages (landing, login, signup, privacy, terms) using `react-snap` or `prerender.io`. For long-term, consider migrating to a framework with SSR (Next.js, Remix).
+**Was:** `<div id="root"></div>` — Googlebot saw empty HTML.
+**Now:** Puppeteer post-build script pre-renders 5 public pages with real HTML content.
+- Landing: "57,100 resumes trained our AI" (69.2KB)
+- Privacy: "Privacy Shield Policy" (17.5KB)
+- Terms: Terms content (13.7KB)
+- Docs: "Welcome to CampusSync Edge" (18.6KB)
+- Quick Score: "Get Your Placement Score" (14.3KB)
+- Runs automatically via `npm run postbuild` → `scripts/prerender.mjs`
 
 ---
 
-### 1.2 Sitemap — HIGH PRIORITY
+### 1.2 Sitemap — FIXED (2026-05-31)
 
 **Finding:** `sitemap.xml` exists but is severely incomplete.
 
@@ -71,7 +65,7 @@
 
 ---
 
-### 1.3 Robots.txt — OK
+### 1.3 Robots.txt — FIXED (2026-05-31)
 
 **Finding:** `robots.txt` exists and is correctly configured.
 
@@ -89,7 +83,7 @@ Sitemap: https://campussync.ai/sitemap.xml
 
 ---
 
-### 1.4 Meta Tags — CRITICAL
+### 1.4 Meta Tags — FIXED (2026-05-31)
 
 **Finding:** Only ONE set of meta tags exists, in `index.html`. These are global and apply to ALL 19 pages.
 
@@ -119,7 +113,7 @@ Sitemap: https://campussync.ai/sitemap.xml
 
 ---
 
-### 1.5 Open Graph Tags — HIGH PRIORITY
+### 1.5 Open Graph Tags — FIXED (2026-05-31)
 
 **Finding:** OG tags exist in `index.html` but are global (same for all pages).
 
@@ -139,7 +133,7 @@ Sitemap: https://campussync.ai/sitemap.xml
 
 ---
 
-### 1.6 Canonical Tags — MEDIUM PRIORITY
+### 1.6 Canonical Tags — FIXED (2026-05-31)
 
 **Finding:** Single canonical URL in `index.html` pointing to `https://campussync.ai`.
 
@@ -171,7 +165,7 @@ Sitemap: https://campussync.ai/sitemap.xml
 
 ## 2. On-Page SEO Audit
 
-### 2.1 Title Tags — CRITICAL
+### 2.1 Title Tags — FIXED (2026-05-31)
 
 **Finding:** No per-page title tags. Single global title for all 19 pages.
 
@@ -189,7 +183,7 @@ Sitemap: https://campussync.ai/sitemap.xml
 
 ---
 
-### 2.2 Meta Descriptions — CRITICAL
+### 2.2 Meta Descriptions — FIXED (2026-05-31)
 
 **Finding:** No per-page meta descriptions.
 
@@ -205,7 +199,7 @@ Sitemap: https://campussync.ai/sitemap.xml
 
 ---
 
-### 2.3 H1 Tags — HIGH PRIORITY
+### 2.3 H1 Tags — FIXED (2026-05-31)
 
 **Finding:** Landing page has no clear H1 with target keywords. Uses branded jargon.
 
@@ -236,7 +230,7 @@ Sitemap: https://campussync.ai/sitemap.xml
 
 ---
 
-### 2.4 Structured Data (JSON-LD) — CRITICAL
+### 2.4 Structured Data (JSON-LD) — FIXED (2026-05-31)
 
 **Finding:** ZERO structured data markup on any page. No `application/ld+json` found anywhere in the codebase.
 
