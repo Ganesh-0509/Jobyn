@@ -34,7 +34,7 @@ export default function Signup() {
         setLoading(true); setError('')
         try {
             await signup(sanitizeText(name.trim()), email.trim(), password)
-            setTimeout(() => navigate('/dashboard'), 1000)
+            setTimeout(() => navigate('/onboarding'), 1000)
         } catch (err: unknown) {
             if (err instanceof Error && err.message === 'VerificationEmailSent') {
                 setError('Registration successful! Please check your email to verify your account.')
