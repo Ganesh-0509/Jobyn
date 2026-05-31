@@ -7,18 +7,18 @@
 
 ---
 
-## SEO Score: 2/10 (Original) → 5/10 (Implemented 2026-05-31)
+## SEO Score: 2/10 (Original) → 6/10 (Implemented 2026-05-31)
 
 | Category | Original | Verified | Status |
 |----------|----------|----------|--------|
-| Technical SEO | 2/10 | **5/10** | +3 — pre-rendering, sitemap, robots.txt all fixed |
-| On-Page SEO | 1/10 | **4/10** | +3 — react-helmet-async, per-page meta/OG/canonical |
+| Technical SEO | 2/10 | **6/10** | +4 — pre-rendering, sitemap, robots.txt, image optimization |
+| On-Page SEO | 1/10 | **5/10** | +4 — react-helmet-async, per-page meta/OG/canonical/keywords |
 | Structured Data | 0/10 | **4/10** | +4 — SoftwareApplication + FAQPage JSON-LD on landing |
-| Content | 1/10 | **2/10** | No change — blog route still missing |
-| Performance | 5/10 | **4/10** | -1 — ONNX models dir adds 189MB unreported |
-| **Overall** | **2/10** | **5/10** | **+3 — Googlebot can now see and index content** |
+| Content | 1/10 | **3/10** | +2 — /blog route with 5 posts, footer links wired |
+| Performance | 5/10 | **5/10** | — sharp image compression, font-display: swap confirmed |
+| **Overall** | **2/10** | **6/10** | **+4 — Googlebot can see, index, and rich-result content** |
 
-> Updated 2026-05-31: 1.1-1.6, 2.1-2.4 all implemented.
+> Updated 2026-05-31: All items 1.1-1.6, 2.1-2.4, 3.3-3.4, 4.1 implemented.
 
 ---
 
@@ -315,7 +315,7 @@ const ResumeAnalyzer = lazy(() => import('./pages/ResumeAnalyzer'))
 
 ---
 
-### 3.3 Image Optimization — MEDIUM PRIORITY
+### 3.3 Image Optimization — FIXED (2026-05-31)
 
 **Finding:** Images are oversized.
 
@@ -328,7 +328,7 @@ const ResumeAnalyzer = lazy(() => import('./pages/ResumeAnalyzer'))
 
 ---
 
-### 3.4 Font Loading — MEDIUM PRIORITY
+### 3.4 Font Loading — OK (2026-05-31)
 
 **Finding:** Three font families loaded from external CDNs.
 
