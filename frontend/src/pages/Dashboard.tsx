@@ -3,9 +3,9 @@ import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useResume } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
-import { getAnalytics } from '../api/client'
+import { getAnalytics, getBenchmarks, type BenchmarkData } from '../api/client'
 import { loadHistory, getHistoryOrDemo } from '../utils/history'
-import { Upload, AlertCircle, Lightbulb, Activity, TrendingUp, Trophy, ArrowRight, BarChart2, Zap, BookOpen, Target, CheckCircle } from 'lucide-react'
+import { Upload, AlertCircle, Lightbulb, Activity, TrendingUp, Trophy, ArrowRight, BarChart2, Zap, BookOpen, Target, CheckCircle, Share2, Users } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -21,12 +21,55 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as const } },
 }
 
+function PeerBenchmarkCard({ role, score }: { role: string; score: number }) {
+  const [data, setData] = useState<BenchmarkData | null>(null)
+  useEffect(() => {
+    getBenchmarks(role).then(setData).catch(() => {})
+  }, [role])
+
+  if (!data || data.total_analyses < 5) return null
+
+  const pct = data.user_percentile ?? 50
+  const topPct = Math.max(1, 100 - pct)
+
+  return (
+    <Card className="premium-hover-card">
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-2">
+          <div className="rounded-lg bg-accent/10 p-1.5">
+            <Users className="size-4 text-accent" />
+          </div>
+          <div>
+            <CardTitle className="text-base">Peer Ranking</CardTitle>
+            <CardDescription>Based on {data.total_analyses} analyses</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-center mb-3">
+          <span className="text-3xl font-heading font-bold text-accent">Top {topPct}%</span>
+          <p className="text-sm text-muted-foreground mt-1">of {role} candidates</p>
+        </div>
+        <div className="relative h-3 bg-muted rounded-full overflow-hidden mb-2">
+          <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-accent to-primary rounded-full transition-all" style={{ width: `${pct}%` }} />
+          <div className="absolute top-1/2 -translate-y-1/2 size-4 bg-white border-2 border-accent rounded-full shadow" style={{ left: `calc(${pct}% - 8px)` }} />
+        </div>
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>Bottom</span>
+          <span>Top</span>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 export default function Dashboard() {
   const { analysis, prediction, bestFit, masteredSkills, loading } = useResume()
   const { user } = useAuth()
   const navigate = useNavigate()
   const [analytics, setAnalytics] = useState<any>(null)
   const [analyticsError, setAnalyticsError] = useState<string | null>(null)
+  const [benchmark, setBenchmark] = useState<BenchmarkData | null>(null)
 
   useEffect(() => {
     const ctl = new AbortController()
@@ -35,6 +78,15 @@ export default function Dashboard() {
       .catch(err => { if (!ctl.signal.aborted) setAnalyticsError(err?.message || 'Failed to load analytics') })
     return () => ctl.abort()
   }, [])
+
+  useEffect(() => {
+    if (!analysis?.role) return
+    const ctl = new AbortController()
+    getBenchmarks(analysis.role)
+      .then(d => { if (!ctl.signal.aborted) setBenchmark(d) })
+      .catch(() => {})
+    return () => ctl.abort()
+  }, [analysis?.role])
 
   const chartHistory = useMemo(() => getHistoryOrDemo(loadHistory(user?.email)), [user?.email])
   const score = analysis?.final_score ?? 0
@@ -343,6 +395,43 @@ export default function Dashboard() {
         </motion.div>
       )}
 
+      {/* Share Your Progress + Peer Benchmarking */}
+      {analysis && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <motion.div variants={item}>
+            <Card className="premium-hover-card">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Share Your Progress</CardTitle>
+                <CardDescription>Let others know your placement readiness</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 border-green-500/30 text-green-600 hover:bg-green-500/10"
+                  onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`I scored ${score}% for ${analysis?.role ?? 'my role'} on CampusSync Edge! Check your placement readiness: ${window.location.origin}/quick-score`)}`, '_blank')}
+                >
+                  <svg className="size-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                  Share on WhatsApp
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/quick-score`); }}
+                >
+                  Copy Invite Link
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div variants={item}>
+            <PeerBenchmarkCard role={analysis.role} score={score} />
+          </motion.div>
+        </div>
+      )}
+
       {/* Quick Actions */}
       <motion.div variants={item} className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {[
@@ -364,6 +453,58 @@ export default function Dashboard() {
           </Card>
         ))}
       </motion.div>
+
+      {/* Peer Benchmarking */}
+      {benchmark && benchmark.user_percentile !== null && (
+        <motion.div variants={item}>
+          <Card className="premium-hover-card border-accent/20 bg-gradient-to-br from-accent/5 via-transparent to-primary/5">
+            <CardContent className="flex items-center gap-4 p-5">
+              <div className="rounded-lg bg-accent/10 p-2.5">
+                <Users className="size-5 text-accent" />
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-semibold text-foreground">
+                  You're in the top {100 - benchmark.user_percentile}% of {analysis?.role} candidates
+                </div>
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  Based on {benchmark.total_analyses.toLocaleString()} analyses &middot; Median score: {benchmark.median_score}
+                </div>
+              </div>
+              <Badge variant="outline" className="border-accent/30 text-accent font-bold text-lg px-3 py-1">
+                {benchmark.user_percentile}th
+              </Badge>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Share Progress */}
+      {analysis && (
+        <motion.div variants={item}>
+          <Card className="premium-hover-card">
+            <CardContent className="flex items-center gap-4 p-5">
+              <div className="rounded-lg bg-green-500/10 p-2.5">
+                <Share2 className="size-5 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-semibold text-foreground">Share Your Progress</div>
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  {score}% readiness for {analysis.role}
+                </div>
+              </div>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`I just scored ${score}% for ${analysis.role} on CampusSync Edge! Check your placement readiness: ${window.location.origin}/quick-score`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#25D366] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1da851] transition-colors"
+              >
+                <svg className="size-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Share on WhatsApp
+              </a>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
     </motion.div>
   )
 }

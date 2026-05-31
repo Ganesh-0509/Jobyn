@@ -645,3 +645,160 @@ export async function endInterview(
         retries: 1,
     })
 }
+
+// ── Quick Score (anonymous) ───────────────────────────────────
+export interface QuickScoreResult {
+    score: number
+    role: string
+    readiness_category: string
+    missing_count: number
+}
+
+export async function quickScoreUpload(file: File): Promise<QuickScoreResult> {
+    const fd = new FormData()
+    fd.append('file', file)
+    return apiFetch<QuickScoreResult>('/quick-score', { method: 'POST', rawBody: fd, noAuth: true })
+}
+
+// ── JD Matching ───────────────────────────────────────────────
+export interface JDMatchResult {
+    jd_match_score: number
+    matched_skills: string[]
+    missing_skills: string[]
+    high_priority_missing: string[]
+    match_strength: string
+}
+
+export interface JDMatchHistoryEntry {
+    id: number
+    jd_title: string | null
+    jd_company: string | null
+    match_score: number
+    match_strength: string
+    created_at: string
+}
+
+export async function matchJD(jdText: string, jdTitle?: string, jdCompany?: string): Promise<JDMatchResult> {
+    return apiFetch<JDMatchResult>('/jd/match', {
+        method: 'POST',
+        body: { jd_text: jdText, jd_title: jdTitle, jd_company: jdCompany },
+        retries: 1,
+    })
+}
+
+export async function getJDMatchHistory(): Promise<JDMatchHistoryEntry[]> {
+    return apiFetch<JDMatchHistoryEntry[]>('/jd/history')
+}
+
+// ── Peer Benchmarking ─────────────────────────────────────────
+export interface BenchmarkData {
+    role: string
+    total_analyses: number
+    avg_score: number
+    median_score: number
+    p10_score: number
+    p25_score: number
+    p50_score: number
+    p75_score: number
+    p90_score: number
+    user_percentile: number | null
+}
+
+export async function getBenchmarks(role: string): Promise<BenchmarkData> {
+    return apiFetch<BenchmarkData>(`/benchmarks/${encodeURIComponent(role)}`)
+}
+
+// ── Company Prep ──────────────────────────────────────────────
+export interface CompanyPrep {
+    company_name: string
+    company_slug: string
+    category: string
+    required_skills: string[]
+    preferred_skills: string[]
+    interview_stages: Array<{ stage: string; duration: string; focus: string }>
+    prep_timeline: Record<string, unknown>
+    resources: Array<{ name: string; url: string }>
+    tips: string[]
+    user_match: {
+        matched_required: string[]
+        matched_preferred: string[]
+        gap_required: string[]
+        gap_preferred: string[]
+        coverage_pct: number
+    }
+}
+
+export interface CompanyListItem {
+    company_name: string
+    company_slug: string
+    category: string
+}
+
+export async function getCompanyList(): Promise<CompanyListItem[]> {
+    return apiFetch<CompanyListItem[]>('/company-prep/companies', { noAuth: true })
+}
+
+export async function getCompanyPrep(slug: string): Promise<CompanyPrep> {
+    return apiFetch<CompanyPrep>(`/company-prep/${encodeURIComponent(slug)}`)
+}
+
+// ── Coding Practice ───────────────────────────────────────────
+export interface CodingProblem {
+    id: number
+    title: string
+    slug: string
+    difficulty: string
+    skill_tags: string[]
+    description: string
+    constraints: string | null
+    example_input: string
+    example_output: string
+    explanation: string
+    starter_code: Record<string, string>
+    test_cases: Array<{ input: string; expected: string }>
+    hints: string[]
+}
+
+export interface SubmissionResult {
+    submission_id: number
+    status: string
+    passed: number
+    total: number
+    test_results: Array<{ passed: boolean; actual?: string; expected?: string; error?: string }>
+}
+
+export interface SubmissionHistoryEntry {
+    id: number
+    problem_id: number
+    language: string
+    status: string
+    passed_count: number
+    total_count: number
+    created_at: string
+}
+
+export async function getCodingProblems(params?: { difficulty?: string; skill?: string; page?: number }): Promise<{ problems: CodingProblem[]; total: number }> {
+    const query = new URLSearchParams()
+    if (params?.difficulty) query.set('difficulty', params.difficulty)
+    if (params?.skill) query.set('skill', params.skill)
+    if (params?.page) query.set('page', String(params.page))
+    const qs = query.toString()
+    return apiFetch<{ problems: CodingProblem[]; total: number }>(`/coding/problems${qs ? '?' + qs : ''}`, { noAuth: true })
+}
+
+export async function getCodingProblem(slug: string): Promise<CodingProblem> {
+    return apiFetch<CodingProblem>(`/coding/problems/${encodeURIComponent(slug)}`, { noAuth: true })
+}
+
+export async function submitCodeSolution(problemId: number, language: string, code: string): Promise<SubmissionResult> {
+    return apiFetch<SubmissionResult>('/coding/submit', {
+        method: 'POST',
+        body: { problem_id: problemId, language, code },
+        retries: 0,
+    })
+}
+
+export async function getCodingSubmissions(problemId?: number): Promise<SubmissionHistoryEntry[]> {
+    const query = problemId ? `?problem_id=${problemId}` : ''
+    return apiFetch<SubmissionHistoryEntry[]>(`/coding/submissions${query}`)
+}

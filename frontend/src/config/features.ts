@@ -8,6 +8,14 @@ export const FEATURE_FLAGS = {
     MARKET_FORECAST: true,        // Enabled — Gemini-powered market forecasts with real data sources
     INDUSTRY_ALIGNMENT: true,     // Keep
     RESUME_COMPARISON: true,      // Keep
+    // Competitor response features (Phase A-C)
+    SHAREABLE_CERTIFICATE: true,  // Counter LinkedIn — shareable score badge
+    QUICK_SCORE: true,            // Counter ResumeWorded — anonymous 30s score
+    WHATSAPP_INTEGRATION: true,   // Counter WhatsApp groups — share via WhatsApp
+    JD_MATCHING: true,            // Counter Jobscan — JD-specific matching
+    PEER_BENCHMARKING: true,      // Counter VMock/LeetCode — percentile ranking
+    COMPANY_PREP: true,           // Counter PrepInsta/GFG — company-specific prep
+    CODING_PRACTICE: true,        // Counter LeetCode/HackerRank — coding challenges
 } as const
 
 export type FeatureFlag = keyof typeof FEATURE_FLAGS

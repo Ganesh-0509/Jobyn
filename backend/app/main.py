@@ -181,6 +181,11 @@ from app.routers import ai_insight
 from app.routers import feedback as feedback_router
 from app.routers import content_feedback as content_feedback_router
 from app.routers import project_generator
+from app.routers import quick_score as quick_score_router
+from app.routers import jd_match as jd_match_router
+from app.routers import benchmark as benchmark_router
+from app.routers import company_prep as company_prep_router
+from app.routers import coding as coding_router
 
 # ── App factory ────────────────────────────────────────────────────────────────
 # ... (rest of App factory)
@@ -193,6 +198,11 @@ app.include_router(ai_insight.router)
 app.include_router(feedback_router.router)
 app.include_router(content_feedback_router.router)
 app.include_router(project_generator.router)
+app.include_router(quick_score_router.router)
+app.include_router(jd_match_router.router)
+app.include_router(benchmark_router.router)
+app.include_router(company_prep_router.router)
+app.include_router(coding_router.router)
 
 
 # ── Root ────────────────────────────────────────────────────────────────────────

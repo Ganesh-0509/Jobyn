@@ -2,7 +2,8 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
     LayoutDashboard, FileText, BarChart2, ZapOff,
     CheckSquare, MessageSquare, TrendingUp, GitCompare,
-    Building2, Blocks, Settings, Shield, Menu, LogOut, Eye, EyeOff
+    Building2, Blocks, Settings, Shield, Menu, LogOut, Eye, EyeOff,
+    Award, Search, Briefcase, Code
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -27,6 +28,10 @@ const NAV_ITEMS: { to: string; label: string; Icon: typeof LayoutDashboard; flag
     { to: '/resume-comparison', label: 'Comparison', Icon: GitCompare, flag: 'RESUME_COMPARISON' },
     { to: '/industry-alignment', label: 'Industry', Icon: Building2 },
     { to: '/my-projects', label: 'Projects', Icon: Blocks },
+    { to: '/jd-match', label: 'JD Match', Icon: Search, flag: 'JD_MATCHING' },
+    { to: '/company-prep', label: 'Company Prep', Icon: Briefcase, flag: 'COMPANY_PREP' },
+    { to: '/coding-practice', label: 'Coding', Icon: Code, flag: 'CODING_PRACTICE' },
+    { to: '/certificate', label: 'Certificate', Icon: Award, flag: 'SHAREABLE_CERTIFICATE' },
     { to: '/admin', label: 'Admin', Icon: Shield },
     { to: '/settings', label: 'Settings', Icon: Settings },
 ]

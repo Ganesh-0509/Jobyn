@@ -392,7 +392,7 @@ export default function Landing() {
             className="flex flex-wrap justify-center gap-5 pt-4"
           >
             <Link to="/signup" className={buttonVariants({ size: "lg" }) + " shadow-md font-semibold gap-2 rounded-full px-9 py-6 text-sm"}>Get Your Resume Score</Link>
-            <a href="#pipeline" className={buttonVariants({ variant: "outline", size: "lg" }) + " font-semibold rounded-full border-stone-200 bg-white hover:bg-stone-50 px-9 py-6 text-sm"}>Explore Flow</a>
+            <Link to="/quick-score" className={buttonVariants({ variant: "outline", size: "lg" }) + " font-semibold rounded-full border-stone-200 bg-white hover:bg-stone-50 px-9 py-6 text-sm"}>Try Free — 30 Second Score</Link>
           </motion.div>
 
           {/* Trust Badges */}

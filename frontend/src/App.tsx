@@ -31,6 +31,11 @@ const NotFound = lazy(() => import('./pages/NotFound'))
 const Privacy = lazy(() => import('./pages/Privacy'))
 const Docs = lazy(() => import('./pages/Docs'))
 const Terms = lazy(() => import('./pages/Terms'))
+const Certificate = lazy(() => import('./pages/Certificate'))
+const QuickScore = lazy(() => import('./pages/QuickScore'))
+const JDMatch = lazy(() => import('./pages/JDMatch'))
+const CompanyPrep = lazy(() => import('./pages/CompanyPrep'))
+const CodingPractice = lazy(() => import('./pages/CodingPractice'))
 
 /** Global page loading spinner for lazy chunks */
 function PageLoader() {
@@ -113,6 +118,7 @@ function AppRoutes() {
                     <Route path="/privacy" element={<Privacy />} />
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/docs" element={<Docs />} />
+                    <Route path="/quick-score" element={<QuickScore />} />
 
                     {/* Authenticated — wrapped in Layout */}
                     <Route element={<RequireAuth><Layout /></RequireAuth>}>
@@ -128,6 +134,10 @@ function AppRoutes() {
                         <Route path="/my-projects" element={<FeatureErrorBoundary featureName="My Projects"><MyProjects /></FeatureErrorBoundary>} />
                         <Route path="/admin" element={<RequireAdmin><FeatureErrorBoundary featureName="Admin Dashboard"><AdminDashboard /></FeatureErrorBoundary></RequireAdmin>} />
                         <Route path="/settings" element={<FeatureErrorBoundary featureName="Settings"><Settings /></FeatureErrorBoundary>} />
+                        <Route path="/certificate" element={<FeatureErrorBoundary featureName="Certificate">{FEATURE_FLAGS.SHAREABLE_CERTIFICATE ? <Certificate /> : <ComingSoon feature="Certificate" />}</FeatureErrorBoundary>} />
+                        <Route path="/jd-match" element={<FeatureErrorBoundary featureName="JD Match">{FEATURE_FLAGS.JD_MATCHING ? <JDMatch /> : <ComingSoon feature="JD Matching" />}</FeatureErrorBoundary>} />
+                        <Route path="/company-prep" element={<FeatureErrorBoundary featureName="Company Prep">{FEATURE_FLAGS.COMPANY_PREP ? <CompanyPrep /> : <ComingSoon feature="Company Prep" />}</FeatureErrorBoundary>} />
+                        <Route path="/coding-practice" element={<FeatureErrorBoundary featureName="Coding Practice">{FEATURE_FLAGS.CODING_PRACTICE ? <CodingPractice /> : <ComingSoon feature="Coding Practice" />}</FeatureErrorBoundary>} />
                     </Route>
 
                     {/* 404 */}

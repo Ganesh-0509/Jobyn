@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useResume, getReadinessClass } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
-import { uploadResume, predictResume } from '../api/client'
+import { uploadResume, predictResume, getBenchmarks, type BenchmarkData } from '../api/client'
 import CircularProgress from '../components/CircularProgress'
-import { Cpu, Cloud, Zap, TrendingUp, AlertCircle, Shield, ArrowRight, FlaskConical, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { Cpu, Cloud, Zap, TrendingUp, AlertCircle, Shield, ArrowRight, FlaskConical, ThumbsUp, ThumbsDown, Users, Share2 } from 'lucide-react'
 import { usePrivacy } from '../context/PrivacyContext'
 import { predictOnDevice, isOnDeviceReady } from '../utils/onDevicePredictor'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -24,6 +24,21 @@ const CLASSES = [
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } }
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as const } } }
 
+function BenchmarkBadge({ role }: { role?: string }) {
+  const [data, setData] = useState<BenchmarkData | null>(null)
+  useEffect(() => {
+    if (!role) return
+    getBenchmarks(role).then(setData).catch(() => {})
+  }, [role])
+  if (!data || !data.user_percentile || data.total_analyses < 5) return null
+  const topPct = Math.max(1, 100 - data.user_percentile)
+  return (
+    <Badge variant="outline" className="gap-1.5 border-accent/30 text-accent">
+      Top {topPct}% of {data.total_analyses} candidates
+    </Badge>
+  )
+}
+
 export default function ReadinessScore() {
   const { analysis, prediction, bestFit, setAnalysis, setPrediction, currentFile } = useResume()
   const { privacy } = usePrivacy()
@@ -32,6 +47,12 @@ export default function ReadinessScore() {
   const [switching, setSwitching] = useState(false)
   const [switchError, setSwitchError] = useState<string | null>(null)
   const [outcomeSubmitted, setOutcomeSubmitted] = useState(false)
+  const [benchmark, setBenchmark] = useState<BenchmarkData | null>(null)
+
+  useEffect(() => {
+    if (!analysis?.role) return
+    getBenchmarks(analysis.role).then(setBenchmark).catch(() => {})
+  }, [analysis?.role])
 
   if (!analysis) {
     return (
@@ -81,6 +102,37 @@ export default function ReadinessScore() {
                 <div className="font-heading text-lg font-bold text-foreground">{current}</div>
                 {analysis?.role && <div className="text-xs text-muted-foreground">for {analysis.role}</div>}
               </div>
+
+              {/* Peer Benchmark Badge */}
+              {benchmark && benchmark.user_percentile !== null && (
+                <div className="flex items-center gap-2 rounded-lg border border-accent/20 bg-accent/5 px-3 py-1.5">
+                  <Users className="size-3.5 text-accent" />
+                  <span className="text-xs font-semibold text-accent">
+                    Top {100 - benchmark.user_percentile}% &middot; {benchmark.total_analyses.toLocaleString()} students
+                  </span>
+                </div>
+              )}
+
+              {/* Share Row */}
+              <div className="flex items-center gap-2">
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(`I scored ${score}% for ${analysis?.role} on CampusSync Edge! Check your placement readiness: ${window.location.origin}/quick-score`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#25D366] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1da851] transition-colors"
+                >
+                  <Share2 className="size-3" /> WhatsApp
+                </a>
+                <a
+                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.origin)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#0A66C2] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#095196] transition-colors"
+                >
+                  <Share2 className="size-3" /> LinkedIn
+                </a>
+              </div>
+              <BenchmarkBadge role={analysis?.role} />
 
               {prediction && (
                 <>
