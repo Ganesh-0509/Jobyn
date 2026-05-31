@@ -37,6 +37,8 @@ const QuickScore = lazy(() => import('./pages/QuickScore'))
 const JDMatch = lazy(() => import('./pages/JDMatch'))
 const CompanyPrep = lazy(() => import('./pages/CompanyPrep'))
 const CodingPractice = lazy(() => import('./pages/CodingPractice'))
+const Blog = lazy(() => import('./pages/Blog'))
+const BlogPost = lazy(() => import('./pages/BlogPost'))
 
 /** Global page loading spinner for lazy chunks */
 function PageLoader() {
@@ -120,6 +122,8 @@ function AppRoutes() {
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/docs" element={<Docs />} />
                     <Route path="/quick-score" element={<QuickScore />} />
+                    <Route path="/blog" element={<Blog />} />
+                    <Route path="/blog/:slug" element={<BlogPost />} />
 
                     {/* Authenticated — wrapped in Layout */}
                     <Route element={<RequireAuth><Layout /></RequireAuth>}>

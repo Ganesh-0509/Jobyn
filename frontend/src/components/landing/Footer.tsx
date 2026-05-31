@@ -1,9 +1,24 @@
 import LogoMark from '../LogoMark'
 
-const LINKS = {
-  Product: ['Features', 'Roadmap', 'Pricing', 'Changelog'],
-  Resources: ['Documentation', 'API Reference', 'Blog', 'Community'],
-  Company: ['About', 'Careers', 'Privacy Policy', 'Terms of Service'],
+const LINKS: Record<string, { label: string; href: string }[]> = {
+  Product: [
+    { label: 'Features', href: '#' },
+    { label: 'Roadmap', href: '#' },
+    { label: 'Pricing', href: '#' },
+    { label: 'Changelog', href: '#' },
+  ],
+  Resources: [
+    { label: 'Documentation', href: '/docs' },
+    { label: 'API Reference', href: '#' },
+    { label: 'Blog', href: '/blog' },
+    { label: 'Community', href: '#' },
+  ],
+  Company: [
+    { label: 'About', href: '#' },
+    { label: 'Careers', href: '#' },
+    { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Terms of Service', href: '/terms' },
+  ],
 }
 
 export default function Footer() {
@@ -65,9 +80,9 @@ export default function Footer() {
             </h4>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
               {links.map(link => (
-                <li key={link}>
+                <li key={link.label}>
                   <a
-                    href="#"
+                    href={link.href}
                     style={{
                       fontSize: 13,
                       fontWeight: 500,
@@ -78,7 +93,7 @@ export default function Footer() {
                     onMouseEnter={(e) => { (e.target as HTMLElement).style.color = '#F8FAFC' }}
                     onMouseLeave={(e) => { (e.target as HTMLElement).style.color = '#94A3B8' }}
                   >
-                    {link}
+                    {link.label}
                   </a>
                 </li>
               ))}
