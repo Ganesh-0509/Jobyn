@@ -63,6 +63,7 @@ graphify-out/
 
 # Local venv on Windows
 Scripts/
+!frontend/scripts/
 Include/
 pyvenv.cfg
 lib64
