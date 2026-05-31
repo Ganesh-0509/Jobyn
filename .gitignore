@@ -62,8 +62,7 @@ graphify-out/
 .openclaude/
 
 # Local venv on Windows
-Scripts/
-!frontend/scripts/
+/Scripts/
 Include/
 pyvenv.cfg
 lib64
