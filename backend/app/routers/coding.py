@@ -412,7 +412,7 @@ async def submit_solution(
         case_result = _run_code(language, body.code, case["input"])
 
         if case_result["timed_out"]:
-            status = "time_limit_exceeded"
+            status = "time_limit"
         elif case_result["returncode"] != 0:
             status = "runtime_error"
         elif case_result["stdout"] == case["expected"]:
@@ -428,11 +428,11 @@ async def submit_solution(
             # Only show expected/actual for public cases
             "expected": case["expected"] if i < len(problem["public_test_cases"]) else None,
             "actual": case_result["stdout"] if i < len(problem["public_test_cases"]) else None,
-            "error": case_result["stderr"] if status in ("runtime_error", "time_limit_exceeded") else None,
+            "error": case_result["stderr"] if status in ("runtime_error", "time_limit") else None,
         })
 
         # Stop early on timeout or runtime error for efficiency
-        if status in ("time_limit_exceeded", "runtime_error"):
+        if status in ("time_limit", "runtime_error"):
             overall_status = status
             break
 
@@ -447,12 +447,11 @@ async def submit_solution(
         insert_resp = sb.table("coding_submissions").insert({
             "user_email": user.email,
             "problem_id": body.problem_id,
-            "problem_slug": problem["slug"],
             "language": language,
             "code": body.code[:10000],
             "status": overall_status,
-            "passed": passed_count,
-            "total": len(all_cases),
+            "passed_count": passed_count,
+            "total_count": len(all_cases),
         }).execute()
         if insert_resp.data:
             submission_id = insert_resp.data[0]["id"]

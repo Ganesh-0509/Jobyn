@@ -118,11 +118,11 @@ async def get_benchmark(
             "total_analyses": len(scores),
             "avg_score": avg_score,
             "median_score": median_score,
-            "p10": p10,
-            "p25": p25,
-            "p50": p50,
-            "p75": p75,
-            "p90": p90,
+            "p10_score": p10,
+            "p25_score": p25,
+            "p50_score": p50,
+            "p75_score": p75,
+            "p90_score": p90,
         }
 
         try:
@@ -138,11 +138,11 @@ async def get_benchmark(
             "total_analyses": len(scores),
             "avg_score": avg_score,
             "median_score": median_score,
-            "p10": p10,
-            "p25": p25,
-            "p50": p50,
-            "p75": p75,
-            "p90": p90,
+            "p10_score": p10,
+            "p25_score": p25,
+            "p50_score": p50,
+            "p75_score": p75,
+            "p90_score": p90,
             "user_percentile": user_percentile,
             "user_score": user_score,
         }

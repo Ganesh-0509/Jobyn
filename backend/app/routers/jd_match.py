@@ -82,7 +82,7 @@ async def match_jd(
             "match_score": result["jd_match_score"],
             "matched_skills": result["matched_skills"],
             "missing_skills": result["missing_skills"],
-            "high_priority_missing": result["high_priority_missing"],
+            "high_priority": result["high_priority_missing"],
             "match_strength": result["match_strength"],
         }
 
