@@ -296,12 +296,6 @@ export default function Landing() {
           "@type": "Offer",
           "price": "0",
           "priceCurrency": "INR"
-        },
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "4.8",
-          "ratingCount": "57100",
-          "bestRating": "5"
         }
       }} />
 

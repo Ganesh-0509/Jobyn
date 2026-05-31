@@ -532,7 +532,7 @@ export async function getAdminStats(): Promise<AdminStats> {
 }
 
 export async function getPendingContributions(): Promise<Contribution[]> {
-    return apiFetch<Contribution[]>('/ai/admin/contributions', { noAuth: true })
+    return apiFetch<Contribution[]>('/ai/admin/contributions')
 }
 
 export async function approveContribution(id: number): Promise<{ status: string }> {
