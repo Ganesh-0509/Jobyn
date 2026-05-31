@@ -8,7 +8,7 @@
         "dev": "vite --port 5173",
         "prebuild": "node scripts/copy-onnx-assets.js",
         "build": "tsc && vite build",
-        "postbuild": "node scripts/prerender.mjs",
+        "postbuild": "node scripts/prerender.mjs && node scripts/optimize-images.mjs",
         "preview": "vite preview"
     },
     "dependencies": {
@@ -46,6 +46,7 @@
         "@vitejs/plugin-react": "^4.3.1",
         "jsdom": "^29.1.1",
         "puppeteer": "^25.1.0",
+        "sharp": "^0.34.5",
         "typescript": "^5.5.3",
         "vite": "^5.4.2",
         "vitest": "^4.1.7"
