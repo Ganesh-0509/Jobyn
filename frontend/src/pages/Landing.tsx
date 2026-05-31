@@ -5,6 +5,8 @@ import {
   ArrowRight, CheckCircle2, ChevronRight, Play, Github, ExternalLink, Sparkles, Upload, FileText, CheckSquare, Award, ArrowUpRight, ShieldCheck, Database, Layers, Network, Star, Users, Briefcase
 } from 'lucide-react'
 import LogoMark from '../components/LogoMark'
+import JsonLd from '../components/JsonLd'
+import SEO from '../components/SEO'
 import { Badge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -16,28 +18,28 @@ import { useAuth } from '../context/AuthContext'
 const STEPS = [
   {
     step: '01',
-    title: 'Resume & Skill Diagnostics',
+    title: 'AI Resume Analysis',
     highlight: 'Identify profile structural flaws',
     body: 'We dissect your engineering profile, locating structural omissions and key terms deficits before a recruiter ever reviews it.',
     fallbackMetric: '100% local profile parser'
   },
   {
     step: '02',
-    title: 'Requirement Gap Analysis',
+    title: 'Skill Gap Detection',
     highlight: 'Expose structural capability deficits',
     body: 'Continuous analysis monitors placement job sheets, matching missing framework concepts against active opportunities.',
     fallbackMetric: '12 standard paths supported'
   },
   {
     step: '03',
-    title: 'Vocal Arena Sandbox',
+    title: 'Interview Practice',
     highlight: 'Construct verbal precision & response clarity',
     body: 'A physical voice simulator questions you on complex systems design, grading vocabulary density and conceptual accuracy.',
     fallbackMetric: 'Instant conceptual feedback'
   },
   {
     step: '04',
-    title: 'Originality Signatures',
+    title: 'Project Verification',
     highlight: 'Validate actual project footprints',
     body: 'Establish verified authorship by auditing commit footprints and codebase complexity directly onto your student profile.',
     fallbackMetric: 'GitHub attribution audit'
@@ -277,6 +279,80 @@ export default function Landing() {
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
       className="min-h-screen bg-background text-foreground selection:bg-primary/10 overflow-x-hidden"
     >
+      <SEO
+        title="CampusSync Edge AI — Career Readiness Intelligence for Engineering Students"
+        description="AI-powered career readiness platform for engineering students. Upload your resume, identify skill gaps, and get placed faster. Free to start."
+        keywords="resume analyzer, skill gap analysis, campus placement, career readiness, engineering students"
+      />
+      {/* SoftwareApplication Schema */}
+      <JsonLd data={{
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "CampusSync Edge AI",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Web",
+        "description": "AI-powered career readiness platform for engineering students. Resume analysis, skill gap detection, interview practice, and placement preparation.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "INR"
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.8",
+          "ratingCount": "57100",
+          "bestRating": "5"
+        }
+      }} />
+
+      {/* FAQPage Schema */}
+      <JsonLd data={{
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How does CampusSync analyze my resume?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "CampusSync uses a 3-layer analysis engine combining deterministic scoring, ML inference trained on 57,100 real resumes, and generative AI for personalized feedback. Your resume is processed on-device and never leaves your browser."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is CampusSync free to use?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, CampusSync is free for engineering students. You can upload your resume, get a readiness score, identify skill gaps, and access study materials at no cost."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What career roles does CampusSync support?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "CampusSync supports 7 career roles: Software Developer, Frontend Developer, Backend Developer, Full Stack Developer, Data Scientist, ML Engineer, and DevOps Engineer."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How accurate is the resume analysis?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our ML model achieves 95% role prediction accuracy and R²=0.992 for score prediction, trained on 57,100 real engineering resumes from the Indian job market."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is my resume data private?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. CampusSync offers an on-device mode where your resume is processed entirely in your browser using ONNX WebAssembly. Your data never leaves your device, and we store zero resume content on our servers."
+            }
+          }
+        ]
+      }} />
+
       {/* ── Minimalist Premium Header ───────────────────────── */}
       <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">

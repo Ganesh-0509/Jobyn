@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { HelmetProvider } from 'react-helmet-async'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ResumeProvider } from './context/ResumeContext'
 import { ToastProvider } from './context/ToastContext'
@@ -199,7 +200,8 @@ export default function App() {
     return (
         <ErrorBoundary>
             <BrowserRouter>
-                <AuthProvider>
+                <HelmetProvider>
+                    <AuthProvider>
                     <PrivacyProvider>
                         <ResumeProvider>
                             <ToastProvider>
@@ -307,6 +309,7 @@ export default function App() {
                         </ResumeProvider>
                     </PrivacyProvider>
                 </AuthProvider>
+                </HelmetProvider>
             </BrowserRouter>
         </ErrorBoundary>
     )

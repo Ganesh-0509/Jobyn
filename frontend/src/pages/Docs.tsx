@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import SEO from '../components/SEO'
 
 interface DocSection {
     id: string
@@ -348,6 +349,10 @@ export default function Docs() {
 
     return (
         <div className="min-h-screen bg-background">
+            <SEO
+                title="Documentation — CampusSync Edge AI"
+                description="Learn how CampusSync Edge works. ONNX-powered AI, privacy-first resume analysis, skill gap detection, and career readiness scoring."
+            />
             {/* Header */}
             <header className="sticky top-0 z-50 flex items-center justify-between border-b border-border/50 bg-background/80 backdrop-blur-xl px-4 py-3">
                 <div className="flex items-center gap-3">

@@ -10,6 +10,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import SEO from '../components/SEO'
 
 const LOADING_STAGES = [
   { icon: FileText, label: 'Parsing your resume' },
@@ -72,6 +73,11 @@ export default function QuickScore() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <SEO
+        title="Free Resume Score — Get Placement Ready in 30 Seconds"
+        description="Get instant AI-powered resume score without signup. Trained on 57,100 real resumes. Identify your placement readiness in 30 seconds."
+        keywords="free resume score, resume analyzer, placement readiness, career score"
+      />
       {/* Minimal Header */}
       <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
