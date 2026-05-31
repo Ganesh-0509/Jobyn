@@ -8,11 +8,13 @@ import {
   type CodingProblem, type SubmissionResult,
 } from '../api/client'
 import { awardXP } from '../utils/streakTracker'
+import CodeEditor from '../components/CodeEditor'
+import ProblemCard from '../components/ProblemCard'
+import TestRunner from '../components/TestRunner'
 import {
-  Code, ArrowLeft, ArrowRight, Play, Send, CheckCircle, XCircle,
-  Loader2, Clock, Tag, ChevronRight,
+  Code, ArrowLeft, Play, Send, Loader2, XCircle, Tag,
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -30,10 +32,15 @@ const item = {
 const LANGUAGES = ['python', 'javascript', 'typescript', 'java', 'cpp', 'go'] as const
 type Language = typeof LANGUAGES[number]
 
-const DIFFICULTY_COLORS: Record<string, string> = {
-  easy: 'border-success/30 bg-success/5 text-success',
-  medium: 'border-warning/30 bg-warning/5 text-warning',
-  hard: 'border-destructive/30 bg-destructive/5 text-destructive',
+function mapStatus(backend: string): string {
+  const map: Record<string, string> = {
+    accepted: 'Accepted',
+    wrong_answer: 'Wrong Answer',
+    runtime_error: 'Runtime Error',
+    time_limit: 'Time Limit Exceeded',
+    compile_error: 'Compile Error',
+  }
+  return map[backend] ?? backend
 }
 
 export default function CodingPractice() {
@@ -121,15 +128,6 @@ export default function CodingPractice() {
     }
   }, [selectedProblem, language, code])
 
-  const getDiffBadge = (diff: string) => {
-    const variant = DIFFICULTY_COLORS[diff.toLowerCase()] || ''
-    return (
-      <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${variant}`}>
-        {diff}
-      </span>
-    )
-  }
-
   // Locked state
   if (!analysis) {
     return (
@@ -174,7 +172,9 @@ export default function CodingPractice() {
                 <h1 className="font-heading text-xl font-bold tracking-tight text-foreground sm:text-2xl">
                   {selectedProblem.title}
                 </h1>
-                {getDiffBadge(selectedProblem.difficulty)}
+                <Badge variant={selectedProblem.difficulty === 'Easy' ? 'secondary' : selectedProblem.difficulty === 'Hard' ? 'destructive' : 'outline'} className="text-xs">
+                  {selectedProblem.difficulty}
+                </Badge>
               </div>
               <div className="mt-1.5 flex flex-wrap items-center gap-2">
                 {selectedProblem.skill_tags.map(tag => (
@@ -257,12 +257,11 @@ export default function CodingPractice() {
                 </Select>
               </CardHeader>
               <CardContent>
-                <textarea
+                <CodeEditor
                   value={code}
-                  onChange={e => setCode(e.target.value)}
-                  className="w-full min-h-[280px] rounded-lg border border-input bg-muted/30 p-4 font-mono text-sm leading-relaxed text-foreground resize-y focus:outline-none focus:ring-2 focus:ring-ring/50"
-                  placeholder="Write your solution here..."
-                  spellCheck={false}
+                  onChange={v => setCode(v ?? '')}
+                  language={language}
+                  height="350px"
                 />
                 <div className="mt-3 flex gap-2">
                   <Button variant="outline" className="gap-1.5" onClick={handleRun} disabled={submitting || !code.trim()}>
@@ -279,48 +278,14 @@ export default function CodingPractice() {
 
             {/* Test Results */}
             {result && (
-              <Card className={`premium-hover-card ${result.status === 'accepted' || result.passed === result.total ? 'border-success/30' : 'border-destructive/30'}`}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {result.status === 'accepted' || result.passed === result.total ? (
-                        <CheckCircle className="size-4 text-success" />
-                      ) : (
-                        <XCircle className="size-4 text-destructive" />
-                      )}
-                      <CardTitle className="text-base">
-                        {result.status === 'accepted' || result.passed === result.total ? 'All Tests Passed!' : 'Some Tests Failed'}
-                      </CardTitle>
+              <Card className={`premium-hover-card ${result.status === 'accepted' ? 'border-success/30' : 'border-destructive/30'}`}>
+                <CardContent className="pt-6">
+                  <TestRunner results={result.test_results} status={mapStatus(result.status)} />
+                  {result.status === 'accepted' && (
+                    <div className="mt-4 flex items-center gap-2 rounded-lg bg-success/5 border border-success/10 px-3 py-2 text-xs text-success font-medium">
+                      +200 XP earned for solving this problem!
                     </div>
-                    <Badge variant={result.status === 'accepted' || result.passed === result.total ? 'default' : 'destructive'}>
-                      {result.passed}/{result.total} Passed
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {result.test_results.map((test, i) => (
-                      <div
-                        key={i}
-                        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs ${
-                          test.passed
-                            ? 'border border-success/10 bg-success/5 text-success'
-                            : 'border border-destructive/10 bg-destructive/5 text-destructive'
-                        }`}
-                      >
-                        {test.passed ? <CheckCircle className="size-3.5 shrink-0" /> : <XCircle className="size-3.5 shrink-0" />}
-                        <span className="font-medium">Test {i + 1}</span>
-                        {!test.passed && test.error && (
-                          <span className="ml-auto truncate max-w-[60%]">{test.error}</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  {result.status === 'accepted' || result.passed === result.total ? (
-                    <div className="mt-3 flex items-center gap-2 rounded-lg bg-success/5 border border-success/10 px-3 py-2 text-xs text-success font-medium">
-                      <CheckCircle className="size-3.5" /> +200 XP earned for solving this problem!
-                    </div>
-                  ) : null}
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -376,35 +341,11 @@ export default function CodingPractice() {
         ) : problems.length > 0 ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {problems.map(problem => (
-              <button
+              <ProblemCard
                 key={problem.id}
-                type="button"
-                className="group flex flex-col rounded-xl border border-border/50 bg-muted/20 p-4 text-left transition-all hover:border-primary/30 hover:bg-primary/5 hover:shadow-md"
+                problem={problem}
                 onClick={() => handleSelectProblem(problem.slug)}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary">
-                    {problem.id}
-                  </div>
-                  {getDiffBadge(problem.difficulty)}
-                </div>
-                <h3 className="mt-3 text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
-                  {problem.title}
-                </h3>
-                <div className="mt-auto pt-3 flex items-center justify-between">
-                  <div className="flex flex-wrap gap-1">
-                    {problem.skill_tags.slice(0, 2).map(tag => (
-                      <Badge key={tag} variant="outline" className="text-[9px]">
-                        {tag}
-                      </Badge>
-                    ))}
-                    {problem.skill_tags.length > 2 && (
-                      <span className="text-[10px] text-muted-foreground">+{problem.skill_tags.length - 2}</span>
-                    )}
-                  </div>
-                  <ChevronRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
-                </div>
-              </button>
+              />
             ))}
           </div>
         ) : (
