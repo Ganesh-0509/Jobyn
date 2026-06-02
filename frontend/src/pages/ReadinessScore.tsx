@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
+import { Info } from 'lucide-react'
 
 const CLASSES = [
   { label: 'Beginner', range: '0–40%', min: 0, max: 40 },
@@ -78,11 +80,11 @@ export default function ReadinessScore() {
   const optPct = analysis?.optional_coverage_percent ?? 0
 
   const BREAKDOWN = [
-    { label: 'Core Skill Coverage', pct: corePct, weight: 35, color: 'bg-primary' },
-    { label: 'Projects & Experience', pct: projectPct, weight: 25, color: 'bg-cyan' },
-    { label: 'ATS Compatibility', pct: atsPct, weight: 20, color: 'bg-success' },
-    { label: 'Resume Structure', pct: structPct, weight: 10, color: 'bg-violet' },
-    { label: 'Optional Skills', pct: optPct, weight: 10, color: 'bg-warning' },
+    { label: 'Core Skill Coverage', pct: corePct, weight: 35, color: 'bg-primary', tip: 'Measures how many must-have skills for your target role appear in your resume. These are the skills recruiters filter for first — languages, frameworks, and tools listed in the job description. A low score means key skills are missing from your resume text.' },
+    { label: 'Projects & Experience', pct: projectPct, weight: 25, color: 'bg-cyan', tip: 'Evaluates the quality and relevance of your projects and work experience. It checks if your projects use the right tech stack for your role, have clear descriptions, and demonstrate real-world application. GitHub links, deployed URLs, and quantified impact boost this score.' },
+    { label: 'ATS Compatibility', pct: atsPct, weight: 20, color: 'bg-success', tip: 'Checks if your resume can pass through Applicant Tracking Systems (ATS) that companies use to filter resumes. Factors include: proper section headings, standard fonts, no images/tables, keyword density matching the job description, and clean file format.' },
+    { label: 'Resume Structure', pct: structPct, weight: 10, color: 'bg-violet', tip: 'Reviews the layout and organization of your resume. Looks for standard sections (Education, Skills, Projects, Experience), consistent formatting, appropriate length (1 page for freshers), and logical ordering. A well-structured resume is easier for both ATS and humans to scan.' },
+    { label: 'Optional Skills', pct: optPct, weight: 10, color: 'bg-warning', tip: 'Bonus points for nice-to-have skills that differentiate you from other candidates — things like Docker, CI/CD, testing frameworks, cloud platforms, or soft skills. These aren\'t required but make you stand out. Think of them as tiebreakers.' },
   ]
 
   return (
@@ -269,10 +271,21 @@ export default function ReadinessScore() {
               <CardDescription>How each metric contributes to your final score</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <TooltipProvider>
               {BREAKDOWN.map(b => (
                 <div key={b.label} className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-foreground">{b.label}</span>
+                    <span className="flex items-center gap-1.5 font-medium text-foreground">
+                      {b.label}
+                      <Tooltip>
+                        <TooltipTrigger className="inline-flex text-muted-foreground/60 hover:text-muted-foreground transition-colors">
+                          <Info className="size-3" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs text-left">
+                          <p>{b.tip}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </span>
                     <span className="tabular-nums text-muted-foreground">
                       {Math.round(b.pct)}% <span className="text-xs opacity-60">(&times;{b.weight}%)</span>
                     </span>
@@ -280,6 +293,7 @@ export default function ReadinessScore() {
                   <Progress value={Math.min(100, Math.round(b.pct))} className="h-2" />
                 </div>
               ))}
+              </TooltipProvider>
               <div className="mt-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-2.5 text-xs text-muted-foreground">
                 Final Score = ({corePct}&times;0.35) + ({projectPct}&times;0.25) + ({atsPct}&times;0.20) + ({structPct}&times;0.10) + ({optPct}&times;0.10) ={' '}
                 <strong className="text-primary">{score}</strong>

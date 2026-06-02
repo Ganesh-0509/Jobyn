@@ -37,6 +37,7 @@ const QuickScore = lazy(() => import('./pages/QuickScore'))
 const JDMatch = lazy(() => import('./pages/JDMatch'))
 const CompanyPrep = lazy(() => import('./pages/CompanyPrep'))
 const CodingPractice = lazy(() => import('./pages/CodingPractice'))
+const ResumeBuilder = lazy(() => import('./pages/ResumeBuilder'))
 const Blog = lazy(() => import('./pages/Blog'))
 const BlogPost = lazy(() => import('./pages/BlogPost'))
 const Onboarding = lazy(() => import('./pages/Onboarding'))
@@ -73,11 +74,20 @@ function FeatureErrorBoundary({ children, featureName }: { children: React.React
     )
 }
 
-/** Guard: redirect unauthenticated users to login */
+/** Guard: redirect unauthenticated users to login; redirect first-time users to onboarding */
 function RequireAuth({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth()
+    const location = useLocation()
     if (loading) return <PageLoader />
     if (!user) return <Navigate to="/login" replace />
+
+    // Redirect first-time users to onboarding (unless they're already there or on settings/admin)
+    const skipOnboardingCheck = location.pathname === '/onboarding' || location.pathname === '/settings' || location.pathname === '/admin'
+    if (!skipOnboardingCheck) {
+        const onboardingDone = localStorage.getItem(`${user.email}_cse_onboarding_done`)
+        if (!onboardingDone) return <Navigate to="/onboarding" replace />
+    }
+
     return <>{children}</>
 }
 
@@ -139,6 +149,7 @@ function AppRoutes() {
                         <Route path="/interview-readiness" element={<FeatureErrorBoundary featureName="Interview Readiness"><InterviewReadiness /></FeatureErrorBoundary>} />
                         <Route path="/progress-tracking" element={<FeatureErrorBoundary featureName="Progress Tracking"><ProgressTracking /></FeatureErrorBoundary>} />
                         <Route path="/resume-comparison" element={<FeatureErrorBoundary featureName="Resume Comparison">{FEATURE_FLAGS.RESUME_COMPARISON ? <ResumeComparison /> : <ComingSoon feature="Resume Comparison" />}</FeatureErrorBoundary>} />
+                        <Route path="/resume-builder" element={<FeatureErrorBoundary featureName="Resume Builder"><ResumeBuilder /></FeatureErrorBoundary>} />
                         <Route path="/industry-alignment" element={<FeatureErrorBoundary featureName="Industry Alignment"><IndustryAlignment /></FeatureErrorBoundary>} />
                         <Route path="/my-projects" element={<FeatureErrorBoundary featureName="My Projects"><MyProjects /></FeatureErrorBoundary>} />
                         <Route path="/admin" element={<RequireAdmin><FeatureErrorBoundary featureName="Admin Dashboard"><AdminDashboard /></FeatureErrorBoundary></RequireAdmin>} />

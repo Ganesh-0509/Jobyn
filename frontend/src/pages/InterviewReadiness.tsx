@@ -9,6 +9,7 @@ import {
     Flame, Lightbulb,
 } from 'lucide-react'
 import { apiFetch } from '../api/client'
+import { markChecklistItem } from '../utils/onboardingChecklist'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -68,14 +69,31 @@ function saveSession(record: SessionRecord, email?: string) {
 }
 
 /* ── Web Speech hook ───────────────────────────────────── */
+const SPEECH_LANGS: Record<string, string> = {
+    'en-IN': 'English (India)',
+    'en-US': 'English (US)',
+    'en-GB': 'English (UK)',
+    'hi-IN': 'Hindi (India)',
+}
+
 function useWebSpeech() {
     const [transcript, setTranscript] = useState('')
     const [listening, setListening] = useState(false)
+    const [speechLang, setSpeechLang] = useState<string>(() => {
+        try { return localStorage.getItem('cse_speech_lang') || 'en-IN' }
+        catch { return 'en-IN' }
+    })
     const [supported] = useState(() => {
         const SR = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null
         return !!SR
     })
     const recRef = useRef<SpeechRecognition | null>(null)
+
+    const applyLang = (lang: string) => {
+        setSpeechLang(lang)
+        try { localStorage.setItem('cse_speech_lang', lang) } catch {}
+        if (recRef.current) recRef.current.lang = lang
+    }
 
     useEffect(() => {
         const SR = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null
@@ -83,7 +101,7 @@ function useWebSpeech() {
         const rec = new SR()
         rec.continuous = true
         rec.interimResults = true
-        rec.lang = 'en-US'
+        rec.lang = speechLang
         rec.onresult = (e: SpeechRecognitionEvent) => {
             const text = Array.from({ length: e.results.length }, (_, i) => e.results[i][0].transcript).join(' ')
             setTranscript(text)
@@ -95,7 +113,7 @@ function useWebSpeech() {
     const start = () => { if (!recRef.current) return; setTranscript(''); recRef.current.start(); setListening(true) }
     const stop = () => { if (!recRef.current) return; recRef.current.stop(); setListening(false) }
 
-    return { transcript, setTranscript, listening, supported, start, stop }
+    return { transcript, setTranscript, listening, supported, start, stop, speechLang, setSpeechLang: applyLang }
 }
 
 /* ════════════════════════════════════════════════════════════ */
@@ -115,7 +133,7 @@ export default function InterviewReadiness() {
     const [showHistory, setShowHistory] = useState(false)
     const [log, setLog] = useState<SessionRecord[]>([])
 
-    const { transcript, setTranscript, listening, supported, start, stop } = useWebSpeech()
+    const { transcript, setTranscript, listening, supported, start, stop, speechLang, setSpeechLang } = useWebSpeech()
 
     useEffect(() => { setLog(loadInterviewLog(user?.email)) }, [user?.email])
 
@@ -176,6 +194,7 @@ export default function InterviewReadiness() {
                 questionPreview: question.question.slice(0, 80),
             }
             saveSession(record, user?.email)
+            markChecklistItem('completed_interview', user?.email)
             setLog(loadInterviewLog(user?.email))
         } catch {
             setResult({
@@ -383,6 +402,15 @@ export default function InterviewReadiness() {
                                             >
                                                 {listening ? <><MicOff className="size-4" /> Stop</> : <><Mic className="size-4" /> Record</>}
                                             </Button>
+                                            <select
+                                                value={speechLang}
+                                                onChange={e => setSpeechLang(e.target.value)}
+                                                className="rounded-md border border-border/50 bg-surface-elevated px-2 py-1.5 text-xs text-foreground"
+                                            >
+                                                {Object.entries(SPEECH_LANGS).map(([code, name]) => (
+                                                    <option key={code} value={code}>{name}</option>
+                                                ))}
+                                            </select>
                                             {listening && (
                                                 <span className="flex items-center gap-1.5 text-xs text-crimson">
                                                     <span className="size-1.5 animate-pulse rounded-full bg-crimson" /> Recording

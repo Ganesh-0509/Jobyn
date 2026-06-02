@@ -10,6 +10,7 @@ import remarkGfm from 'remark-gfm'
 import DOMPurify from 'dompurify'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
+import { markChecklistItem } from '../utils/onboardingChecklist'
 import type { VerificationResult } from '../api/client'
 import {
   getSavedProjects, updateProjectStatus, deleteProject, saveVerification,
@@ -66,7 +67,11 @@ export default function MyProjects() {
   }
 
   const handleStartProject = (id: string) => { updateProjectStatus(id, 'in-progress', user?.email); reload() }
-  const handleVerified = (id: string, githubUrl: string, result: VerificationResult) => { saveVerification(id, githubUrl, result, user?.email); reload() }
+  const handleVerified = (id: string, githubUrl: string, result: VerificationResult) => {
+    saveVerification(id, githubUrl, result, user?.email)
+    markChecklistItem('generated_project', user?.email)
+    reload()
+  }
   const handleDelete = (id: string) => { deleteProject(id, user?.email); if (expanded === id) setExpanded(null); if (verifyOpen === id) setVerifyOpen(null); reload() }
   const handleCopy = (id: string, markdown: string) => { navigator.clipboard.writeText(markdown).then(() => { setCopied(id); setTimeout(() => setCopied(null), 2000) }) }
   const handleDownload = (p: SavedProject) => { const blob = new Blob([p.markdown], { type: 'text/markdown' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `${p.role.replace(/\s+/g, '-').toLowerCase()}-capstone-project.md`; a.click(); URL.revokeObjectURL(url) }

@@ -9,6 +9,7 @@ import {
   Monitor, Shield, Cloud, Info, Bell,
   User, Download, HardDrive, Keyboard,
   Sliders, Database, Zap, FileText, Target,
+  Wifi,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -26,6 +27,7 @@ export default function Settings() {
   const [healthLoading, setHealthLoading] = useState(true)
   const [notifications, setNotifications] = useState(() => getItem<string>('notifs') !== 'false')
   const [privacyMode, setPrivacyMode] = useState(() => getItem<string>('privacy') === 'true')
+  const [lowDataMode, setLowDataMode] = useState(() => getItem<string>('low_data') === 'true')
   const [deleting, setDeleting] = useState(false)
 
   useEffect(() => { getHealth().then(h => setHealth(h)).catch(() => {}).finally(() => setHealthLoading(false)) }, [])
@@ -33,6 +35,7 @@ export default function Settings() {
   const handleSave = () => {
     setItem('notifs', String(notifications))
     setItem('privacy', String(privacyMode))
+    setItem('low_data', String(lowDataMode))
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -191,6 +194,14 @@ export default function Settings() {
                   <p className="text-xs text-muted-foreground">Anonymize resume data before cloud processing</p>
                 </div>
                 <Switch checked={privacyMode} onCheckedChange={setPrivacyMode} />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="flex items-center gap-1.5 text-sm font-medium"><Wifi className="size-3.5" /> Low Data Mode</Label>
+                  <p className="text-xs text-muted-foreground">Reduce API calls and skip heavy animations for slower connections. ML predictions run on-device automatically.</p>
+                </div>
+                <Switch checked={lowDataMode} onCheckedChange={setLowDataMode} />
               </div>
             </CardContent>
           </Card>

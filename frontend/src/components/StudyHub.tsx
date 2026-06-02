@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react'
 import { X, BookOpen, CheckCircle2, ChevronRight, ChevronLeft, BrainCircuit, Lightbulb, Clock, MessageSquare, Send, Sparkles, Pin, Sun, Moon, Target, Zap, RotateCcw, AlertCircle, Code2, ExternalLink, Loader2 } from 'lucide-react'
-import { getStudyNotes, getStudyQuiz, getStudySection, studyChat, saveStudyProgress, getStudyProgress, submitQuizGrade, type StudyNotesResult, type QuizResult, type DetailedContent } from '../api/client'
+import { getStudyNotes, getStudyQuiz, getStudySection, studyChat, saveStudyProgress, getStudyProgress, submitQuizGrade, traceCode, type StudyNotesResult, type QuizResult, type DetailedContent, type SandboxTraceResult } from '../api/client'
 const ReactMarkdown = lazy(() => import('react-markdown'))
 import remarkGfm from 'remark-gfm'
 import { useResume } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
 import InterviewSimulator from './InterviewSimulator'
+import CodeBlock from './CodeBlock'
+import CodeVisualizer from './CodeVisualizer'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 
 interface StudyHubProps {
     skill: string
@@ -67,6 +70,12 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
 
     // Interactive notes state
     const [expandedTryIt, setExpandedTryIt] = useState<Record<number, boolean>>({})
+    const [showVisualizer, setShowVisualizer] = useState(false)
+    const [visualizerCode, setVisualizerCode] = useState('')
+    const [visualizerLang, setVisualizerLang] = useState('python')
+    const [visualizerTraceData, setVisualizerTraceData] = useState<any>(null)
+    const [visualizerLoading, setVisualizerLoading] = useState(false)
+    const [visualizerError, setVisualizerError] = useState<string | null>(null)
 
     // Chat state
     const [query, setQuery] = useState('')
@@ -470,7 +479,19 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                             <h3>{sections[activeSectionIdx].subheading}</h3>
                                             <div className="content-prose">
                                                 <Suspense fallback={<p>{sections[activeSectionIdx].explanation}</p>}>
-                                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                    <ReactMarkdown
+                                                        remarkPlugins={[remarkGfm]}
+                                                        components={{
+                                                            code({ node, className, children, ...props }) {
+                                                                const match = /language-(\w+)/.exec(className || '')
+                                                                const codeStr = String(children).replace(/\n$/, '')
+                                                                if (match) {
+                                                                    return <CodeBlock code={codeStr} language={match[1]} />
+                                                                }
+                                                                return <code className={className} {...props}>{children}</code>
+                                                            },
+                                                        }}
+                                                    >
                                                         {sections[activeSectionIdx].explanation}
                                                     </ReactMarkdown>
                                                 </Suspense>
@@ -480,7 +501,19 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                                         <strong style={{ display: 'block', color: 'var(--cyan)', marginBottom: 4 }}>Algorithm / Steps:</strong>
                                                         <div style={{ fontSize: 13, background: 'rgba(34, 211, 238, 0.05)', padding: 12, borderRadius: 8, borderLeft: '2px solid var(--cyan)' }}>
                                                             <Suspense fallback={<p style={{ whiteSpace: 'pre-line' }}>{sections[activeSectionIdx].algorithm}</p>}>
-                                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                                <ReactMarkdown
+                                                                    remarkPlugins={[remarkGfm]}
+                                                                    components={{
+                                                                        code({ node, className, children, ...props }) {
+                                                                            const match = /language-(\w+)/.exec(className || '')
+                                                                            const codeStr = String(children).replace(/\n$/, '')
+                                                                            if (match) {
+                                                                                return <CodeBlock code={codeStr} language={match[1]} />
+                                                                            }
+                                                                            return <code className={className} {...props}>{children}</code>
+                                                                        },
+                                                                    }}
+                                                                >
                                                                     {sections[activeSectionIdx].algorithm!}
                                                                 </ReactMarkdown>
                                                             </Suspense>
@@ -493,7 +526,44 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                                         <div className="example-label"><Code2 size={14} /> Code Example</div>
                                                         <div className="example-content">
                                                             <Suspense fallback={<pre>{sections[activeSectionIdx].example}</pre>}>
-                                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                                <ReactMarkdown
+                                                                    remarkPlugins={[remarkGfm]}
+                                                                    components={{
+                                                                        code({ node, className, children, ...props }) {
+                                                                            const match = /language-(\w+)/.exec(className || '')
+                                                                            const codeStr = String(children).replace(/\n$/, '')
+                                                                            if (match) {
+                                                                                return (
+                                                                                    <CodeBlock
+                                                                                        code={codeStr}
+                                                                                        language={match[1]}
+                                                                                        onVisualize={async () => {
+                                                                                            setVisualizerCode(codeStr)
+                                                                                            setVisualizerLang(match[1])
+                                                                                            setVisualizerTraceData(null)
+                                                                                            setVisualizerError(null)
+                                                                                            setVisualizerLoading(true)
+                                                                                            setShowVisualizer(true)
+                                                                                            try {
+                                                                                                const result = await traceCode(codeStr, match[1])
+                                                                                                if (result.error) {
+                                                                                                    setVisualizerError(result.error)
+                                                                                                } else {
+                                                                                                    setVisualizerTraceData(result)
+                                                                                                }
+                                                                                            } catch (err) {
+                                                                                                setVisualizerError(err instanceof Error ? err.message : 'Failed to trace code')
+                                                                                            } finally {
+                                                                                                setVisualizerLoading(false)
+                                                                                            }
+                                                                                        }}
+                                                                                    />
+                                                                                )
+                                                                            }
+                                                                            return <code className={className} {...props}>{children}</code>
+                                                                        },
+                                                                    }}
+                                                                >
                                                                     {sections[activeSectionIdx].example.includes('```') ? sections[activeSectionIdx].example : `\`\`\`\n${sections[activeSectionIdx].example}\n\`\`\``}
                                                                 </ReactMarkdown>
                                                             </Suspense>
@@ -671,7 +741,19 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                                             <div className="msg-content">
                                                 {m.role === 'assistant' ? (
                                                     <Suspense fallback={<span>Loading…</span>}>
-                                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                        <ReactMarkdown
+                                                            remarkPlugins={[remarkGfm]}
+                                                            components={{
+                                                                code({ node, className, children, ...props }) {
+                                                                    const match = /language-(\w+)/.exec(className || '')
+                                                                    const codeStr = String(children).replace(/\n$/, '')
+                                                                    if (match) {
+                                                                        return <CodeBlock code={codeStr} language={match[1]} />
+                                                                    }
+                                                                    return <code className={className} {...props}>{children}</code>
+                                                                },
+                                                            }}
+                                                        >
                                                             {m.content}
                                                         </ReactMarkdown>
                                                     </Suspense>
@@ -916,6 +998,32 @@ export default function StudyHub({ skill, onClose, onVerified }: StudyHubProps) 
                     </div>
                 </main>
             </div>
+
+            {/* Code Visualizer Modal */}
+            <Dialog open={showVisualizer} onOpenChange={setShowVisualizer}>
+                <DialogContent className="sm:max-w-[950px] max-h-[90vh] overflow-auto">
+                    <DialogTitle className="sr-only">Code Execution Visualizer</DialogTitle>
+                    {visualizerLoading ? (
+                        <div className="flex flex-col items-center justify-center gap-3 py-12">
+                            <Loader2 className="size-8 animate-spin text-primary" />
+                            <p className="text-sm text-muted-foreground">Tracing execution...</p>
+                        </div>
+                    ) : visualizerError ? (
+                        <div className="flex flex-col items-center justify-center gap-3 py-12">
+                            <AlertCircle className="size-8 text-destructive" />
+                            <p className="text-sm text-destructive">{visualizerError}</p>
+                        </div>
+                    ) : visualizerTraceData ? (
+                        <CodeVisualizer
+                            code={visualizerCode}
+                            language={visualizerLang}
+                            steps={visualizerTraceData.steps}
+                            traceError={visualizerTraceData.error}
+                            onClose={() => setShowVisualizer(false)}
+                        />
+                    ) : null}
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

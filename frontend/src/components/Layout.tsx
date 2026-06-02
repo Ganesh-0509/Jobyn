@@ -3,7 +3,7 @@ import {
     LayoutDashboard, FileText, BarChart2, ZapOff,
     CheckSquare, MessageSquare, TrendingUp, GitCompare,
     Building2, Blocks, Settings, Shield, Menu, LogOut, Eye, EyeOff,
-    Award, Search, Briefcase, Code
+    Award, Search, Briefcase, Code, PenLine
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -26,6 +26,7 @@ const NAV_ITEMS: { to: string; label: string; Icon: typeof LayoutDashboard; flag
     { to: '/interview-readiness', label: 'Interview Prep', Icon: MessageSquare },
     { to: '/progress-tracking', label: 'Progress', Icon: TrendingUp },
     { to: '/resume-comparison', label: 'Comparison', Icon: GitCompare, flag: 'RESUME_COMPARISON' },
+    { to: '/resume-builder', label: 'Resume Builder', Icon: PenLine },
     { to: '/industry-alignment', label: 'Industry', Icon: Building2 },
     { to: '/my-projects', label: 'Projects', Icon: Blocks },
     { to: '/jd-match', label: 'JD Match', Icon: Search, flag: 'JD_MATCHING' },

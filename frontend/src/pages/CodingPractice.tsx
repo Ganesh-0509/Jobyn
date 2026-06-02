@@ -4,15 +4,16 @@ import { motion } from 'framer-motion'
 import { useResume } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
 import {
-  getCodingProblems, getCodingProblem, submitCodeSolution,
-  type CodingProblem, type SubmissionResult,
+  getCodingProblems, getCodingProblem, submitCodeSolution, traceCode,
+  type CodingProblem, type SubmissionResult, type TraceResult as SandboxTraceResult,
 } from '../api/client'
 import { awardXP } from '../utils/streakTracker'
 import CodeEditor from '../components/CodeEditor'
 import ProblemCard from '../components/ProblemCard'
 import TestRunner from '../components/TestRunner'
+import CodeVisualizer from '../components/CodeVisualizer'
 import {
-  Code, ArrowLeft, Play, Send, Loader2, XCircle, Tag,
+  Code, ArrowLeft, Play, Send, Loader2, XCircle, Tag, Eye,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -58,6 +59,8 @@ export default function CodingPractice() {
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<SubmissionResult | null>(null)
   const [error, setError] = useState('')
+  const [visualizerData, setVisualizerData] = useState<SandboxTraceResult | null>(null)
+  const [visualizing, setVisualizing] = useState(false)
 
   // Fetch problems
   useEffect(() => {
@@ -127,6 +130,23 @@ export default function CodingPractice() {
       setSubmitting(false)
     }
   }, [selectedProblem, language, code])
+
+  const handleVisualize = useCallback(async () => {
+    if (!code.trim()) return
+    setVisualizing(true); setError('')
+    try {
+      const data = await traceCode(code, language)
+      if (data.error) {
+        setError(data.error)
+      } else {
+        setVisualizerData(data)
+      }
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Visualization failed')
+    } finally {
+      setVisualizing(false)
+    }
+  }, [language, code])
 
   // Locked state
   if (!analysis) {
@@ -268,6 +288,10 @@ export default function CodingPractice() {
                     {submitting ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}
                     Run Tests
                   </Button>
+                  <Button variant="outline" className="gap-1.5" onClick={handleVisualize} disabled={visualizing || !code.trim()}>
+                    {visualizing ? <Loader2 className="size-3.5 animate-spin" /> : <Eye className="size-3.5" />}
+                    Visualize
+                  </Button>
                   <Button className="gap-1.5" onClick={handleSubmit} disabled={submitting || !code.trim()}>
                     {submitting ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
                     Submit
@@ -298,6 +322,16 @@ export default function CodingPractice() {
             )}
           </div>
         </motion.div>
+
+        {/* Code Visualizer Modal */}
+        {visualizerData && (
+          <CodeVisualizer
+            code={code}
+            language={language}
+            steps={visualizerData.steps}
+            onClose={() => setVisualizerData(null)}
+          />
+        )}
       </motion.div>
     )
   }

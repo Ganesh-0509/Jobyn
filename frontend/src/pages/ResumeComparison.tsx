@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useResume } from '../context/ResumeContext'
-import { TrendingUp, ArrowUpRight, ArrowDownRight, Plus, Minus, Equal, GitCompareArrows, Upload } from 'lucide-react'
+import { TrendingUp, ArrowUpRight, ArrowDownRight, Plus, Minus, Equal, GitCompareArrows, Upload, PenLine } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -63,9 +63,15 @@ export default function ResumeComparison() {
 
     return (
         <div className="mx-auto max-w-4xl space-y-6">
-            <motion.div {...fadeUp}>
-                <h1 className="font-heading text-2xl font-bold tracking-tight">Resume Comparison</h1>
-                <p className="mt-1 text-sm text-muted-foreground">Compare your resume versions side by side</p>
+            <motion.div {...fadeUp} className="flex items-start justify-between">
+                <div>
+                    <h1 className="font-heading text-2xl font-bold tracking-tight">Resume Comparison</h1>
+                    <p className="mt-1 text-sm text-muted-foreground">Compare your resume versions side by side</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => navigate('/resume-builder')} className="gap-2 shrink-0">
+                    <PenLine className="size-3.5" />
+                    Resume Builder
+                </Button>
             </motion.div>
 
             <div className="grid gap-4 sm:grid-cols-2">

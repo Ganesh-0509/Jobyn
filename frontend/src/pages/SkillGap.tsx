@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useResume } from '../context/ResumeContext'
+import { useAuth } from '../context/AuthContext'
+import { markChecklistItem } from '../utils/onboardingChecklist'
 import { BarChart2, AlertCircle, ArrowRight, Trophy, GitBranch, Eye, EyeOff } from 'lucide-react'
 import SkillGraphViz from '../components/SkillGraphViz'
 import ProjectGeneratorModal from '../components/ProjectGeneratorModal'
@@ -16,10 +18,16 @@ const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transiti
 export default function SkillGap() {
   const navigate = useNavigate()
   const { analysis, masteredSkills } = useResume()
+  const { user } = useAuth()
   const [deps, setDeps] = useState<Record<string, string[]>>({})
   const [depsError, setDepsError] = useState(false)
   const [showGraph, setShowGraph] = useState(true)
   const [activeProject, setActiveProject] = useState<{ role: string; skills: string[] } | null>(null)
+
+  // Mark onboarding checklist item when user views their skill gaps
+  useEffect(() => {
+    if (analysis) markChecklistItem('reviewed_skill_gaps', user?.email)
+  }, [analysis, user?.email])
 
   useEffect(() => {
     apiFetch<Record<string, string[]>>('/interview/dependencies')

@@ -6,6 +6,7 @@ import {
 } from '../api/client'
 import { useResume } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
+import { markChecklistItem } from '../utils/onboardingChecklist'
 import {
     Clock, Lock, PlayCircle, Trophy, Blocks,
     Target, CalendarClock, TrendingUp, ChevronDown, ChevronUp,
@@ -84,7 +85,10 @@ export default function ImprovementPlan() {
 
     const canStudy = (item: SmartPlanItem) => item.prerequisites.every(p => masteredSkills.includes(p.toLowerCase()))
 
-    const handleVerified = (skill: string) => { markSkillMastered(skill.toLowerCase()) }
+    const handleVerified = (skill: string) => {
+        markSkillMastered(skill.toLowerCase())
+        markChecklistItem('started_learning', user?.email)
+    }
 
     if (!analysis) {
         return (

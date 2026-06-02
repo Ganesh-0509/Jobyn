@@ -1,13 +1,16 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { useResume } from '../context/ResumeContext'
 import { uploadResume, predictResume } from '../api/client'
 import { predictOnDevice, isOnDeviceReady } from '../utils/onDevicePredictor'
+import { SAMPLE_ANALYSIS, SAMPLE_PREDICTION } from '../utils/sampleData'
 import { usePrivacy } from '../context/PrivacyContext'
 import CircularProgress from '../components/CircularProgress'
 import LogoMark from '../components/LogoMark'
+import ManualProfileForm from '../components/ManualProfileForm'
+import { getChecklistState, getCompletionCount, type ChecklistState } from '../utils/onboardingChecklist'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -15,7 +18,8 @@ import { Progress } from '@/components/ui/progress'
 import {
   Upload, ArrowRight, ArrowLeft, CheckCircle2, Target,
   Sparkles, FileText, Brain, BarChart2, Zap,
-  GraduationCap, Compass, FileEdit, MessageSquare,
+  GraduationCap, Compass, FileEdit, MessageSquare, Play,
+  PenLine,
 } from 'lucide-react'
 
 const GOALS = [
@@ -35,18 +39,25 @@ const STAGES = [
 
 export default function Onboarding() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { user } = useAuth()
   const { setAnalysis, setPrediction } = useResume()
   const { privacy } = usePrivacy()
 
   const [step, setStep] = useState(0)
-  const [goal, setGoal] = useState<string | null>(null)
+  const [goal, setGoal] = useState<string | null>(() => {
+    if (user?.email) return localStorage.getItem(`${user.email}_cse_goal`)
+    return null
+  })
   const [file, setFile] = useState<File | null>(null)
   const [drag, setDrag] = useState(false)
   const [loading, setLoading] = useState(false)
   const [stageIdx, setStageIdx] = useState(-1)
   const [error, setError] = useState('')
   const [result, setResult] = useState<any>(null)
+  const [isSampleMode, setIsSampleMode] = useState(false)
+  const [manualMode, setManualMode] = useState(false)
+  const [checklist, setChecklist] = useState<ChecklistState>(() => getChecklistState(user?.email))
   const inputRef = useRef<HTMLInputElement>(null)
 
   const markDone = useCallback(() => {
@@ -55,11 +66,87 @@ export default function Onboarding() {
     }
   }, [user?.email])
 
+  // Refresh checklist state when entering step 4
+  useEffect(() => {
+    if (step === 4) setChecklist(getChecklistState(user?.email))
+  }, [step, user?.email])
+
+  // Auto-trigger sample mode from URL param (runs once on mount)
+  useEffect(() => {
+    if (searchParams.get('mode') === 'sample') {
+      handleSampleMode()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Track signup date for nudge system
+  useEffect(() => {
+    if (user?.email) {
+      const key = `${user.email}_cse_signup_date`
+      if (!localStorage.getItem(key)) {
+        localStorage.setItem(key, new Date().toISOString())
+      }
+      // Track last active
+      localStorage.setItem(`${user.email}_cse_last_active`, new Date().toISOString())
+    }
+  }, [user?.email])
+
   const handleFile = useCallback((f: File) => {
     if (f.size > 5 * 1024 * 1024) { setError('File must be under 5 MB.'); return }
     if (!f.name.endsWith('.pdf') && !f.name.endsWith('.docx')) { setError('Only PDF and DOCX files are supported.'); return }
     setFile(f); setError('')
   }, [])
+
+  const handleSampleMode = useCallback(() => {
+    setIsSampleMode(true)
+    setAnalysis(SAMPLE_ANALYSIS)
+    setPrediction(SAMPLE_PREDICTION)
+    setResult(SAMPLE_ANALYSIS)
+    setStep(3)
+  }, [setAnalysis, setPrediction])
+
+  // Handle manual profile form submission
+  const handleManualSubmit = useCallback(async (analysis: any) => {
+    setAnalysis(analysis)
+    try {
+      if (isOnDeviceReady()) {
+        const local = await predictOnDevice(
+          analysis.detected_skills, analysis.project_score_percent,
+          analysis.ats_score_percent, analysis.structure_score_percent,
+          analysis.core_coverage_percent, analysis.optional_coverage_percent
+        )
+        setPrediction({
+          predicted_role: local.predictedRole || analysis.role,
+          confidence: local.score / 100, resume_score: local.score,
+          weak_areas: analysis.missing_core_skills.slice(0, 3),
+          model_version: 'v2.0-onnx', inference_time_ms: local.inferenceMs
+        })
+      } else {
+        const pred = await predictResume({
+          skills: analysis.detected_skills, project_score: analysis.project_score_percent,
+          ats_score: analysis.ats_score_percent, structure_score: analysis.structure_score_percent,
+          core_coverage: analysis.core_coverage_percent, optional_coverage: analysis.optional_coverage_percent,
+        })
+        setPrediction(pred)
+      }
+    } catch {
+      setPrediction({
+        predicted_role: analysis.role, confidence: 0, resume_score: analysis.final_score,
+        weak_areas: analysis.missing_core_skills.slice(0, 3),
+        model_version: 'fallback', inference_time_ms: 0
+      })
+    }
+    setResult(analysis)
+    setStep(3)
+  }, [setAnalysis, setPrediction])
+
+  // Persist goal when selected
+  const handleGoalSelect = useCallback((goalId: string) => {
+    setGoal(goalId)
+    if (user?.email) {
+      localStorage.setItem(`${user.email}_cse_goal`, goalId)
+    }
+  }, [user?.email])
 
   // Animate stages during upload
   useEffect(() => {
@@ -123,7 +210,9 @@ export default function Onboarding() {
   const score = result?.final_score ?? 0
   const role = result?.role ?? 'Unknown'
   const missingCore: string[] = result?.missing_core_skills ?? []
-  const readinessCategory = score >= 80 ? 'Interview Ready' : score >= 60 ? 'Placement Ready' : score >= 40 ? 'Developing' : 'Beginner'
+  const readinessCategory = result?.readiness_category ?? (
+    score >= 80 ? 'Interview Ready' : score >= 60 ? 'Placement Ready' : score >= 40 ? 'Developing' : 'Beginner'
+  )
 
   return (
     <motion.div
@@ -203,7 +292,7 @@ export default function Onboarding() {
                     {GOALS.map(g => (
                       <button
                         key={g.id}
-                        onClick={() => setGoal(g.id)}
+                        onClick={() => handleGoalSelect(g.id)}
                         className={`flex items-center gap-4 rounded-xl border p-4 text-left transition-all ${
                           goal === g.id
                             ? 'border-primary bg-primary/5 shadow-sm'
@@ -233,96 +322,154 @@ export default function Onboarding() {
               </Card>
             )}
 
-            {/* Step 2: Upload Resume */}
+            {/* Step 2: Upload Resume or Enter Manually */}
             {step === 2 && (
               <Card className="premium-hover-card border-border/50 shadow-lg">
                 <CardContent className="p-8 space-y-6">
                   <div className="text-center">
                     <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-                      Upload Your Resume
+                      {manualMode ? 'Enter Your Profile' : 'Upload Your Resume'}
                     </h1>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      Our ML model will analyze your skills in 30 seconds.
+                      {manualMode
+                        ? "Don't have a resume? No problem — enter your details below."
+                        : 'Our ML model will analyze your skills in 30 seconds.'}
                     </p>
                   </div>
 
-                  {/* Trust signals */}
-                  <div className="rounded-lg border border-border/50 bg-muted/20 p-4 space-y-2">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="size-4 text-accent shrink-0" />
-                      <span className="text-sm text-foreground">95% ML accuracy on role prediction</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="size-4 text-accent shrink-0" />
-                      <span className="text-sm text-foreground">Processed on-device — your resume never leaves your browser</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="size-4 text-accent shrink-0" />
-                      <span className="text-sm text-foreground">PDF and DOCX supported, max 5MB</span>
-                    </div>
+                  {/* Toggle between upload and manual */}
+                  <div className="flex rounded-lg border border-border/50 p-1 bg-muted/30">
+                    <button
+                      onClick={() => setManualMode(false)}
+                      className={`flex-1 flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-all ${
+                        !manualMode ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <Upload className="size-4" />
+                      Upload Resume
+                    </button>
+                    <button
+                      onClick={() => setManualMode(true)}
+                      className={`flex-1 flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-all ${
+                        manualMode ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <PenLine className="size-4" />
+                      Enter Manually
+                    </button>
                   </div>
 
-                  {/* Upload zone */}
-                  {!loading ? (
-                    <div
-                      className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-all cursor-pointer ${
-                        drag ? 'border-primary bg-primary/5' : file ? 'border-primary/30 bg-primary/5' : 'border-border/50 hover:border-primary/20'
-                      }`}
-                      onDragOver={e => { e.preventDefault(); setDrag(true) }}
-                      onDragLeave={() => setDrag(false)}
-                      onDrop={e => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
-                      onClick={() => inputRef.current?.click()}
-                    >
-                      <input ref={inputRef} type="file" accept=".pdf,.docx" onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} className="hidden" />
-                      {file ? (
+                  {manualMode ? (
+                    /* Manual Profile Form */
+                    <ManualProfileForm
+                      onSubmit={handleManualSubmit}
+                      onBack={() => setStep(1)}
+                    />
+                  ) : (
+                    <>
+                      {/* Trust signals */}
+                      <div className="rounded-lg border border-border/50 bg-muted/20 p-4 space-y-2">
                         <div className="flex items-center gap-3">
-                          <FileText className="size-8 text-primary" />
-                          <div>
-                            <div className="text-sm font-semibold text-foreground">{file.name}</div>
-                            <div className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</div>
-                          </div>
-                          <CheckCircle2 className="ml-2 size-5 text-accent" />
+                          <CheckCircle2 className="size-4 text-accent shrink-0" />
+                          <span className="text-sm text-foreground">95% ML accuracy on role prediction</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <CheckCircle2 className="size-4 text-accent shrink-0" />
+                          <span className="text-sm text-foreground">Processed on-device — your resume never leaves your browser</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <CheckCircle2 className="size-4 text-accent shrink-0" />
+                          <span className="text-sm text-foreground">PDF and DOCX supported, max 5MB</span>
+                        </div>
+                      </div>
+
+                      {/* Upload zone */}
+                      {!loading ? (
+                        <div
+                          className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-all cursor-pointer ${
+                            drag ? 'border-primary bg-primary/5' : file ? 'border-primary/30 bg-primary/5' : 'border-border/50 hover:border-primary/20'
+                          }`}
+                          onDragOver={e => { e.preventDefault(); setDrag(true) }}
+                          onDragLeave={() => setDrag(false)}
+                          onDrop={e => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
+                          onClick={() => inputRef.current?.click()}
+                        >
+                          <input ref={inputRef} type="file" accept=".pdf,.docx" onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} className="hidden" />
+                          {file ? (
+                            <div className="flex items-center gap-3">
+                              <FileText className="size-8 text-primary" />
+                              <div>
+                                <div className="text-sm font-semibold text-foreground">{file.name}</div>
+                                <div className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</div>
+                              </div>
+                              <CheckCircle2 className="ml-2 size-5 text-accent" />
+                            </div>
+                          ) : (
+                            <>
+                              <Upload className="size-10 text-primary/40 mb-3" />
+                              <div className="text-sm font-semibold text-foreground">Drag & drop your resume</div>
+                              <div className="text-xs text-muted-foreground mt-1">or click to browse files</div>
+                            </>
+                          )}
                         </div>
                       ) : (
-                        <>
-                          <Upload className="size-10 text-primary/40 mb-3" />
-                          <div className="text-sm font-semibold text-foreground">Drag & drop your resume</div>
-                          <div className="text-xs text-muted-foreground mt-1">or click to browse files</div>
-                        </>
-                      )}
-                    </div>
-                  ) : (
-                    /* Loading stages */
-                    <div className="space-y-3 py-4">
-                      {STAGES.map((stage, i) => (
-                        <div key={i} className={`flex items-center gap-3 transition-opacity duration-300 ${i <= stageIdx ? 'opacity-100' : 'opacity-30'}`}>
-                          {i < stageIdx ? (
-                            <CheckCircle2 className="size-4 text-accent shrink-0" />
-                          ) : i === stageIdx ? (
-                            <div className="size-4 shrink-0 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                          ) : (
-                            <div className="size-4 shrink-0 rounded-full border border-border" />
-                          )}
-                          <span className={`text-sm ${i <= stageIdx ? 'text-foreground' : 'text-muted-foreground'}`}>{stage.label}</span>
+                        /* Loading stages */
+                        <div className="space-y-3 py-4">
+                          {STAGES.map((stage, i) => (
+                            <div key={i} className={`flex items-center gap-3 transition-opacity duration-300 ${i <= stageIdx ? 'opacity-100' : 'opacity-30'}`}>
+                              {i < stageIdx ? (
+                                <CheckCircle2 className="size-4 text-accent shrink-0" />
+                              ) : i === stageIdx ? (
+                                <div className="size-4 shrink-0 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                              ) : (
+                                <div className="size-4 shrink-0 rounded-full border border-border" />
+                              )}
+                              <span className={`text-sm ${i <= stageIdx ? 'text-foreground' : 'text-muted-foreground'}`}>{stage.label}</span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      )}
 
-                  {error && (
-                    <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-                      {error}
-                    </div>
-                  )}
+                      {error && (
+                        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                          {error}
+                        </div>
+                      )}
 
-                  <div className="flex gap-3 justify-center">
-                    <Button variant="outline" onClick={() => setStep(1)} className="gap-2" disabled={loading}>
-                      <ArrowLeft className="size-4" /> Back
-                    </Button>
-                    <Button onClick={handleUpload} disabled={!file || loading} className="gap-2">
-                      {loading ? 'Analyzing...' : 'Analyze Resume'} {!loading && <Zap className="size-4" />}
-                    </Button>
-                  </div>
+                      <div className="flex gap-3 justify-center">
+                        <Button variant="outline" onClick={() => setStep(1)} className="gap-2" disabled={loading}>
+                          <ArrowLeft className="size-4" /> Back
+                        </Button>
+                        <Button onClick={handleUpload} disabled={!file || loading} className="gap-2">
+                          {loading ? 'Analyzing...' : 'Analyze Resume'} {!loading && <Zap className="size-4" />}
+                        </Button>
+                      </div>
+
+                      {/* Sample mode + manual entry hint */}
+                      {!file && !loading && (
+                        <div className="text-center space-y-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setManualMode(true)}
+                            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <PenLine className="size-3" />
+                            Don't have a resume? Enter your details manually
+                          </button>
+                          <div>
+                            <button
+                              type="button"
+                              onClick={handleSampleMode}
+                              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/60 hover:text-foreground transition-colors"
+                            >
+                              <Play className="size-3" />
+                              Or try with sample data
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -331,6 +478,11 @@ export default function Onboarding() {
             {step === 3 && result && (
               <Card className="premium-hover-card border-border/50 shadow-lg">
                 <CardContent className="p-8 space-y-6">
+                  {isSampleMode && (
+                    <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-2.5 text-xs text-primary text-center">
+                      This is sample data — upload your real resume for personalized results
+                    </div>
+                  )}
                   <div className="text-center space-y-4">
                     <div className="flex justify-center">
                       <CircularProgress pct={score} size={140} stroke={10} />
@@ -366,6 +518,16 @@ export default function Onboarding() {
                     </div>
                   )}
 
+                  {/* Goal-specific tip */}
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-center">
+                    <p className="text-xs text-primary">
+                      {goal === 'interview' ? 'Focus on interview prep next — practice with role-specific questions to build confidence.' :
+                       goal === 'resume' ? 'Your skill gaps are the key to a stronger resume — close them to stand out.' :
+                       goal === 'explore' ? 'Try generating a project to test-drive different career paths.' :
+                       'Close your skill gaps first — that\'s the fastest path to placement readiness.'}
+                    </p>
+                  </div>
+
                   <div className="flex gap-3 justify-center">
                     <Button onClick={() => setStep(4)} className="gap-2">
                       See Your Next Steps <ArrowRight className="size-4" />
@@ -384,18 +546,32 @@ export default function Onboarding() {
                       Here's Your Plan
                     </h1>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      Follow these steps to get placement-ready.
+                      {goal === 'interview' ? 'Ace your interviews with this roadmap.' :
+                       goal === 'resume' ? 'Build a standout resume step by step.' :
+                       goal === 'explore' ? 'Discover your best-fit career path.' :
+                       'Follow these steps to get placement-ready.'}
                     </p>
                   </div>
 
                   <div className="space-y-3">
-                    {[
-                      { done: true, label: 'Upload your resume', xp: '+100 XP', icon: CheckCircle2 },
-                      { done: false, label: 'Review your skill gaps', xp: '+50 XP', icon: Target, path: '/skill-gap' },
-                      { done: false, label: 'Complete your first interview', xp: '+75 XP', icon: MessageSquare, path: '/interview-readiness' },
-                      { done: false, label: 'Start learning your first skill', xp: '+50 XP', icon: Zap, path: '/improvement-plan' },
-                      { done: false, label: 'Generate your first project', xp: '+75 XP', icon: FileText, path: '/my-projects' },
-                    ].map((item, i) => (
+                    {(() => {
+                      const allItems = [
+                        { done: true, label: manualMode ? 'Complete your profile' : 'Upload your resume', xp: '+100 XP', icon: CheckCircle2, key: 'profile', path: '' },
+                        { done: checklist.reviewed_skill_gaps, label: 'Review your skill gaps', xp: '+50 XP', icon: Target, key: 'gaps', path: '/skill-gap' },
+                        { done: checklist.completed_interview, label: 'Complete your first interview', xp: '+75 XP', icon: MessageSquare, key: 'interview', path: '/interview-readiness' },
+                        { done: checklist.started_learning, label: 'Start learning your first skill', xp: '+50 XP', icon: Zap, key: 'learn', path: '/improvement-plan' },
+                        { done: checklist.generated_project, label: 'Generate your first project', xp: '+75 XP', icon: FileText, key: 'project', path: '/my-projects' },
+                      ]
+                      const goalOrder: Record<string, string[]> = {
+                        placement: ['profile', 'gaps', 'interview', 'learn', 'project'],
+                        interview: ['profile', 'interview', 'gaps', 'learn', 'project'],
+                        resume: ['profile', 'gaps', 'learn', 'interview', 'project'],
+                        explore: ['profile', 'gaps', 'project', 'learn', 'interview'],
+                      }
+                      const order = goalOrder[goal || ''] || goalOrder.placement
+                      return [...allItems].sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key))
+                    })()
+                    .map((item, i) => (
                       <div
                         key={i}
                         className={`flex items-center gap-4 rounded-lg border p-4 transition-all ${
@@ -418,8 +594,13 @@ export default function Onboarding() {
                     ))}
                   </div>
 
+                  {/* Completion progress */}
                   <div className="text-center space-y-2">
-                    <p className="text-xs text-muted-foreground">Complete all 5 steps to earn 350 XP and the "Career Explorer" badge</p>
+                    <p className="text-xs text-muted-foreground">
+                      {getCompletionCount(checklist) === 4
+                        ? 'All tasks complete! You earned 350 XP and the "Career Explorer" badge'
+                        : `${getCompletionCount(checklist)}/4 tasks complete — finish all to earn 350 XP`}
+                    </p>
                     <Button onClick={() => { markDone(); navigate('/dashboard') }} className="gap-2">
                       Go to Dashboard <ArrowRight className="size-4" />
                     </Button>
