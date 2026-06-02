@@ -26,10 +26,18 @@ services:
         sync: false
       - key: BYTEZ_API_KEY
         sync: false
+      - key: GITHUB_TOKEN
+        sync: false          # GitHub PAT for project verification
       - key: GEMINI_API_KEY
         sync: false
       - key: CORS_ORIGINS
         sync: false          # set to your frontend URL, e.g. https://campussync-edge.onrender.com
+      - key: REDIS_URL
+        sync: false          # set to your Upstash Redis URL (rediss://...)
+      - key: RESUME_ENCRYPTION_KEY
+        sync: false          # set to your Fernet key
+      - key: SENTRY_DSN
+        sync: false          # optional — Sentry error tracking
 
   # ── Frontend: Vite Static Site ─────────────────────────────
   - type: web
