@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { useResume } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
 import { getCompanyList, getCompanyPrep, type CompanyListItem, type CompanyPrep as CompanyPrepType } from '../api/client'
+import AuthRequiredPrompt from '../components/AuthRequiredPrompt'
 import CircularProgress from '../components/CircularProgress'
 import {
   Briefcase, ArrowRight, CheckCircle, AlertTriangle, ExternalLink, BookOpen, Building2, Filter,
@@ -66,6 +67,10 @@ export default function CompanyPrep() {
     : companies.filter(c => c.category.toLowerCase() === filter.toLowerCase())
 
   // Locked state
+  if (!user) {
+    return <AuthRequiredPrompt feature="Company Prep" />
+  }
+
   if (!analysis) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">

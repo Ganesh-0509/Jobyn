@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useResume } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
+import AuthRequiredPrompt from '../components/AuthRequiredPrompt'
 import { loadHistory } from '../utils/history'
 import {
     Award, Zap, Trophy, TrendingUp, Target,
@@ -134,6 +135,10 @@ export default function ProgressTracking() {
     }, [analysis, masteredSkills])
 
     const verifiedAll = roleSkills.all.filter(s => isVerified(s))
+
+    if (!user) {
+        return <AuthRequiredPrompt feature="Growth Tracking" />
+    }
 
     if (!analysis) {
         return (

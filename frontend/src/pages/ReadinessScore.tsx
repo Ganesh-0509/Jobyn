@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { useResume, getReadinessClass } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
 import { uploadResume, predictResume, getBenchmarks, type BenchmarkData } from '../api/client'
+import AuthRequiredPrompt from '../components/AuthRequiredPrompt'
 import CircularProgress from '../components/CircularProgress'
 import { Cpu, Cloud, Zap, TrendingUp, AlertCircle, Shield, ArrowRight, FlaskConical, ThumbsUp, ThumbsDown, Users, Share2 } from 'lucide-react'
 import { usePrivacy } from '../context/PrivacyContext'
@@ -55,6 +56,10 @@ export default function ReadinessScore() {
     if (!analysis?.role) return
     getBenchmarks(analysis.role).then(setBenchmark).catch(() => {})
   }, [analysis?.role])
+
+  if (!user) {
+    return <AuthRequiredPrompt feature="Readiness Score" />
+  }
 
   if (!analysis) {
     return (

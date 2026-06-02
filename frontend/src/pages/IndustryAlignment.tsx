@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useResume, getIndustryAlignment } from '../context/ResumeContext'
+import { useAuth } from '../context/AuthContext'
+import AuthRequiredPrompt from '../components/AuthRequiredPrompt'
 import { Building2, Monitor, Rocket, ExternalLink, Info, BookOpen, Shield, TrendingUp, Lock } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -54,10 +56,15 @@ const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }
 export default function IndustryAlignment() {
   const navigate = useNavigate()
   const { analysis } = useResume()
+  const { user } = useAuth()
   const score = analysis?.final_score ?? null
   const align = score !== null ? getIndustryAlignment(score) : null
 
   const pcts = [align?.service ?? 0, align?.product ?? 0, align?.startup ?? 0]
+
+  if (!user) {
+    return <AuthRequiredPrompt feature="Industry Alignment" />
+  }
 
   if (score === null) {
     return (

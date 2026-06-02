@@ -5,6 +5,7 @@ import { useResume } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
 import { markChecklistItem } from '../utils/onboardingChecklist'
 import { BarChart2, AlertCircle, ArrowRight, Trophy, GitBranch, Eye, EyeOff } from 'lucide-react'
+import AuthRequiredPrompt from '../components/AuthRequiredPrompt'
 import SkillGraphViz from '../components/SkillGraphViz'
 import ProjectGeneratorModal from '../components/ProjectGeneratorModal'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -48,6 +49,10 @@ export default function SkillGap() {
   const getPrereqs = (skillName: string): string[] => deps[skillName.toLowerCase()] ?? []
   const detected = [...(analysis?.detected_skills ?? []), ...masteredSkills]
   const role = analysis?.role ?? ''
+
+  if (!user) {
+    return <AuthRequiredPrompt feature="Skill Gap Analysis" />
+  }
 
   if (!analysis) {
     return (

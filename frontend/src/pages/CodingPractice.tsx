@@ -8,6 +8,7 @@ import {
   type CodingProblem, type SubmissionResult, type TraceResult as SandboxTraceResult,
 } from '../api/client'
 import { awardXP } from '../utils/streakTracker'
+import AuthRequiredPrompt from '../components/AuthRequiredPrompt'
 import CodeEditor from '../components/CodeEditor'
 import ProblemCard from '../components/ProblemCard'
 import TestRunner from '../components/TestRunner'
@@ -149,6 +150,10 @@ export default function CodingPractice() {
   }, [language, code])
 
   // Locked state
+  if (!user) {
+    return <AuthRequiredPrompt feature="Coding Practice" />
+  }
+
   if (!analysis) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">

@@ -3,6 +3,7 @@ import { useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { useResume } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
+import AuthRequiredPrompt from '../components/AuthRequiredPrompt'
 import { Award, Download, Link2, Share2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -55,6 +56,10 @@ export default function Certificate() {
   }, [])
 
   // Locked state
+  if (!user) {
+    return <AuthRequiredPrompt feature="Readiness Certificate" />
+  }
+
   if (!analysis) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">

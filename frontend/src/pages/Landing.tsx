@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import {
@@ -186,6 +186,7 @@ function ScrollPipeline() {
 export default function Landing() {
   const { analysis } = useResume()
   const { user } = useAuth()
+  const navigate = useNavigate()
 
   const [speechIdx, setSpeechIdx] = useState(0)
   const [activeDomainIdx, setActiveDomainIdx] = useState(0)
@@ -193,9 +194,6 @@ export default function Landing() {
   const [isSimulating, setIsSimulating] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
-  const [analyzingFile, setAnalyzingFile] = useState(false)
-  const [analysisPercent, setAnalysisPercent] = useState(0)
-  const [analysisCompleted, setAnalysisCompleted] = useState(false)
 
   const simIntervalRef = useRef<any>(null)
 
@@ -252,24 +250,10 @@ export default function Landing() {
   const onDropHandler = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
-    if (e.dataTransfer.files?.[0]) startProfileAudits()
-  }, [])
-
-  const startProfileAudits = useCallback(() => {
-    if (analyzingFile || analysisCompleted) return
-    setAnalyzingFile(true)
-    setAnalysisPercent(0)
-    const iv = setInterval(() => {
-      setAnalysisPercent(p => {
-        if (p >= 100) {
-          clearInterval(iv)
-          setTimeout(() => { setAnalyzingFile(false); setAnalysisCompleted(true) }, 400)
-          return 100
-        }
-        return p + 10
-      })
-    }, 100)
-  }, [analyzingFile, analysisCompleted])
+    if (e.dataTransfer.files?.[0]) {
+      navigate('/quick-score')
+    }
+  }, [navigate])
 
   return (
     <motion.div
@@ -898,9 +882,9 @@ export default function Landing() {
           </p>
 
           {/* Interactive drop sandbox */}
-          <div
-            className={`relative p-10 rounded-2xl border-2 border-dashed transition-all duration-200 cursor-pointer ${
-              analysisCompleted ? 'border-primary bg-primary/5' :
+          <Link
+            to="/quick-score"
+            className={`relative block p-10 rounded-2xl border-2 border-dashed transition-all duration-200 cursor-pointer ${
               isDragging ? 'border-primary bg-primary/5' :
               'border-stone-300 bg-stone-50 hover:border-primary/40 hover:bg-stone-100/60'
             }`}
@@ -908,76 +892,13 @@ export default function Landing() {
             onDragOver={onDragHandler}
             onDragLeave={onDragHandler}
             onDrop={onDropHandler}
-            onClick={startProfileAudits}
           >
-            {analyzingFile ? (
-              <div className="space-y-4">
-                <div className="text-xl animate-spin">⏳</div>
-                <div className="text-[11px] font-bold text-foreground">Running layout parsing diagnostics ({analysisPercent}%)</div>
-                <div className="h-1.5 w-36 mx-auto rounded-full bg-stone-200 overflow-hidden">
-                  <div className="h-full bg-primary transition-all duration-150" style={{ width: `${analysisPercent}%` }} />
-                </div>
-              </div>
-            ) : analysisCompleted ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-left space-y-4"
-              >
-                <div className="flex items-center justify-between border-b border-stone-200 pb-3">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="size-4.5 text-accent animate-pulse" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-primary">Audit Diagnostic Report</span>
-                  </div>
-                  <Badge className="bg-primary/10 text-primary hover:bg-primary/15 border-none text-xs font-bold px-2 py-0.5 rounded-md">
-                    Score: 81 / 100
-                  </Badge>
-                </div>
-
-                <div className="space-y-2.5">
-                  <div className="text-xs text-stone-500 font-bold uppercase tracking-widest">Crucial Placement Deficits</div>
-                  
-                  <div className="space-y-1.5">
-                    <div className="flex items-start gap-2 bg-red-50/50 border border-red-100 p-2.5 rounded-xl text-xs text-red-700">
-                      <span className="font-bold shrink-0">CRITICAL:</span>
-                      <span>Your resume layout uses a dual-column design which fails ATS scanner checks. We recommend converting to an elegant single-column schema.</span>
-                    </div>
-
-                    <div className="flex items-start gap-2 bg-amber-50/50 border border-amber-100 p-2.5 rounded-xl text-xs text-amber-700">
-                      <span className="font-bold shrink-0">MISSING:</span>
-                      <span>3 critical corporate backend SDE terms absent (optimistic locking, change data capture, distributed transaction isolation).</span>
-                    </div>
-
-                    <div className="flex items-start gap-2 bg-green-50/50 border border-green-100 p-2.5 rounded-xl text-xs text-green-700">
-                      <span className="font-bold shrink-0">STAMPED:</span>
-                      <span>Github authorships verified (attic repositories validated).</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-2 flex justify-between items-center text-xs text-stone-400 font-mono border-t border-stone-100 mt-2">
-                  <span>File: engineering_resume.pdf</span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setAnalysisCompleted(false)
-                      setAnalysisPercent(0)
-                    }}
-                    className="hover:text-primary underline cursor-pointer font-bold transition-colors"
-                  >
-                    Re-upload resume
-                  </button>
-                </div>
-              </motion.div>
-            ) : (
-              <div className="space-y-2">
-                <Upload className="mx-auto size-8 text-stone-400" />
-                <div className="text-xs font-bold text-foreground">Drag and drop your engineering resume here</div>
-                <div className="text-xs text-stone-500 font-semibold tracking-wider">LOCALIZED PROFILE DIAGNOSTIC HUB</div>
-              </div>
-            )}
-          </div>
+            <div className="space-y-2">
+              <Upload className="mx-auto size-8 text-stone-400" />
+              <div className="text-xs font-bold text-foreground">Drag and drop your engineering resume here</div>
+              <div className="text-xs text-stone-500 font-semibold tracking-wider">GET YOUR INSTANT SCORE — NO SIGNUP REQUIRED</div>
+            </div>
+          </Link>
 
           <div className="flex flex-wrap justify-center gap-4 pt-2">
             <Link to="/signup" className={buttonVariants({ size: "lg" }) + " shadow-md font-semibold gap-2 rounded-full px-9 py-6 text-sm"}>Assess My Profile</Link>

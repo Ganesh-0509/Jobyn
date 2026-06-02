@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { useResume } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
 import { matchJD, getJDMatchHistory, type JDMatchResult, type JDMatchHistoryEntry } from '../api/client'
+import AuthRequiredPrompt from '../components/AuthRequiredPrompt'
 import CircularProgress from '../components/CircularProgress'
 import {
   Search, ArrowRight, CheckCircle, AlertTriangle, Clock, Briefcase, Building2, Sparkles,
@@ -74,6 +75,10 @@ export default function JDMatch() {
   }
 
   // Locked state
+  if (!user) {
+    return <AuthRequiredPrompt feature="JD Matching" />
+  }
+
   if (!analysis) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { apiFetch } from '../api/client'
 import { markChecklistItem } from '../utils/onboardingChecklist'
+import AuthRequiredPrompt from '../components/AuthRequiredPrompt'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -211,6 +212,10 @@ export default function InterviewReadiness() {
     const readinessColor = readiness >= 75 ? '#05FFC5' : readiness >= 50 ? '#F59E0B' : '#FF3F6C'
 
     /* ── Locked state ──────────────────────────────────── */
+    if (!user) {
+        return <AuthRequiredPrompt feature="Interview Arena" />
+    }
+
     if (!analysis) {
         return (
             <div className="mx-auto max-w-xl py-20 text-center">

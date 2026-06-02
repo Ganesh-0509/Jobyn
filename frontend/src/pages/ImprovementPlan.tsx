@@ -12,6 +12,7 @@ import {
     Target, CalendarClock, TrendingUp, ChevronDown, ChevronUp,
     GitBranch, ExternalLink, Shield, Sparkles,
 } from 'lucide-react'
+import AuthRequiredPrompt from '../components/AuthRequiredPrompt'
 import StudyHub from '../components/StudyHub'
 import ProjectGeneratorModal from '../components/ProjectGeneratorModal'
 import { Card, CardContent } from '@/components/ui/card'
@@ -88,6 +89,10 @@ export default function ImprovementPlan() {
     const handleVerified = (skill: string) => {
         markSkillMastered(skill.toLowerCase())
         markChecklistItem('started_learning', user?.email)
+    }
+
+    if (!user) {
+        return <AuthRequiredPrompt feature="Learning Roadmap" />
     }
 
     if (!analysis) {
