@@ -494,3 +494,315 @@ async def list_submissions(
     except Exception as e:
         log.exception("Failed to fetch submissions")
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
+
+
+# ── Code Tracer (Sandbox Visualization) ─────────────────────────────────────
+
+TRACE_TIMEOUT = 10  # seconds (tracing is slower than plain execution)
+MAX_TRACE_STEPS = 1000
+MAX_CODE_LENGTH = 50000
+
+
+class TraceRequest(BaseModel):
+    code: str
+    language: str
+    stdin: str = ""
+
+
+class RunRequest(BaseModel):
+    code: str
+    language: str
+    stdin: str = ""
+
+
+class TraceStep(BaseModel):
+    line: int
+    locals: dict
+    output: str
+    error: str | None
+    event: str
+
+
+class TraceResult(BaseModel):
+    steps: list[TraceStep]
+    total_steps: int
+    timed_out: bool
+    error: str | None
+    language: str
+
+
+# Python tracer harness — uses bdb for line-by-line execution tracing
+_TRACER_HARNESS = r'''
+import bdb
+import sys
+import json
+import io
+import traceback
+
+MAX_STEPS = {max_steps}
+
+def _safe_repr(val):
+    """Truncate repr to prevent huge responses."""
+    try:
+        r = repr(val)
+        return r[:200] + "..." if len(r) > 200 else r
+    except Exception:
+        return type(val).__name__
+
+class CodeTracer(bdb.Bdb):
+    def __init__(self):
+        super().__init__()
+        self.steps = []
+        self.output_capture = io.StringIO()
+        self._original_stdout = sys.stdout
+
+    def user_line(self, frame):
+        self._capture(frame, "line")
+
+    def user_call(self, frame, argument_list):
+        self._capture(frame, "call")
+
+    def user_return(self, frame, return_value):
+        self._capture(frame, "return")
+
+    def user_exception(self, frame, exc_info):
+        self._capture(frame, "exception", str(exc_info[1]))
+
+    def _capture(self, frame, event, error=None):
+        if len(self.steps) >= MAX_STEPS:
+            self.set_quit()
+            return
+        if frame.f_code.co_filename != "<user_code>":
+            return
+        current_output = self.output_buffer.getvalue() if hasattr(self, "output_buffer") else ""
+        loc = {{}}
+        for k, v in frame.f_locals.items():
+            if not k.startswith("__"):
+                loc[k] = _safe_repr(v)
+        self.steps.append({{
+            "line": frame.f_lineno,
+            "locals": loc,
+            "output": current_output,
+            "error": error,
+            "event": event,
+        }})
+
+# Redirect stdout to capture print() calls
+captured_output = io.StringIO()
+sys.stdout = captured_output
+
+tracer = CodeTracer()
+user_code = """{escaped_code}"""
+
+try:
+    compiled = compile(user_code, "<user_code>", "exec")
+    tracer.run(compiled, globals={{}}, locals={{}})
+except SyntaxError as e:
+    print(json.dumps({{"error": f"SyntaxError: {{e.msg}} at line {{e.lineno}}", "steps": []}}))
+    sys.exit(0)
+except Exception as e:
+    pass  # tracer captures the exception step
+
+# Get final output
+final_output = captured_output.getvalue()
+
+# Update all steps with accumulated output
+output_so_far = ""
+for step in tracer.steps:
+    if step["output"]:
+        output_so_far = step["output"]
+    else:
+        step["output"] = output_so_far
+
+# If there was output after the last step, add it to the last step
+if final_output and tracer.steps and not tracer.steps[-1]["output"]:
+    tracer.steps[-1]["output"] = final_output
+
+result = {{
+    "steps": tracer.steps,
+    "total_steps": len(tracer.steps),
+    "timed_out": len(tracer.steps) >= MAX_STEPS,
+    "error": None,
+    "language": "python"
+}}
+print(json.dumps(result))
+'''
+
+
+def _trace_python(code: str, stdin_data: str = "") -> dict:
+    """Trace Python code execution step-by-step using bdb."""
+    import re
+
+    # Escape code for embedding in the harness script
+    escaped = code.replace("\\", "\\\\").replace('"""', '\\"\\"\\"').replace("'", "\\'")
+
+    harness = _TRACER_HARNESS.format(
+        max_steps=MAX_TRACE_STEPS,
+        escaped_code=escaped,
+    )
+
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            harness_path = os.path.join(tmpdir, "tracer_harness.py")
+            with open(harness_path, "w", encoding="utf-8") as f:
+                f.write(harness)
+
+            proc = subprocess.run(
+                ["python", harness_path],
+                input=stdin_data,
+                capture_output=True,
+                text=True,
+                timeout=TRACE_TIMEOUT,
+                cwd=tmpdir,
+            )
+
+            if proc.returncode != 0 and not proc.stdout.strip():
+                return {
+                    "steps": [],
+                    "total_steps": 0,
+                    "timed_out": False,
+                    "error": proc.stderr.strip() or "Tracer failed",
+                    "language": "python",
+                }
+
+            try:
+                result = json.loads(proc.stdout.strip())
+                return result
+            except json.JSONDecodeError:
+                return {
+                    "steps": [],
+                    "total_steps": 0,
+                    "timed_out": False,
+                    "error": f"Tracer output parse error: {proc.stdout[:200]}",
+                    "language": "python",
+                }
+
+    except subprocess.TimeoutExpired:
+        return {
+            "steps": [],
+            "total_steps": 0,
+            "timed_out": True,
+            "error": f"Trace timed out after {TRACE_TIMEOUT} seconds.",
+            "language": "python",
+        }
+    except Exception as e:
+        return {
+            "steps": [],
+            "total_steps": 0,
+            "timed_out": False,
+            "error": f"Trace error: {str(e)}",
+            "language": "python",
+        }
+
+
+def _trace_javascript(code: str, stdin_data: str = "") -> dict:
+    """Trace JavaScript code — instrumentation-based approach."""
+    # Simple line-step tracer for JS
+    lines = code.strip().split("\n")
+    if not lines:
+        return {"steps": [], "total_steps": 0, "timed_out": False, "error": "Empty code", "language": "javascript"}
+
+    # Build instrumented code that tracks execution
+    instrumented = """
+const __steps = [];
+const __output = [];
+const __origLog = console.log;
+console.log = (...args) => { __output.push(args.map(String).join(' ')); __origLog(...args); };
+
+try {
+""" + "\n".join(f"  __steps.push({{line: {i+1}, locals: (() => {{ try {{ const __vars = {{}}; for (const __k in this) {{ if (typeof this[__k] !== 'function' && !__k.startsWith('__')) {{ __vars[__k] = String(this[__k]).slice(0, 200); }} }} return __vars; }} catch(e) {{ return {{}}; }} }})(), output: __output.join('\\n'), error: null, event: 'line' }});\n  {line}" for i, line in enumerate(lines)) + """
+} catch(e) {
+  __steps.push({line: __steps.length ? __steps[__steps.length-1].line : 1, locals: {}, output: __output.join('\\n'), error: e.message, event: 'exception'});
+}
+
+console.log = __origLog;
+process.stdout.write(JSON.stringify({steps: __steps, total_steps: __steps.length, timed_out: false, error: null, language: 'javascript'}));
+"""
+
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            filepath = os.path.join(tmpdir, "trace.js")
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write(instrumented)
+
+            proc = subprocess.run(
+                ["node", filepath],
+                input=stdin_data,
+                capture_output=True,
+                text=True,
+                timeout=TRACE_TIMEOUT,
+                cwd=tmpdir,
+            )
+
+            if proc.stdout.strip():
+                try:
+                    return json.loads(proc.stdout.strip())
+                except json.JSONDecodeError:
+                    pass
+
+            return {
+                "steps": [],
+                "total_steps": 0,
+                "timed_out": False,
+                "error": proc.stderr.strip() or "JavaScript trace failed",
+                "language": "javascript",
+            }
+
+    except subprocess.TimeoutExpired:
+        return {
+            "steps": [],
+            "total_steps": 0,
+            "timed_out": True,
+            "error": f"Trace timed out after {TRACE_TIMEOUT} seconds.",
+            "language": "javascript",
+        }
+    except Exception as e:
+        return {
+            "steps": [],
+            "total_steps": 0,
+            "timed_out": False,
+            "error": f"Trace error: {str(e)}",
+            "language": "javascript",
+        }
+
+
+@router.post("/trace")
+@ai_limit
+async def trace_code(request: Request, body: TraceRequest):
+    """
+    Execute code step-by-step and return line-by-line execution trace.
+    Shows variable state at each line (like Python Tutor).
+    No authentication required.
+    """
+    if len(body.code) > MAX_CODE_LENGTH:
+        raise HTTPException(status_code=400, detail=f"Code too long (max {MAX_CODE_LENGTH} chars).")
+
+    language = body.language.lower()
+    if language not in ("python", "javascript"):
+        raise HTTPException(status_code=400, detail="Supported languages: python, javascript.")
+
+    if language == "python":
+        result = _trace_python(body.code, body.stdin)
+    else:
+        result = _trace_javascript(body.code, body.stdin)
+
+    return result
+
+
+@router.post("/run")
+@ai_limit
+async def run_code(request: Request, body: RunRequest):
+    """
+    Execute code and return stdout/stderr (no tracing).
+    Lightweight alternative to /trace for quick code runs.
+    No authentication required.
+    """
+    if len(body.code) > MAX_CODE_LENGTH:
+        raise HTTPException(status_code=400, detail=f"Code too long (max {MAX_CODE_LENGTH} chars).")
+
+    language = body.language.lower()
+    if language not in ("python", "javascript"):
+        raise HTTPException(status_code=400, detail="Supported languages: python, javascript.")
+
+    result = _run_code(language, body.code, body.stdin)
+    return result
