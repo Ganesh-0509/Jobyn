@@ -15,6 +15,10 @@ dist/
 backend/models/*.pkl
 backend/models/*.onnx
 frontend/public/models/role_model_v2.onnx
+frontend/public/models/score_model_v2.onnx
+
+# SQLite databases
+backend/app/db/*.db
 
 # Analysis reports (internal reference only — not for GitHub)
 analysis/
