@@ -226,7 +226,7 @@ export async function getRoles(): Promise<string[]> {
 // ── Analytics ─────────────────────────────────────────────────
 export async function getAnalytics(): Promise<Record<string, unknown>> {
     try {
-        return await apiFetch<Record<string, unknown>>('/analytics/role-stats', { noAuth: true })
+        return await apiFetch<Record<string, unknown>>('/analytics/role-stats')
     } catch {
         return {}
     }
@@ -801,4 +801,110 @@ export async function submitCodeSolution(problemId: number, language: string, co
 export async function getCodingSubmissions(problemId?: number): Promise<SubmissionHistoryEntry[]> {
     const query = problemId ? `?problem_id=${problemId}` : ''
     return apiFetch<SubmissionHistoryEntry[]>(`/coding/submissions${query}`)
+}
+
+// ── Sandbox (Code Execution & Tracing) ────────────────────────────────
+
+export interface RunResult {
+    stdout: string
+    stderr: string
+    returncode: number
+    timed_out: boolean
+}
+
+export interface TraceStep {
+    line: number
+    locals: Record<string, string>
+    output: string
+    error?: string | null
+    event?: string
+}
+
+export interface TraceResult {
+    steps: TraceStep[]
+    error?: string | null
+    stdout: string
+}
+
+export type SandboxTraceResult = TraceResult
+
+export async function runCode(code: string, language: string = 'python'): Promise<RunResult> {
+    return apiFetch<RunResult>('/sandbox/run', {
+        method: 'POST',
+        body: { code, language },
+    })
+}
+
+export async function traceCode(code: string, language: string = 'python'): Promise<TraceResult> {
+    return apiFetch<TraceResult>('/sandbox/trace', {
+        method: 'POST',
+        body: { code, language },
+    })
+}
+
+// ── Onboarding Email ────────────────────────────────────────────────
+
+export async function triggerOnboardingEmail(email: string, name?: string, goal?: string): Promise<{ status: string }> {
+    return apiFetch<{ status: string }>('/onboarding/trigger', {
+        method: 'POST',
+        body: { email, name, goal },
+        noAuth: true,
+    })
+}
+
+export async function checkOnboardingEmails(email: string): Promise<{ sent: string[] }> {
+    return apiFetch<{ sent: string[] }>('/onboarding/check', {
+        method: 'POST',
+        body: { email },
+    })
+}
+
+export async function recordOnboardingMilestone(email: string, milestone: string): Promise<{ status: string }> {
+    return apiFetch<{ status: string }>('/onboarding/milestone', {
+        method: 'POST',
+        body: { email, milestone },
+        noAuth: true,
+    })
+}
+
+// ── Manual Profile Entry ──────────────────────────────────────────
+export async function submitManualProfile(data: {
+    skills: string[]
+    education: string
+    projects: string
+    links: string[]
+    target_role?: string
+}): Promise<UploadResult> {
+    return apiFetch<UploadResult>('/profile/manual', {
+        method: 'POST',
+        body: data,
+    })
+}
+
+export async function getSkillsList(): Promise<{ skills: string[] }> {
+    return cachedFetch<{ skills: string[] }>('/skills/list', 10 * 60_000)
+}
+
+// ── Resume Builder ────────────────────────────────────────────────
+export interface ResumeBuilderResult {
+    resume: string
+    method: 'ai' | 'template'
+    jd_skills: string[]
+    matched_skills: string[]
+}
+
+export async function buildResume(data: {
+    jd_text: string
+    jd_title?: string
+    jd_company?: string
+    skills: string[]
+    education: string
+    projects: string
+    links: string[]
+}): Promise<ResumeBuilderResult> {
+    return apiFetch<ResumeBuilderResult>('/resume-builder', {
+        method: 'POST',
+        body: data,
+        retries: 1,
+    })
 }

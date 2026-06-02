@@ -1,12 +1,6 @@
 import os
 import sentry_sdk
 
-sentry_sdk.init(
-    dsn=os.getenv("SENTRY_DSN", ""),
-    environment=os.getenv("ENV", "development"),
-    traces_sample_rate=0.1,
-)
-
 """
 main.py — application entry point.
 
@@ -186,6 +180,10 @@ from app.routers import jd_match as jd_match_router
 from app.routers import benchmark as benchmark_router
 from app.routers import company_prep as company_prep_router
 from app.routers import coding as coding_router
+from app.routers import onboarding_email as onboarding_email_router
+from app.routers import manual_profile as manual_profile_router
+from app.routers import resume_builder as resume_builder_router
+from app.routers import sandbox as sandbox_router
 
 # ── App factory ────────────────────────────────────────────────────────────────
 # ... (rest of App factory)
@@ -203,6 +201,10 @@ app.include_router(jd_match_router.router)
 app.include_router(benchmark_router.router)
 app.include_router(company_prep_router.router)
 app.include_router(coding_router.router)
+app.include_router(onboarding_email_router.router)
+app.include_router(manual_profile_router.router)
+app.include_router(resume_builder_router.router)
+app.include_router(sandbox_router.router)
 
 
 # ── Root ────────────────────────────────────────────────────────────────────────
