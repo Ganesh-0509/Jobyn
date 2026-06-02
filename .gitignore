@@ -65,6 +65,12 @@ graphify-out/
 # OpenClaude local config
 .openclaude/
 
+# Internal analysis/intelligence files
+PROJECT_INTELLIGENCE_FILE.md
+
+# Job application POCs
+bolna-poc/
+
 # Local venv on Windows
 /Scripts/
 Include/
