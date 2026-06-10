@@ -17,7 +17,7 @@ services:
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
-        value: "3.11.9"
+        value: "3.12.8"        # match backend/Dockerfile (python:3.12-slim) and docs
       - key: SUPABASE_URL
         sync: false          # set manually in Render dashboard
       - key: SUPABASE_KEY
