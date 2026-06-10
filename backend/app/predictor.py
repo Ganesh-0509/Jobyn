@@ -124,7 +124,9 @@ def predict_resume(input_data) -> dict:
     if using_onnx:
         score_session = get_score_model()
         score_out = score_session.run(None, {"float_input": X})
-        predicted_score = int(round(float(score_out[0][0])))
+        # score_out[0] is shape (1, 1); flatten before float() — numpy 2.x raises
+        # on float() of a non-0-d array.
+        predicted_score = int(round(float(np.asarray(score_out[0]).reshape(-1)[0])))
     else:
         reg = get_score_model()
         predicted_score = int(round(float(reg.predict(X)[0])))
@@ -137,7 +139,7 @@ def predict_resume(input_data) -> dict:
         using_onnx=using_onnx,
     )
 
-    elapsed_ms = t.elapsed_ms()
+    elapsed_ms = t()  # Timer is callable → elapsed milliseconds
     version = metadata.get("version", "v2")
     if using_onnx:
         version += "-onnx"
