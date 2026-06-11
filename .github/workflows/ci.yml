@@ -29,13 +29,18 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        # Use `npm install` (not `npm ci`): the committed package-lock.json is
-        # generated on Windows and omits the linux rollup optional dependency
-        # (@rollup/rollup-linux-x64-gnu), so `npm ci` hard-fails on the Linux
-        # runner (npm/cli#4828). `npm install` resolves the platform binary.
-        # Long-term fix: regenerate the lockfile on Linux (WSL/Docker) and
-        # restore `npm ci`.
-        run: npm install
+        # The committed package-lock.json is generated on Windows and only
+        # records win32 rollup binaries — the linux optional dep
+        # (@rollup/rollup-linux-x64-gnu) is missing, so both `npm ci` and a
+        # plain `npm install` (which still honors the lock) fail to install it
+        # on the Linux runner (npm/cli#4828). Removing the stale lock forces npm
+        # to resolve fresh from package.json and fetch the correct platform
+        # binary — exactly what the rollup error message recommends.
+        # Long-term fix: regenerate the lockfile on Linux (WSL/Docker), commit
+        # it, and restore `npm ci`.
+        run: |
+          rm -f package-lock.json
+          npm install
 
       - name: TypeScript check
         run: npx tsc --noEmit
