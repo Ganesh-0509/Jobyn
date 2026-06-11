@@ -69,15 +69,15 @@ def predict_endpoint(body: ResumeInput) -> ResumePrediction:
     elapsed_ms = t()
     log.info(
         "POST /predict  role=%s  score=%.1f  conf=%.2f  latency=%.1fms",
-        result["predicted_role"], result["resume_score"],
-        result["confidence"], elapsed_ms,
+        result.predicted_role, result.resume_score,
+        result.confidence, elapsed_ms,
     )
 
     return ResumePrediction(
-        predicted_role    = result["predicted_role"],
-        confidence        = result["confidence"],
-        resume_score      = result["resume_score"],
-        weak_areas        = result["weak_areas"],
-        model_version     = result["model_version"],
+        predicted_role    = result.predicted_role,
+        confidence        = result.confidence,
+        resume_score      = result.resume_score,
+        weak_areas        = result.weak_areas,
+        model_version     = result.model_version,
         inference_time_ms = elapsed_ms,
     )
