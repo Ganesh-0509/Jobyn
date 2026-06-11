@@ -80,6 +80,6 @@ async def quick_score(
         raise
     except ValueError:
         raise HTTPException(status_code=400, detail="Could not parse the uploaded file.")
-    except Exception as e:
+    except Exception:
         log.exception("Quick score failed")
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")

@@ -43,7 +43,7 @@ def post_feedback(body: FeedbackRequest, current_user: AuthUser = Depends(get_cu
             user_email=current_user.email,
         )
         return {"status": "recorded", "feedback": record}
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
@@ -55,7 +55,7 @@ def feedback_summary(
     """Return aggregated feedback statistics (paginated)."""
     try:
         return get_feedback_summary(page=page, per_page=per_page)
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
@@ -71,5 +71,5 @@ def feedback_corrections(
     """
     try:
         return get_correction_pairs(page=page, per_page=per_page)
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")

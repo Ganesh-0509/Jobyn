@@ -4,7 +4,7 @@ POST /onboarding/trigger  — called after signup, creates progress record + sen
 POST /onboarding/check    — called on login, sends any pending drip emails
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from app.core.supabase_client import get_supabase
@@ -126,7 +126,7 @@ async def check_onboarding_emails(req: CheckRequest, user=Depends(get_current_us
         top_gap = "your skills"
         try:
             # Fetch latest analysis
-            from app.services.resume_parser import parse_resume
+            pass
             # We don't have the raw text here, so use defaults
         except Exception:
             pass

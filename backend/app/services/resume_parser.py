@@ -81,7 +81,7 @@ def _extract_links(text: str) -> list:
 
 def _detect_sections(text: str) -> dict:
     """Split resume text into labelled sections by heading detection.
-    
+
     Improved: handles UPPERCASE headings, headings with colons/dashes,
     and headings that are part of a longer line (e.g. 'SKILLS: Python, Java').
     """

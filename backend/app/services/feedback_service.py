@@ -8,7 +8,6 @@ aggregation helpers so future training runs can incorporate corrections.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
 
 from app.core.supabase_client import get_supabase
 

@@ -6,7 +6,7 @@ resume using Gemini AI. Falls back to a template-based approach if
 Gemini is unavailable.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from app.core.auth import get_current_user, AuthUser
@@ -43,7 +43,6 @@ def _build_template_resume(req: ResumeBuilderRequest, jd_skills: dict) -> str:
     Template-based resume generator — works without AI.
     Prioritizes skills that match the JD.
     """
-    user_skills_lower = {s.lower() for s in req.skills}
     jd_skill_set = {s.lower() for s in jd_skills.get("skills", [])}
 
     # Prioritize JD-matching skills first
@@ -54,7 +53,7 @@ def _build_template_resume(req: ResumeBuilderRequest, jd_skills: dict) -> str:
     company = req.jd_company or "the target company"
 
     lines = []
-    lines.append(f"# RESUME")
+    lines.append("# RESUME")
     lines.append("")
 
     # Contact / Links
@@ -66,7 +65,6 @@ def _build_template_resume(req: ResumeBuilderRequest, jd_skills: dict) -> str:
 
     # Professional Summary — tailored to JD
     lines.append("## Professional Summary")
-    jd_preview = req.jd_text[:200].replace("\n", " ").strip()
     lines.append(
         f"Motivated engineer with skills in {', '.join(matched[:5] or req.skills[:5])}, "
         f"seeking the {title} role at {company}. "

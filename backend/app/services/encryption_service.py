@@ -7,7 +7,6 @@ Generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.g
 
 import os
 import logging
-from typing import Optional
 
 log = logging.getLogger("encryption")
 

@@ -6,7 +6,6 @@ syllabus, and the compilation layer stores progressive notes successfully.
 """
 
 import asyncio
-import os
 import sys
 from pathlib import Path
 
@@ -16,19 +15,18 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
-from app.services.scraper_service import scraper_service
-from app.services.ai_service import ai_service
-from app.services.knowledge_service import knowledge_service
+from app.services.scraper_service import scraper_service  # noqa: E402 — needs sys.path + dotenv above
+from app.services.ai_service import ai_service  # noqa: E402 — needs sys.path + dotenv above
 
 async def main():
     skill = "trie"
     url = "https://raw.githubusercontent.com/trekhleb/javascript-algorithms/master/src/data-structures/trie/README.md"
-    
+
     print("=" * 60)
     print(f"1. TESTING SCRAPER SERVICE FOR SKILL: {skill.upper()}")
     print(f"Target Resource URL: {url}")
     print("=" * 60)
-    
+
     try:
         scraped_text = await scraper_service.fetch_clean_markdown(url)
         print(f"[SUCCESS] Scraped {len(scraped_text)} characters of clean markdown/text.")
@@ -45,7 +43,7 @@ async def main():
     print("\n" + "=" * 60)
     print("2. TESTING DYNAMIC SYLLABUS COMPILER (N-SECTIONS)")
     print("=" * 60)
-    
+
     try:
         sections = await ai_service.get_or_create_syllabus(skill)
         print(f"[SUCCESS] Dynamically generated {len(sections)} chapters/modules:")
@@ -62,17 +60,17 @@ async def main():
     print("\n" + "=" * 60)
     print("3. TESTING STUDY NOTES COMPILATION (PROGRESSIVE LOAD)")
     print("=" * 60)
-    
+
     try:
         # Fetching section 0 (should generate and cache it)
         print("Compiling and caching Section 0 (Concept Foundation)...")
         section_data = await ai_service.get_study_section(skill, 0)
-        print(f"[SUCCESS] Compiled Section 0:")
+        print("[SUCCESS] Compiled Section 0:")
         safe_sub = section_data.get('subheading', '').encode(sys.stdout.encoding or 'utf-8', errors='replace').decode(sys.stdout.encoding or 'utf-8')
         safe_exp = section_data.get('explanation', '')[:200].encode(sys.stdout.encoding or 'utf-8', errors='replace').decode(sys.stdout.encoding or 'utf-8')
         safe_takeaway = section_data.get('key_takeaway', '').encode(sys.stdout.encoding or 'utf-8', errors='replace').decode(sys.stdout.encoding or 'utf-8')
         safe_try = section_data.get('try_it', '').encode(sys.stdout.encoding or 'utf-8', errors='replace').decode(sys.stdout.encoding or 'utf-8')
-        
+
         print(f"  Subheading: {safe_sub}")
         print(f"  Explanation: {safe_exp}...")
         print(f"  Key Takeaway: {safe_takeaway}")

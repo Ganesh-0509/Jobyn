@@ -47,7 +47,7 @@ def post_content_feedback(body: ContentFeedbackRequest, current_user: AuthUser =
             user_email=current_user.email,
         )
         return {"status": "recorded", "feedback": record}
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
@@ -56,7 +56,7 @@ def content_feedback_summary(skill: str | None = Query(None)):
     """Return aggregated content feedback statistics."""
     try:
         return get_content_feedback_summary(skill=skill)
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
@@ -65,5 +65,5 @@ def low_rated_content(threshold: float = Query(3.0)):
     """Find content with average rating below threshold — candidates for regeneration."""
     try:
         return {"low_rated": get_low_rated_content(threshold=threshold)}
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")

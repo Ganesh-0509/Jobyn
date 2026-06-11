@@ -1,10 +1,8 @@
 import os
-import json
 import asyncio
 import logging
-import time
 from google import genai
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 
 from app.utils.llm_utils import parse_json_from_llm
 from app.core.cache import cache as _cache
@@ -88,7 +86,7 @@ class GeminiService:
                     contents=prompt,
                 )
                 text = response.text
-                
+
                 data = parse_json_from_llm(text)
                 if data is None:
                     raise ValueError("Failed to parse JSON from Gemini response")
@@ -98,7 +96,7 @@ class GeminiService:
                 data["is_fallback"] = False
                 _cache.set(cache_key, data, ttl=settings.FORECAST_CACHE_TTL)
                 return data
-                    
+
             except Exception as e:
                 err_str = str(e)
                 is_rate_limit = "429" in err_str or "RESOURCE_EXHAUSTED" in err_str

@@ -95,7 +95,7 @@ async def match_jd(
         raise
     except EnvironmentError:
         raise HTTPException(status_code=503, detail="Database not configured.")
-    except Exception as e:
+    except Exception:
         log.exception("JD match failed")
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
@@ -124,6 +124,6 @@ async def jd_match_history(
 
     except EnvironmentError:
         raise HTTPException(status_code=503, detail="Database not configured.")
-    except Exception as e:
+    except Exception:
         log.exception("JD history fetch failed")
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")

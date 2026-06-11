@@ -57,7 +57,7 @@ def get_question(role: str = "Software Developer"):
             "difficulty": q.get("difficulty", "Intermediate"),
             "role":       role,
         }
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 

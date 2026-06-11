@@ -8,7 +8,6 @@ Tracks: section-level ratings, error reports, improvement suggestions.
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from app.core.supabase_client import get_supabase
 

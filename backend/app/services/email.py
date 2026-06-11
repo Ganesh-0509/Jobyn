@@ -5,7 +5,6 @@ Requires RESEND_API_KEY env var. Falls back gracefully if not configured.
 
 import os
 import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 

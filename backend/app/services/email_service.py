@@ -6,8 +6,6 @@ Requires RESEND_API_KEY env var. Falls back gracefully if not set.
 
 import os
 import logging
-from datetime import datetime, timedelta
-from typing import Optional
 
 log = logging.getLogger("email")
 

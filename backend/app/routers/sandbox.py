@@ -8,15 +8,13 @@ Provides two endpoints:
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict
 import subprocess
 import tempfile
 import os
 import sys
 import json
 import io
-import threading
-import traceback
 
 import logging
 
@@ -72,9 +70,6 @@ class TraceResponse(BaseModel):
 def _trace_python(code: str, stdin_data: str) -> TraceResponse:
     """Trace Python code execution step-by-step using bdb."""
     import bdb
-    import io
-    import sys
-    import signal
 
     steps: List[TraceStep] = []
     captured_output = io.StringIO()

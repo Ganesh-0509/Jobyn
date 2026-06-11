@@ -1,7 +1,5 @@
 import os
-import json
 import logging
-import httpx
 from typing import Optional, Dict, Any, List
 from app.services.gemini_service import gemini_service
 from app.services.bytez_service import bytez_service
@@ -57,7 +55,7 @@ class AIService:
         return result
 
     # ── Dynamic Syllabus Generator (Coursera-style N sections) ────────────────
-    
+
     async def get_or_create_syllabus(self, skill: str) -> List[Dict[str, Any]]:
         """Retrieve cached dynamic syllabus or compile a custom N-section syllabus via Gemini."""
         try:
@@ -74,15 +72,15 @@ class AIService:
         prompt = f"""
         You are a Principal Curriculum Director at Coursera.
         Design a comprehensive, highly-structured learning path (syllabus) specifically for: {skill}.
-        
+
         Divide the topic into an optimal number of sections (modules) based on its complexity:
         - For simple foundational topics, use 4-5 sections.
         - For intermediate/standard framework topics, use 6-8 sections.
         - For advanced/complex systems or data science topics, use 8-12 sections.
-        
+
         Each section must have a unique title, a clear 2-sentence description of what will be covered, and estimated study duration in minutes.
         Ensure sections flow in a logical educational order (e.g. analogical/concept foundations first, then theory internals, intermediate setups, code implementation, production best-practices, and finally practice/quizzes).
-        
+
         Return strictly a JSON object matching this structure:
         {{
           "sections": [
@@ -150,7 +148,7 @@ class AIService:
         if is_last:
             return f"""You are a senior coding interview coach.
             Generate a practice problems section for the topic '{skill}', specifically focusing on the final module '{title}' (described as: {desc}).
-            
+
             Return valid JSON only:
             {{
               "subheading": "{title}",
@@ -173,7 +171,7 @@ class AIService:
                 }}
               ]
             }}
-            
+
             RULES:
             - Include exactly 5 real LeetCode problems relevant to {skill}. Use ACTUAL LeetCode problem names, numbers, and URL slugs.
             - Mix difficulties: 2 Easy, 2 Medium, 1 Hard.
@@ -186,7 +184,7 @@ class AIService:
         Generate ONE detailed study section for the topic '{skill}'.
         Section: "{title}" — Description: {desc}
         Student already knows: [{existing_skills}]
-        
+
         Return valid JSON only (one object, NOT an array):
         {{
           "subheading": "{title}",
@@ -197,7 +195,7 @@ class AIService:
           "try_it": "Mini challenge: modify the code above to handle edge case X",
           "complexity": "Time: O(n), Space: O(1) (if applicable, else omit)"
         }}
-        
+
         RULES:
         - The example MUST be real runnable code in markdown fences.
         - key_takeaway and try_it are REQUIRED.
@@ -281,9 +279,9 @@ class AIService:
         prompt = f"""You are a senior interview curriculum architect.
         Generate a study guide OVERVIEW with the first dynamic section for the topic '{skill}'.
         Student already knows: [{existing_skills}]
-        
+
         Section to generate: "{sec_0['title']}" — Description: {sec_0['desc']}
-        
+
         Return this exact JSON format:
         {{
           "skill": "{skill}",
@@ -302,7 +300,7 @@ class AIService:
           ],
           "pro_tip": "Industry expert tip about {skill}..."
         }}
-        
+
         RULES:
         - detailed_content should have ONLY 1 section (the '{sec_0['title']}').
         - The example MUST be real runnable code.
@@ -400,21 +398,21 @@ class AIService:
         prompt = f"""
         You are an expert technical interviewer.
         Generate a highly-targeted 3-question multiple-choice quiz verifying understanding of the section "{sec_title}" for the topic "{skill}".
-        
+
         Use the following section material for context to ensure the questions directly test the concepts explained:
         ---
         Section Explanation:
         {explanation}
-        
+
         Section Code Example:
         {example_code}
         ---
-        
+
         RULES:
         - Generate exactly 3 multiple-choice questions.
         - Questions must directly test concepts, logic, or code patterns explained in the text above.
         - Each question must have exactly 4 plausible options, a correct_index (0-3), and a comprehensive explanation explaining why the correct choice is right and others are wrong.
-        
+
         Return strict JSON only matching this format:
         {{
           "skill": "{skill}",
@@ -467,15 +465,15 @@ class AIService:
         cached = knowledge_service.get_cached_knowledge(skill, "quiz")
         if cached:
             return cached
-        
+
         prompt = f"""Generate 5 challenging multiple-choice interview preparation questions for {skill}.
-        
+
         RULES:
         - Questions should be scenario-based, not trivial definitions.
         - Include code snippets in questions where applicable.
         - Each option should be plausible. Provide detailed explanations.
         - Mix difficulty: 2 medium, 2 hard, 1 expert.
-        
+
         Return valid JSON only:
         {{
           "skill": "{skill}",

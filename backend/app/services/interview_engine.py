@@ -15,8 +15,10 @@ _SKILLS: dict | None = None
 def _get_skills():
     global _SKILLS
     if _SKILLS is None:
-        try: _SKILLS = load_skills()
-        except Exception: _SKILLS = {}
+        try:
+            _SKILLS = load_skills()
+        except Exception:
+            _SKILLS = {}
     return _SKILLS
 
 # ── Question Bank ─────────────────────────────────────────────────────────────
@@ -347,7 +349,7 @@ def evaluate_answer(role: str, question_id: str, answer_text: str) -> dict:
         if c.lower() in answer_lower:
             detected.append(c)
             continue
-        
+
         # 2. Check synonyms if concept exists in our skills dictionary
         syns = skills_map.get(c.lower(), [])
         if any(s.lower() in answer_lower for s in syns):

@@ -7,7 +7,6 @@ Uses httpx for high-performance async requests and BeautifulSoup for clean, junk
 import logging
 import httpx
 from bs4 import BeautifulSoup
-from typing import Optional
 from app.core.cache import cache
 
 log = logging.getLogger("scraper_service")
@@ -32,7 +31,7 @@ class ScraperService:
         and sidebars, then compiles the remaining text into a structured, clean format.
         """
         cache_key = f"scraped:{url}"
-        
+
         # 1. Try L1 Cache first
         try:
             cached_data = cache.get(cache_key)
@@ -49,9 +48,9 @@ class ScraperService:
                 resp = await client.get(url, headers=self.headers)
                 if resp.status_code != 200:
                     raise Exception(f"HTTP error status {resp.status_code}")
-                
+
                 soup = BeautifulSoup(resp.text, "html.parser")
-                
+
                 # 1. Clean out standard non-article junk elements
                 for tag in soup(["script", "style", "nav", "footer", "header", "aside", "noscript", "iframe", "form"]):
                     tag.decompose()
@@ -63,9 +62,9 @@ class ScraperService:
 
                 # 2. Extract core content area (main, article, div id=content or body)
                 content_container = (
-                    soup.find("main") or 
-                    soup.find("article") or 
-                    soup.find(id="content") or 
+                    soup.find("main") or
+                    soup.find("article") or
+                    soup.find(id="content") or
                     soup.find(class_=lambda c: c and "article" in c.lower()) or
                     soup.body or
                     soup
@@ -81,7 +80,7 @@ class ScraperService:
 
                 # 4. Extract cleaned text paragraphs
                 raw_text = content_container.get_text()
-                
+
                 # Clean multiple empty lines and excessive whitespace
                 lines = []
                 for line in raw_text.splitlines():
@@ -90,19 +89,19 @@ class ScraperService:
                         lines.append(cleaned)
                     elif lines and lines[-1] != "":
                         lines.append("") # keep a single empty separator line
-                
+
                 markdown_text = "\n".join(lines).strip()
-                
+
                 if len(markdown_text) < 150:
                     log.warning("Scraped content from %s is extremely short (%d chars). Fallback to full body.", url, len(markdown_text))
-                
+
                 # Cache successful scrape in Redis/Memory for 24 hours
                 try:
                     cache.set(cache_key, markdown_text, ttl=86400)
                     log.info("Cached crawled content for %s to L1 Cache", url)
                 except Exception as ce:
                     log.warning("Failed to cache scraped text for %s: %s", url, ce)
-                
+
                 return markdown_text
 
         except Exception as e:

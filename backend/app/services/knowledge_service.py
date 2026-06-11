@@ -28,7 +28,7 @@ class KnowledgeService:
         Automatically rejects stale entries from older cache versions.
         """
         cache_key = f"knowledge:{type}:{topic.lower()}"
-        
+
         # 1. Try L1 cache (Redis/Memory)
         try:
             cached_content = cache.get(cache_key)
@@ -61,7 +61,7 @@ class KnowledgeService:
                     log.info("Supabase cache STALE for %s (%s) — version %s < %s, will regenerate",
                              topic, type, content.get("_cache_version", 0), CACHE_VERSION)
                     return None
-                
+
                 # Cache in L1 for future fast hits (24 hours TTL)
                 log.info("Supabase cache HIT for %s (%s). Writing to L1 Cache.", topic, type)
                 try:

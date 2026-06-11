@@ -86,19 +86,19 @@ def print_evaluation_report(metrics: dict) -> None:
     print("\n" + "=" * 50)
     print("  MODEL EVALUATION REPORT")
     print("=" * 50)
-    print(f"\n  Role Classifier (RandomForest)")
+    print("\n  Role Classifier (RandomForest)")
     print(f"    Accuracy  : {clf['accuracy']:.4f}  ({clf['accuracy']*100:.1f}%)")
     print(f"    F1 Macro  : {clf['f1_macro']:.4f}")
     print(f"\n    Roles     : {clf['class_labels']}")
-    print(f"\n    Confusion Matrix:")
+    print("\n    Confusion Matrix:")
     labels = clf["class_labels"]
-    header = f"{'':>20} " + "  ".join(f"{l[:8]:>8}" for l in labels)
+    header = f"{'':>20} " + "  ".join(f"{lbl[:8]:>8}" for lbl in labels)
     print(f"    {header}")
     for i, row in enumerate(clf["confusion_matrix"]):
         row_str = "  ".join(f"{v:>8}" for v in row)
         print(f"    {labels[i][:20]:>20} {row_str}")
 
-    print(f"\n  Score Regressor (RandomForest)")
+    print("\n  Score Regressor (RandomForest)")
     print(f"    RMSE      : {reg['rmse']:.4f}")
     print(f"    R²        : {reg['r2']:.4f}")
     print("=" * 50 + "\n")

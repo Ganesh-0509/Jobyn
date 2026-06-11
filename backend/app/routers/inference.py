@@ -59,7 +59,7 @@ def predict_endpoint(body: ResumeInput) -> ResumePrediction:
     t = Timer()
     try:
         result = predict_resume(body)
-    except Exception as e:
+    except Exception:
         log.exception("Prediction failed for input: %s", body.model_dump())
         raise HTTPException(
             status_code = 500,

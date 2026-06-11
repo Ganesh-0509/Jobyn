@@ -1,7 +1,6 @@
 import os
 import logging
 from typing import Dict, Any, List
-import json
 
 from app.utils.llm_utils import extract_content, parse_json_from_llm
 
@@ -33,7 +32,7 @@ class BytezService:
                 return context
         except Exception as e:
             log.warning(f"Wiki scrape failed for {skill}: {e}")
-            
+
         try:
             from duckduckgo_search import DDGS
             with DDGS() as ddgs:
@@ -45,7 +44,7 @@ class BytezService:
                     return context
         except Exception as e:
             log.warning(f"DDG scrape failed for {skill}: {e}")
-            
+
         return ""
 
     async def get_study_materials(self, skill: str, existing_skills: str = "") -> Dict[str, Any]:
@@ -104,8 +103,9 @@ RULES:
 
     async def generate_quiz(self, skill: str) -> Dict[str, Any]:
         """Generates 3 verification questions for a skill."""
-        if not self.model: return {"is_fallback": True}
-        
+        if not self.model:
+            return {"is_fallback": True}
+
         prompt = f"""Generate 5 challenging multiple-choice questions to test mastery of {skill}.
 
 RULES:
@@ -142,7 +142,8 @@ Return valid JSON:
 
     async def get_market_forecast(self, role: str, missing: List[str]) -> Dict[str, Any]:
         """Generates market snapshot."""
-        if not self.model: return {"is_fallback": True}
+        if not self.model:
+            return {"is_fallback": True}
         skills_str = ', '.join(missing[:5])
         prompt = f"""You are a tech recruitment analyst. Generate a 2026 career market forecast.
 

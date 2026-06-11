@@ -238,22 +238,22 @@ async def save_study_progress(req: SubmitProgressRequest, user: AuthUser = Depen
     """Save user progress for completing a study section."""
     from app.core.supabase_client import get_supabase
     sb = get_supabase()
-    
+
     # 1. Fetch current progress
     resp = sb.table("user_study_progress").select("completed_sections", "mastered").eq("user_email", user.email).eq("skill", req.skill.lower()).execute()
-    
+
     completed = []
     if resp.data:
         completed = resp.data[0].get("completed_sections") or []
-        
+
     if req.section_idx not in completed:
         completed.append(req.section_idx)
-        
+
     # Check if they completed all syllabus sections
     sections = await ai_service.get_or_create_syllabus(req.skill)
     total_secs = len(sections)
     mastered = len(completed) >= total_secs
-    
+
     # Update in DB
     sb.table("user_study_progress").upsert({
         "user_email": user.email,
@@ -262,7 +262,7 @@ async def save_study_progress(req: SubmitProgressRequest, user: AuthUser = Depen
         "mastered": mastered,
         "updated_at": "now()"
     }, on_conflict="user_email,skill").execute()
-    
+
     return {"status": "success", "completed_sections": completed, "mastered": mastered}
 
 @router.get("/study/progress")
@@ -270,7 +270,7 @@ async def get_study_progress(skill: Optional[str] = None, user: AuthUser = Depen
     """Get active progress for a specific skill or all skills for the logged-in student."""
     from app.core.supabase_client import get_supabase
     sb = get_supabase()
-    
+
     query = sb.table("user_study_progress").select("*").eq("user_email", user.email)
     if skill:
         query = query.eq("skill", skill.lower())
@@ -282,7 +282,7 @@ async def submit_quiz_grade(req: SubmitQuizGradeRequest, user: AuthUser = Depend
     """Logs quiz score, attempts, and automatically triggers progress mark if student passed."""
     from app.core.supabase_client import get_supabase
     sb = get_supabase()
-    
+
     # 1. Insert quiz attempt
     sb.table("user_quiz_attempts").insert({
         "user_email": user.email,
@@ -291,7 +291,7 @@ async def submit_quiz_grade(req: SubmitQuizGradeRequest, user: AuthUser = Depend
         "score": req.score,
         "passed": req.passed
     }).execute()
-    
+
     # 2. If they passed, automatically register the progress completion for this section!
     completed = []
     mastered = False
@@ -299,14 +299,14 @@ async def submit_quiz_grade(req: SubmitQuizGradeRequest, user: AuthUser = Depend
         resp = sb.table("user_study_progress").select("completed_sections", "mastered").eq("user_email", user.email).eq("skill", req.skill.lower()).execute()
         if resp.data:
             completed = resp.data[0].get("completed_sections") or []
-        
+
         if req.section_idx not in completed:
             completed.append(req.section_idx)
-            
+
         sections = await ai_service.get_or_create_syllabus(req.skill)
         total_secs = len(sections)
         mastered = len(completed) >= total_secs
-        
+
         sb.table("user_study_progress").upsert({
             "user_email": user.email,
             "skill": req.skill.lower(),
@@ -314,10 +314,10 @@ async def submit_quiz_grade(req: SubmitQuizGradeRequest, user: AuthUser = Depend
             "mastered": mastered,
             "updated_at": "now()"
         }, on_conflict="user_email,skill").execute()
-        
+
     return {
-        "status": "success", 
-        "passed": req.passed, 
+        "status": "success",
+        "passed": req.passed,
         "completed_sections": completed,
         "mastered": mastered
     }
@@ -329,7 +329,7 @@ async def study_chat(request: Request, req: ChatRequest):
     """Provides a chat interface for a specific skill."""
     if not req.skill or not req.query:
         raise HTTPException(status_code=400, detail="Skill and query are required.")
-    
+
     context = f"Student already knows: {', '.join(req.mastered_skills or [])}"
     content = await ai_service.get_chat_response(req.skill, req.query, req.history, context)
     return {"response": content}
@@ -403,11 +403,11 @@ def _sb():
 @heavy_limit
 async def submit_contribution(request: Request, req: ContributionRequest):
     from app.utils.validation import sanitize_plain, sanitize_recursive
-    
+
     clean_skill = sanitize_plain(req.skill).lower()
     clean_submitted_by = sanitize_plain(req.submitted_by)
     clean_content = sanitize_recursive(req.notes_content)
-    
+
     if not clean_skill or not clean_submitted_by or not clean_content:
         raise HTTPException(status_code=400, detail="Invalid contribution input data.")
 
@@ -420,7 +420,7 @@ async def submit_contribution(request: Request, req: ContributionRequest):
             "status": "pending",
         }).execute()
         return {"status": "success", "message": "Contribution submitted for review."}
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 @router.get("/admin/contributions")
@@ -435,7 +435,7 @@ async def get_pending_contributions(admin=Depends(get_admin_user)):
             .execute()
         )
         return resp.data or []
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 @router.post("/admin/contributions/{id}/approve")
@@ -456,7 +456,7 @@ async def approve_contribution(id: int, admin=Depends(get_admin_user)):
         return {"status": "success"}
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 @router.post("/admin/contributions/{id}/reject")
@@ -469,7 +469,7 @@ async def reject_contribution(id: int, admin=Depends(get_admin_user)):
         return {"status": "success"}
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 @router.get("/admin/stats")
@@ -526,20 +526,20 @@ async def ingest_course(request: Request, req: IngestCourseRequest, admin=Depend
     from app.services.rag_service import embed_text
     from app.utils.llm_utils import parse_json_from_llm
     from app.core.supabase_client import get_supabase
-    
+
     skill_norm = req.skill.lower().strip()
-    
+
     # 1. Scrape content
     try:
         scraped_text = await scraper_service.fetch_clean_markdown(req.url)
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=400, detail="An internal error occurred. Please try again.")
-        
+
     if not scraped_text or len(scraped_text) < 100:
         raise HTTPException(status_code=400, detail="Scraped resource content is too short or invalid.")
-        
+
     sb = get_supabase()
-    
+
     # ──────────────────────────────────────────────────────────────────────────
     # PATHWAY A: Grounded RAG Ingestion (Insert overlapping vector chunks)
     # ──────────────────────────────────────────────────────────────────────────
@@ -548,13 +548,13 @@ async def ingest_course(request: Request, req: IngestCourseRequest, admin=Depend
             chunk_size = 1200
             overlap = 200
             chunks = []
-            
+
             # Simple chunking with overlap
             for i in range(0, len(scraped_text), chunk_size - overlap):
                 chunk = scraped_text[i:i + chunk_size].strip()
                 if len(chunk) > 50:
                     chunks.append(chunk)
-                    
+
             inserted_count = 0
             for chunk in chunks:
                 embedding = embed_text(chunk)
@@ -567,7 +567,7 @@ async def ingest_course(request: Request, req: IngestCourseRequest, admin=Depend
                         "source_version": "user_curated"
                     }).execute()
                     inserted_count += 1
-                    
+
             return {
                 "status": "success",
                 "pathway": "Pathway A: Grounded RAG",
@@ -575,9 +575,9 @@ async def ingest_course(request: Request, req: IngestCourseRequest, admin=Depend
                 "total_chunks": len(chunks),
                 "inserted_chunks": inserted_count
             }
-        except Exception as e:
+        except Exception:
             raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
-            
+
     # ──────────────────────────────────────────────────────────────────────────
     # PATHWAY B: Direct Static Course Compiler (Create 0ms cached learning hub)
     # ──────────────────────────────────────────────────────────────────────────
@@ -587,25 +587,25 @@ async def ingest_course(request: Request, req: IngestCourseRequest, admin=Depend
             sections = await ai_service.get_or_create_syllabus(skill_norm)
             sub_roadmap = [{"title": s["title"], "duration": s["duration"]} for s in sections]
             total_sections = len(sections)
-            
+
             # 2. Compile each individual section statically using scraped documentation
             from app.services.gemini_service import gemini_service
             from app.core.settings import settings
-            
+
             if not ai_service.gemini_key or not gemini_service.client:
                 raise Exception("Gemini API client is not configured. Pathway B requires a valid GEMINI_API_KEY.")
-                
+
             compiled_sections = []
-            
+
             # Limit the size of scraped reference text passed to the model (fits inside typical token context windows)
             reference_context = scraped_text[:15000]
-            
+
             for section in sections:
                 idx = section["idx"]
                 title = section["title"]
                 desc = section["desc"]
                 is_last = (idx == total_sections - 1)
-                
+
                 # Build custom compilation prompt
                 if is_last:
                     prompt = f"""
@@ -614,9 +614,9 @@ async def ingest_course(request: Request, req: IngestCourseRequest, admin=Depend
                     ---
                     {reference_context}
                     ---
-                    
+
                     Task: Compile the final Practice Problems & LeetCode module for "{title}" (described as: {desc}).
-                    
+
                     Return strict JSON only matching:
                     {{
                       "subheading": "{title}",
@@ -639,7 +639,7 @@ async def ingest_course(request: Request, req: IngestCourseRequest, admin=Depend
                         }}
                       ]
                     }}
-                    
+
                     Include exactly 5 real LeetCode problems (2 Easy, 2 Medium, 1 Hard) relevant to {req.skill}.
                     """
                 else:
@@ -649,10 +649,10 @@ async def ingest_course(request: Request, req: IngestCourseRequest, admin=Depend
                     ---
                     {reference_context}
                     ---
-                    
+
                     Task: Compile Module {idx}: "{title}" (described as: {desc}).
                     Generate high-quality explanations and copy-pasteable code examples derived directly from the reference material above. Do not hallucinate syntax.
-                    
+
                     Return strict JSON only matching:
                     {{
                       "subheading": "{title}",
@@ -663,7 +663,7 @@ async def ingest_course(request: Request, req: IngestCourseRequest, admin=Depend
                       "complexity": "Time: O(1), Space: O(1) (if applicable)"
                     }}
                     """
-                
+
                 # Call LLM
                 response = gemini_service.client.models.generate_content(
                     model=settings.GEMINI_MODEL,
@@ -672,12 +672,12 @@ async def ingest_course(request: Request, req: IngestCourseRequest, admin=Depend
                 data = parse_json_from_llm(response.text)
                 if not data or not data.get("subheading"):
                     raise Exception(f"Failed to compile section {idx}: LLM returned invalid or malformed structure.")
-                
+
                 # Cache section in database
                 cache_key = f"{skill_norm}_section_{idx}"
                 knowledge_service.cache_knowledge(cache_key, data, "section")
                 compiled_sections.append(title)
-                
+
             # 3. Compile the main study intro overview notes
             intro_prompt = f"""
             You are a Senior technical curriculum director.
@@ -685,9 +685,9 @@ async def ingest_course(request: Request, req: IngestCourseRequest, admin=Depend
             ---
             {reference_context[:6000]}
             ---
-            
+
             Compile a high-level course overview for the skill "{req.skill}".
-            
+
             Return strict JSON only matching:
             {{
               "skill": "{req.skill}",
@@ -702,22 +702,22 @@ async def ingest_course(request: Request, req: IngestCourseRequest, admin=Depend
               "pro_tip": "Expert industry optimization pro-tip."
             }}
             """
-            
+
             intro_resp = gemini_service.client.models.generate_content(
                 model=settings.GEMINI_MODEL,
                 contents=intro_prompt,
             )
             intro_data = parse_json_from_llm(intro_resp.text)
-            
+
             if intro_data and intro_data.get("quick_summary"):
                 # Append required metadata
                 intro_data["sources"] = [{"title": f"{req.skill} Documentation", "source_type": "Curated Reference", "version": req.url}]
                 intro_data["sub_roadmap"] = sub_roadmap
                 intro_data["total_sections"] = total_sections
-                
+
                 # Cache intro in DB
                 knowledge_service.cache_knowledge(skill_norm, intro_data, "study")
-                
+
             return {
                 "status": "success",
                 "pathway": "Pathway B: Direct Static Compiler",
@@ -725,8 +725,8 @@ async def ingest_course(request: Request, req: IngestCourseRequest, admin=Depend
                 "syllabus": sub_roadmap,
                 "compiled_sections": compiled_sections
             }
-            
-        except Exception as e:
+
+        except Exception:
             raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 

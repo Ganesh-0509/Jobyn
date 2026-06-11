@@ -28,7 +28,7 @@ async def generate_project(request: Request, req: ProjectRequest):
     """
     if not req.role or not req.skills:
         raise HTTPException(status_code=400, detail="Role and a list of skills are required.")
-    
+
     # Generate project
     result = await project_generator_service.generate_project(req.role, req.skills)
     return result
@@ -44,15 +44,15 @@ async def verify_project(request: Request, req: VerifyRequest):
         raise HTTPException(status_code=400, detail="A GitHub repository URL is required.")
     if not req.project_markdown:
         raise HTTPException(status_code=400, detail="The original project specification is required.")
-    
+
     result = await project_verifier_service.verify_project(
         github_url=req.github_url,
         project_markdown=req.project_markdown,
         required_skills=req.required_skills,
         role=req.role,
     )
-    
+
     if not result.get("verified") and result.get("error"):
         raise HTTPException(status_code=400, detail=result["error"])
-    
+
     return result

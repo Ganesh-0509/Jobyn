@@ -197,25 +197,25 @@ async def upload_resume(
                     resp_a = sb.table("role_analyses").insert(analysis_data).execute()
                     analysis_id = resp_a.data[0]["id"]
 
-            except EnvironmentError as e:
+            except EnvironmentError:
                 db_warning = "Supabase not configured — result not saved."
-            except Exception as e:
+            except Exception:
                 db_warning = "DB save failed (scoring still valid)."
 
         result["resume_id"]   = resume_id
         result["analysis_id"] = analysis_id
         if db_warning:
             result["db_warning"] = db_warning
-        
+
         result["privacy_active"] = privacy_mode
 
         return result
 
     except HTTPException:
         raise  # Re-raise FastAPI HTTP exceptions (400, 413, etc.) without masking them
-    except ValueError as e:
+    except ValueError:
         raise HTTPException(status_code=400, detail="Invalid input provided.")
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 

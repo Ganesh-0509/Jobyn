@@ -10,7 +10,6 @@ Strategy:
 No ML. Fully deterministic and explainable.
 """
 
-import math
 from app.ml_pipeline.similarity_engine import build_vocabulary, encode, cosine_similarity
 
 

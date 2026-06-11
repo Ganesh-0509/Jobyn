@@ -40,10 +40,10 @@ class ProjectGeneratorService:
         return f"""
         Act as a Senior Tech Lead and Mentor.
         I am aiming for the role of '{role}' but I am missing the following core skills: {skills_str}.
-        
+
         Generate a comprehensive, engaging capstone project in Markdown format that will force me to learn and combine these exact skills.
         The project should be realistic, something I can put on my resume, and provide a clear step-by-step implementation guide.
-        
+
         Format the response in Markdown with the following sections:
         # Project Title
         ## 🎯 Overview (What it is and why it's useful)
@@ -158,7 +158,7 @@ class ProjectGeneratorService:
         markdown = f"""# {role} Starter Project
 
 ## 🎯 Overview
-Build a basic web application or script that utilizes the following skills: **{skills_str}**. 
+Build a basic web application or script that utilizes the following skills: **{skills_str}**.
 This is a fallback project because the AI generation service is currently unavailable.
 
 ## 🛠️ Tech Stack

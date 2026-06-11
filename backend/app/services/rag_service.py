@@ -52,7 +52,7 @@ def embed_text(text: str) -> Optional[List[float]]:
     try:
         from google import genai
         client = genai.Client(api_key=api_key)
-        
+
         embed_res = client.models.embed_content(
             model=settings.GEMINI_EMBEDDING_MODEL,
             contents=text,

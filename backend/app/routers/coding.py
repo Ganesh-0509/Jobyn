@@ -8,12 +8,11 @@ submission history per user.
 
 from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional
 import subprocess
 import tempfile
 import os
 import json
-import time
 
 from app.core.auth import get_current_user, AuthUser
 from app.core.supabase_client import get_supabase
@@ -491,7 +490,7 @@ async def list_submissions(
 
     except EnvironmentError:
         raise HTTPException(status_code=503, detail="Database not configured.")
-    except Exception as e:
+    except Exception:
         log.exception("Failed to fetch submissions")
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
@@ -631,7 +630,6 @@ print(json.dumps(result))
 
 def _trace_python(code: str, stdin_data: str = "") -> dict:
     """Trace Python code execution step-by-step using bdb."""
-    import re
 
     # Escape code for embedding in the harness script
     escaped = code.replace("\\", "\\\\").replace('"""', '\\"\\"\\"').replace("'", "\\'")

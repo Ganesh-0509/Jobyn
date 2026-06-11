@@ -19,9 +19,9 @@ import logging
 import pickle
 from pathlib import Path
 from datetime import datetime, timezone
+from collections import defaultdict
 
 logger = logging.getLogger(__name__)
-from collections import defaultdict
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
 _ML_DIR    = Path(__file__).resolve().parent

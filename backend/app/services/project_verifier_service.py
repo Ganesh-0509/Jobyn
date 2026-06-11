@@ -66,7 +66,7 @@ class GitHubFetcher:
     async def fetch_repo(self, owner: str, repo: str) -> Dict[str, Any]:
         """Fetch all the data we need for verification in parallel."""
         cache_key = f"github:repo:{owner.lower()}:{repo.lower()}"
-        
+
         # 1. Try L1 Cache first
         try:
             from app.core.cache import cache
@@ -192,7 +192,7 @@ def _build_verification_prompt(
 
     # Check if this is a frontend-centric repository to give target checklist guidelines
     is_frontend = any(lang.lower() in ["html", "css", "javascript", "typescript", "vue", "svelte"] for lang in repo_data["languages"].keys())
-    
+
     frontend_checklist_instructions = ""
     if is_frontend:
         frontend_checklist_instructions = """
@@ -443,7 +443,7 @@ class ProjectVerifierService:
         score += commit_score * 0.25
 
         # Language match against required skills
-        repo_langs = set(l.lower() for l in repo_data["languages"].keys())
+        repo_langs = set(lang.lower() for lang in repo_data["languages"].keys())
         repo_files = " ".join(repo_data["file_tree"]).lower()
         skill_hits = 0
         for skill in required_skills:

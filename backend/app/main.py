@@ -1,6 +1,3 @@
-import os
-import sentry_sdk
-
 """
 main.py — application entry point.
 
@@ -19,6 +16,8 @@ Routers:
   - inference.py → /health, /predict  (Phase 4B RandomForest serving)
 """
 
+import os
+import sentry_sdk
 import logging
 from contextlib import asynccontextmanager
 
@@ -36,6 +35,28 @@ from app.routers import interview as interview_router
 from app.core.rate_limiter import limiter, rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.core.settings import settings
+
+# Middleware deps
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+
+# Routers (registered below)
+from app.routers import ai_insight
+from app.routers import feedback as feedback_router
+from app.routers import content_feedback as content_feedback_router
+from app.routers import project_generator
+from app.routers import quick_score as quick_score_router
+from app.routers import jd_match as jd_match_router
+from app.routers import benchmark as benchmark_router
+from app.routers import company_prep as company_prep_router
+from app.routers import coding as coding_router
+from app.routers import onboarding_email as onboarding_email_router
+from app.routers import manual_profile as manual_profile_router
+from app.routers import resume_builder as resume_builder_router
+from app.routers import sandbox as sandbox_router
+
+from app.core.cache import cache as _app_cache
 
 logging.basicConfig(
     level   = logging.INFO,
@@ -120,10 +141,6 @@ app.add_middleware(
 )
 
 # ── Request Body Size Limit Middleware ────────────────────────────────────
-from fastapi import Request
-from fastapi.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware
-
 class LimitUploadSize(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         if request.method == "POST":
@@ -149,11 +166,11 @@ async def add_security_headers(request: Request, call_next):
 async def audit_auth_requests(request: Request, call_next):
     client_ip = request.client.host if request.client else "unknown"
     path = request.url.path
-    
+
     # Log auth/sensitive actions specifically
     if "auth" in path.lower() or "admin" in path.lower():
         log.info(f"AUDIT LOG: Sensitive route access on '{path}' by client IP {client_ip}")
-        
+
     response = await call_next(request)
     return response
 
@@ -170,20 +187,6 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"detail": "Security Event: An internal error occurred. Administrators have been alerted."}
     )
-
-from app.routers import ai_insight
-from app.routers import feedback as feedback_router
-from app.routers import content_feedback as content_feedback_router
-from app.routers import project_generator
-from app.routers import quick_score as quick_score_router
-from app.routers import jd_match as jd_match_router
-from app.routers import benchmark as benchmark_router
-from app.routers import company_prep as company_prep_router
-from app.routers import coding as coding_router
-from app.routers import onboarding_email as onboarding_email_router
-from app.routers import manual_profile as manual_profile_router
-from app.routers import resume_builder as resume_builder_router
-from app.routers import sandbox as sandbox_router
 
 # ── App factory ────────────────────────────────────────────────────────────────
 # ... (rest of App factory)
@@ -208,8 +211,6 @@ app.include_router(sandbox_router.router)
 
 
 # ── Root ────────────────────────────────────────────────────────────────────────
-
-from app.core.cache import cache as _app_cache
 
 @app.api_route("/", methods=["GET", "HEAD"], tags=["Status"], summary="Service root status")
 def root():

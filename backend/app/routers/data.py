@@ -9,12 +9,9 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from collections import defaultdict
 import logging
 from app.core.supabase_client import get_supabase
+from app.core.auth import get_current_user, get_admin_user, AuthUser
 
 logger = logging.getLogger(__name__)
-
-
-
-from app.core.auth import get_current_user, get_admin_user, AuthUser
 
 router = APIRouter()
 

@@ -151,6 +151,6 @@ async def get_benchmark(
         raise
     except EnvironmentError:
         raise HTTPException(status_code=503, detail="Database not configured.")
-    except Exception as e:
+    except Exception:
         log.exception("Benchmark computation failed")
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")

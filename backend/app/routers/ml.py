@@ -14,7 +14,6 @@ from pydantic import BaseModel, Field
 from app.core.settings import settings
 from app.core.auth import get_admin_user
 from app.ml_pipeline.data_loader     import load_dataset
-from app.ml_pipeline.similarity_engine import predict_role
 from app.ml_pipeline.skill_impact    import compute_skill_impact
 from app.ml_pipeline.projection_engine import project_score
 from app.ml_pipeline.model_registry  import (
@@ -64,7 +63,7 @@ def _require_data() -> list[dict]:
 @router.post("/predict-role")
 def ml_predict_role(request: RolePredictRequest):
     """
-    Predict the best-fit role by calculating the Readiness Score 
+    Predict the best-fit role by calculating the Readiness Score
     for the current resume across all supported roles.
 
     Optimized: computes shared sub-scores (project, ATS, structure)
@@ -76,9 +75,8 @@ def ml_predict_role(request: RolePredictRequest):
         from app.services.ats_engine import calculate_ats_score
         from app.services.scoring_engine import (
             calculate_structure_score, apply_locked_formula,
-            get_readiness_category, weighted_coverage,
+            weighted_coverage,
         )
-        from app.services.skill_gap_engine import generate_skill_gap_analysis
 
         # ── Compute shared sub-scores once ─────────────────────────
         resume_set = set(request.skills)
@@ -119,7 +117,7 @@ def ml_predict_role(request: RolePredictRequest):
 
         # Sort matches by score
         all_results.sort(key=lambda x: -x["score"])
-        
+
         # Calculate reasoning
         if request.current_role and best_role == request.current_role:
              reasoning = f"Your resume is a perfect fit for {best_role}! You match {int(best_score)}% of the core requirements."
@@ -136,7 +134,7 @@ def ml_predict_role(request: RolePredictRequest):
             "reasoning": reasoning,
             "model_version": f"cross-role-validator-{settings.APP_VERSION}"
         }
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
@@ -161,7 +159,7 @@ def ml_project_score(request: ScoreProjectRequest):
         return result
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
@@ -290,7 +288,7 @@ def ml_promote_version(tag: str, current_user: dict = Depends(get_admin_user)):
     try:
         entry = _promote_version(tag)
         return {"status": "promoted", "version": entry}
-    except ValueError as e:
+    except ValueError:
         raise HTTPException(status_code=404, detail="Resource not found.")
 
 
@@ -300,7 +298,7 @@ def ml_delete_version(tag: str, current_user: dict = Depends(get_admin_user)):
     try:
         _delete_version(tag)
         return {"status": "deleted", "tag": tag}
-    except ValueError as e:
+    except ValueError:
         raise HTTPException(status_code=400, detail="Invalid input provided.")
 
 
