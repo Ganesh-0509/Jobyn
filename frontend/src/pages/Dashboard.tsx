@@ -92,7 +92,8 @@ export default function Dashboard() {
   }, [analysis?.role])
 
   const chartHistory = useMemo(() => getHistoryOrDemo(loadHistory(user?.email)), [user?.email])
-  const score = analysis?.final_score ?? 0
+  // Provisional (confidence-discounted) score, for consistency with the analyzer.
+  const score = analysis?.provisional_score ?? analysis?.final_score ?? 0
   const readiness = analysis?.readiness_category ?? 'Unknown'
   const masteredLower = useMemo(() => new Set(masteredSkills.map(s => s.toLowerCase())), [masteredSkills])
   const skills = useMemo(() => {

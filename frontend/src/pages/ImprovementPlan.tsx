@@ -10,9 +10,10 @@ import { markChecklistItem } from '../utils/onboardingChecklist'
 import {
     Clock, Lock, PlayCircle, Trophy, Blocks,
     Target, CalendarClock, TrendingUp, ChevronDown, ChevronUp,
-    GitBranch, ExternalLink, Shield, Sparkles,
+    GitBranch, ExternalLink, Shield, Sparkles, ShieldCheck,
 } from 'lucide-react'
 import AuthRequiredPrompt from '../components/AuthRequiredPrompt'
+import SkillVerification from '../components/SkillVerification'
 import StudyHub from '../components/StudyHub'
 import ProjectGeneratorModal from '../components/ProjectGeneratorModal'
 import { Card, CardContent } from '@/components/ui/card'
@@ -46,6 +47,9 @@ export default function ImprovementPlan() {
     const [forecastLoading, setForecastLoading] = useState(false)
     const [forecastError, setForecastError] = useState<string | null>(null)
     const [forecastExpanded, setForecastExpanded] = useState(false)
+    const [verifyOpen, setVerifyOpen] = useState(false)
+    const [verifiedDone, setVerifiedDone] = useState(false)
+    const unverifiedClaimed = (analysis?.skill_proficiency ?? []).filter(p => p.verifiable).map(p => p.skill)
 
     useEffect(() => {
         if (!analysis) return
@@ -144,6 +148,25 @@ export default function ImprovementPlan() {
                     </CardContent>
                 </Card>
             </motion.div>
+
+            {/* Confirm claimed-but-unverified skills before building the plan around them */}
+            {unverifiedClaimed.length > 0 && !verifiedDone && (
+                <motion.div {...fadeUp} transition={{ delay: 0.04 }}>
+                    <Card className="border-warning/20 bg-warning/5">
+                        <CardContent className="flex flex-wrap items-center justify-between gap-3 py-3">
+                            <div className="flex items-center gap-2 text-sm">
+                                <ShieldCheck className="size-4 shrink-0 text-warning" />
+                                <span>
+                                    <strong>{unverifiedClaimed.length} skill{unverifiedClaimed.length > 1 ? 's' : ''}</strong> on your resume aren’t verified — confirm them so your plan reflects your real level.
+                                </span>
+                            </div>
+                            <Button size="sm" variant="outline" className="gap-1.5 border-warning/40" onClick={() => setVerifyOpen(true)}>
+                                <ShieldCheck className="size-4" /> Verify skills
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </motion.div>
+            )}
 
             {/* Header + Controls */}
             <motion.div {...fadeUp} transition={{ delay: 0.05 }}>
@@ -384,6 +407,17 @@ export default function ImprovementPlan() {
 
             {activeStudy && <StudyHub skill={activeStudy} onClose={() => setActiveStudy(null)} onVerified={s => handleVerified(s)} />}
             {activeProject && <ProjectGeneratorModal role={activeProject.role} skills={activeProject.skills} onClose={() => setActiveProject(null)} />}
+            {analysis && (
+                <SkillVerification
+                    open={verifyOpen}
+                    onClose={() => setVerifyOpen(false)}
+                    role={role}
+                    skills={analysis.detected_skills}
+                    rawText={analysis.raw_text}
+                    sections={analysis.sections_detected}
+                    onUnlocked={() => setVerifiedDone(true)}
+                />
+            )}
         </div>
     )
 }

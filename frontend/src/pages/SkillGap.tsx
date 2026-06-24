@@ -4,9 +4,10 @@ import { motion } from 'framer-motion'
 import { useResume } from '../context/ResumeContext'
 import { useAuth } from '../context/AuthContext'
 import { markChecklistItem } from '../utils/onboardingChecklist'
-import { BarChart2, AlertCircle, ArrowRight, Trophy, GitBranch, Eye, EyeOff } from 'lucide-react'
+import { BarChart2, AlertCircle, ArrowRight, Trophy, GitBranch, Eye, EyeOff, ShieldCheck } from 'lucide-react'
 import AuthRequiredPrompt from '../components/AuthRequiredPrompt'
 import SkillGraphViz from '../components/SkillGraphViz'
+import SkillVerification from '../components/SkillVerification'
 import ProjectGeneratorModal from '../components/ProjectGeneratorModal'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -24,6 +25,8 @@ export default function SkillGap() {
   const [depsError, setDepsError] = useState(false)
   const [showGraph, setShowGraph] = useState(true)
   const [activeProject, setActiveProject] = useState<{ role: string; skills: string[] } | null>(null)
+  const [verifyOpen, setVerifyOpen] = useState(false)
+  const [verifiedDone, setVerifiedDone] = useState(false)
 
   // Mark onboarding checklist item when user views their skill gaps
   useEffect(() => {
@@ -49,6 +52,10 @@ export default function SkillGap() {
   const getPrereqs = (skillName: string): string[] => deps[skillName.toLowerCase()] ?? []
   const detected = [...(analysis?.detected_skills ?? []), ...masteredSkills]
   const role = analysis?.role ?? ''
+  // Claimed-but-unverified skills (Phase 2.1): treat as confirm-or-learn, not mastered.
+  const unverifiedClaimed = (analysis?.skill_proficiency ?? [])
+    .filter(p => p.verifiable)
+    .map(p => p.skill)
 
   if (!user) {
     return <AuthRequiredPrompt feature="Skill Gap Analysis" />
@@ -96,7 +103,7 @@ export default function SkillGap() {
               <CardTitle className="flex items-center gap-2 text-base">
                 <GitBranch className="size-4 text-primary" /> Skill Dependency Graph
               </CardTitle>
-              <CardDescription>Your skills (green) vs gaps (red/orange)</CardDescription>
+              <CardDescription>Your skills (green) · unverified (amber) · gaps (red/orange)</CardDescription>
             </div>
             <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setShowGraph(v => !v)}>
               {showGraph ? <><EyeOff className="size-3.5" /> Hide</> : <><Eye className="size-3.5" /> Show</>}
@@ -109,12 +116,51 @@ export default function SkillGap() {
                 missingCore={coreMissing}
                 missingOptional={optMissing}
                 dependencies={deps}
+                unverified={verifiedDone ? [] : unverifiedClaimed}
                 onNodeClick={(skill) => setActiveProject({ role, skills: [skill] })}
               />
             </CardContent>
           )}
         </Card>
       </motion.div>
+
+      {/* Verify-to-confirm: claimed skills that aren't yet evidenced/verified */}
+      {unverifiedClaimed.length > 0 && !verifiedDone && (
+        <motion.div variants={item}>
+          <Card className="premium-hover-card border-warning/20 bg-warning/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ShieldCheck className="size-4 text-warning" /> Confirm your skills ({unverifiedClaimed.length})
+              </CardTitle>
+              <CardDescription>
+                These are on your resume but not strongly evidenced — verify them to confirm your level and unlock score points.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex flex-wrap gap-1.5">
+                {unverifiedClaimed.map(s => (
+                  <Badge key={s} variant="outline" className="border-warning/40 text-warning capitalize">{s}</Badge>
+                ))}
+              </div>
+              <Button size="sm" className="gap-1.5" onClick={() => setVerifyOpen(true)}>
+                <ShieldCheck className="size-4" /> Verify these skills
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {analysis && (
+        <SkillVerification
+          open={verifyOpen}
+          onClose={() => setVerifyOpen(false)}
+          role={role}
+          skills={analysis.detected_skills}
+          rawText={analysis.raw_text}
+          sections={analysis.sections_detected}
+          onUnlocked={() => setVerifiedDone(true)}
+        />
+      )}
 
       {/* Active Gaps */}
       <motion.div variants={item}>

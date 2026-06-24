@@ -14,7 +14,7 @@ import { useState, useEffect, useRef } from 'react'
 interface Node {
     id: string
     label: string
-    type: 'center' | 'detected' | 'missing-core' | 'missing-high' | 'missing-medium'
+    type: 'center' | 'detected' | 'detected-unverified' | 'missing-core' | 'missing-high' | 'missing-medium'
     x: number
     y: number
     r: number
@@ -29,6 +29,7 @@ interface Edge {
 const COLOR: Record<string, string> = {
     center: '#3b82f6',
     detected: '#22c55e',
+    'detected-unverified': '#eab308',
     'missing-core': '#ef4444',
     'missing-high': '#f59e0b',
     'missing-medium': '#3b82f6',
@@ -37,6 +38,7 @@ const COLOR: Record<string, string> = {
 const GLOW: Record<string, string> = {
     center: 'rgba(59,130,246,0.5)',
     detected: 'rgba(34,197,94,0.45)',
+    'detected-unverified': 'rgba(234,179,8,0.4)',
     'missing-core': 'rgba(239,68,68,0.45)',
     'missing-high': 'rgba(245,158,11,0.4)',
     'missing-medium': 'rgba(59,130,246,0.4)',
@@ -63,6 +65,8 @@ interface SkillGraphVizProps {
     missingOptional: string[]
     dependencies: Record<string, string[]>
     onNodeClick?: (skill: string) => void
+    /** Detected skills that are claimed but not yet verified (shown amber). */
+    unverified?: string[]
 }
 
 export default function SkillGraphViz({
@@ -71,6 +75,7 @@ export default function SkillGraphViz({
     missingOptional,
     dependencies,
     onNodeClick,
+    unverified = [],
 }: SkillGraphVizProps) {
     const W = 640, H = 430
     const cx = W / 2, cy = H / 2
@@ -126,9 +131,10 @@ export default function SkillGraphViz({
     const topOpt = missingOptional.slice(0, 2)
     const otherOpt = missingOptional.slice(2, 6)
 
+    const unverifiedSet = new Set(unverified)
     innerSkills.forEach((s, i) => {
         const { x, y } = polar(cx, cy, 145, (i / innerSkills.length) * 360)
-        nodes.push({ id: s, label: s, type: 'detected', x, y, r: 17 })
+        nodes.push({ id: s, label: s, type: unverifiedSet.has(s) ? 'detected-unverified' : 'detected', x, y, r: 17 })
     })
 
     coreMissing.forEach((s, i) => {

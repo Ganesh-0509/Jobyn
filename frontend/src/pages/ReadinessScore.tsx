@@ -6,7 +6,8 @@ import { useAuth } from '../context/AuthContext'
 import { uploadResume, predictResume, getBenchmarks, type BenchmarkData } from '../api/client'
 import AuthRequiredPrompt from '../components/AuthRequiredPrompt'
 import CircularProgress from '../components/CircularProgress'
-import { Cpu, Cloud, Zap, TrendingUp, AlertCircle, Shield, ArrowRight, FlaskConical, ThumbsUp, ThumbsDown, Users, Share2 } from 'lucide-react'
+import { Cpu, Cloud, Zap, TrendingUp, AlertCircle, Shield, ArrowRight, FlaskConical, ThumbsUp, ThumbsDown, Users, Share2, ShieldCheck } from 'lucide-react'
+import SkillVerification from '../components/SkillVerification'
 import { usePrivacy } from '../context/PrivacyContext'
 import { predictOnDevice, isOnDeviceReady } from '../utils/onDevicePredictor'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -76,7 +77,11 @@ export default function ReadinessScore() {
     )
   }
 
-  const score = analysis?.final_score ?? 0
+  const [verifyOpen, setVerifyOpen] = useState(false)
+  const [unlockedScore, setUnlockedScore] = useState<number | null>(null)
+  const headroom = analysis?.score_headroom ?? 0
+  // Show the provisional score (or the unlocked value after verification).
+  const score = unlockedScore ?? analysis?.provisional_score ?? analysis?.final_score ?? 0
   const current = getReadinessClass(score)
   const corePct = analysis?.core_coverage_percent ?? 0
   const projectPct = analysis?.project_score_percent ?? 0
@@ -109,6 +114,34 @@ export default function ReadinessScore() {
                 <div className="font-heading text-lg font-bold text-foreground">{current}</div>
                 {analysis?.role && <div className="text-xs text-muted-foreground">for {analysis.role}</div>}
               </div>
+
+              {/* Provisional score — verify unverified skills to unlock headroom */}
+              {headroom > 0 && unlockedScore === null && (
+                <div className="w-full rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-center">
+                  <p className="text-sm font-semibold text-foreground">
+                    🔓 Provisional — unlock <span className="text-primary">+{headroom}</span>
+                    {analysis?.verified_score ? <> → <span className="text-primary">{analysis.verified_score}</span></> : null}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">Some listed skills aren’t verified yet.</p>
+                  <Button size="sm" className="mt-2 gap-1.5" onClick={() => setVerifyOpen(true)}>
+                    <ShieldCheck className="size-4" /> Verify my skills
+                  </Button>
+                </div>
+              )}
+              {unlockedScore !== null && (
+                <p className="text-sm font-medium text-success">✓ Unlocked — score now {unlockedScore}</p>
+              )}
+              {analysis && (
+                <SkillVerification
+                  open={verifyOpen}
+                  onClose={() => setVerifyOpen(false)}
+                  role={analysis.role}
+                  skills={analysis.detected_skills}
+                  rawText={analysis.raw_text}
+                  sections={analysis.sections_detected}
+                  onUnlocked={(s) => setUnlockedScore(s)}
+                />
+              )}
 
               {/* Peer Benchmark Badge */}
               {benchmark && benchmark.user_percentile !== null && (
