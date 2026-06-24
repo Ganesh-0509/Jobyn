@@ -11,6 +11,15 @@ const destModelsDir = path.join(publicDir, 'models');
 const destOrtDir = path.join(publicDir, 'ort');
 const ortSourceDir = path.join(frontendDir, 'node_modules/onnxruntime-web/dist');
 
+// Browser-side ML models are gitignored (too large for the repo). The frontend
+// is deployed as a standalone static site (rootDir: frontend), so backend/models
+// has no .onnx files at build time — fetch them from the same GitHub Release the
+// backend uses. Override the host with MODELS_BASE_URL if the release moves.
+const MODELS_BASE_URL = (
+    process.env.MODELS_BASE_URL ||
+    'https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai/releases/download/models-v2'
+).replace(/\/$/, '');
+
 // Helper to ensure directory exists
 function ensureDir(dir) {
     if (!fs.existsSync(dir)) {
@@ -19,11 +28,38 @@ function ensureDir(dir) {
     }
 }
 
+// Download an ONNX model into destDir if it is not already present. Non-fatal:
+// a failed fetch only disables privacy-mode inference, it does not fail the build.
+async function downloadIfMissing(name, destDir, { required }) {
+    const dest = path.join(destDir, name);
+    if (fs.existsSync(dest) && fs.statSync(dest).size > 0) {
+        return; // already present (committed or fetched on a previous build)
+    }
+    const url = `${MODELS_BASE_URL}/${name}`;
+    try {
+        console.log(`[ONNX Asset Sync] Fetching ${name} from release…`);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const buf = Buffer.from(await res.arrayBuffer());
+        ensureDir(destDir);
+        fs.writeFileSync(dest, buf);
+        console.log(`[ONNX Asset Sync] Downloaded ${name} (${(buf.length / 1e6).toFixed(1)} MB)`);
+    } catch (err) {
+        const level = required ? 'Warning' : 'Note';
+        console.error(`[ONNX Asset Sync] ${level}: could not fetch ${name}: ${err.message}`);
+    }
+}
+
 async function syncAssets() {
     console.log('[ONNX Asset Sync] Synchronizing ONNX and WebAssembly assets...');
 
     ensureDir(destModelsDir);
     ensureDir(destOrtDir);
+
+    // 0. Fetch gitignored ONNX models if they aren't on disk (frontend-only deploy).
+    //    score is required for browser inference; role is optional in onDevicePredictor.
+    await downloadIfMissing('score_model_v2.onnx', backendModelsDir, { required: true });
+    await downloadIfMissing('role_model_v2.onnx', backendModelsDir, { required: false });
 
     // 1. Copy Model files from backend/models/
     const filesToCopy = [
