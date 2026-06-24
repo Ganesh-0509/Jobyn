@@ -140,14 +140,32 @@ def parse_resume(file_bytes: bytes, filename: str) -> dict:
         }
     """
     fname = filename.lower()
-    if fname.endswith(".pdf"):
-        raw = _extract_text_from_pdf(file_bytes)
-    elif fname.endswith(".docx"):
-        raw = _extract_text_from_docx(file_bytes)
-    else:
-        raise ValueError("Unsupported format. Only PDF and DOCX are allowed.")
+    # Wrap extraction so a corrupt/unsupported file raises a clean ValueError
+    # (mapped to HTTP 400 by callers) instead of leaking a pdfminer/zipfile
+    # exception that surfaces as a confusing HTTP 500.
+    try:
+        if fname.endswith(".pdf"):
+            raw = _extract_text_from_pdf(file_bytes)
+        elif fname.endswith(".docx"):
+            raw = _extract_text_from_docx(file_bytes)
+        else:
+            raise ValueError("Unsupported format. Only PDF and DOCX are allowed.")
+    except ValueError:
+        raise
+    except Exception as e:
+        raise ValueError(
+            "Could not read the file — it may be corrupted, password-protected, "
+            "or not a valid PDF/DOCX."
+        ) from e
 
     raw = _clean_text(raw)
+    # Reject documents with no extractable text (e.g. scanned-image PDFs) so the
+    # user gets a helpful message instead of a meaningless 0 score.
+    if len(raw) < 20:
+        raise ValueError(
+            "No readable text found in the document. If it is a scanned image, "
+            "upload a text-based PDF or DOCX instead."
+        )
     sections = _detect_sections(raw)
     links = _extract_links(raw)
 
