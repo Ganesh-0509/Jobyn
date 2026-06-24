@@ -129,10 +129,17 @@ export default function MyProjects() {
             <div className="text-center">
               <h3 className="font-heading text-base font-bold">No saved projects yet</h3>
               <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                Generate a capstone project from the <strong>Skill Gap</strong> or <strong>Improvement Plan</strong> page, then click "Save to My Projects" to track it here.
+                Add a project by generating a capstone from the <strong>Skill Gap</strong> or <strong>Improvement Plan</strong> page, then click "Save to My Projects" to track it here.
               </p>
             </div>
-            <Button onClick={() => navigate('/skill-gap')}>Go to Skill Gap Analysis</Button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button onClick={() => navigate('/skill-gap')} className="gap-1.5">
+                <Blocks className="size-4" /> Generate from Skill Gap
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/improvement-plan')} className="gap-1.5">
+                <FolderOpen className="size-4" /> Generate from Improvement Plan
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
