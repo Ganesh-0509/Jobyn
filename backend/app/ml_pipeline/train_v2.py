@@ -39,9 +39,14 @@ logging.basicConfig(
 log = logging.getLogger("train_v2")
 
 # ── Hyperparameters (v2) ───────────────────────────────────────────────────────
+# Defaults tuned to keep the exported ONNX models small enough to load on a
+# 512 MB instance (Render free tier). The original full-size config (300 trees /
+# depth 20) produced a ~129 MB role ONNX that OOM'd on load; 80 trees / depth 12
+# brings that to ~25 MB at a ~1-3% accuracy cost. Override via CLI for a beefier
+# instance: --n-estimators 300 --max-depth 20.
 HYPERPARAMS = {
-    "n_estimators":    300,
-    "max_depth":       20,
+    "n_estimators":    80,
+    "max_depth":       12,
     "min_samples_leaf": 3,
 }
 TEST_SIZE = 0.20
@@ -174,5 +179,15 @@ if __name__ == "__main__":
         "--seed", type=int, default=42,
         help="Random seed for reproducibility (default: 42)"
     )
+    parser.add_argument(
+        "--n-estimators", type=int, default=HYPERPARAMS["n_estimators"],
+        help=f"Number of trees (default: {HYPERPARAMS['n_estimators']})"
+    )
+    parser.add_argument(
+        "--max-depth", type=int, default=HYPERPARAMS["max_depth"],
+        help=f"Max tree depth (default: {HYPERPARAMS['max_depth']})"
+    )
     args = parser.parse_args()
+    HYPERPARAMS["n_estimators"] = args.n_estimators
+    HYPERPARAMS["max_depth"] = args.max_depth
     run(seed=args.seed)

@@ -58,6 +58,17 @@ _MAX_RETRIES = 3
 _RETRY_BACKOFF_S = 3
 
 
+def _remote_size(url: str) -> int | None:
+    """Return the Content-Length of a remote asset, or None if unknown."""
+    try:
+        req = urllib.request.Request(url, method="HEAD")
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            cl = resp.headers.get("Content-Length")
+            return int(cl) if cl is not None else None
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError):
+        return None
+
+
 def _download(url: str, dest: Path) -> None:
     """Stream a URL to disk (no full-file buffering) with retries."""
     tmp = dest.with_suffix(dest.suffix + ".part")
@@ -92,12 +103,21 @@ def fetch() -> None:
 
     for name in _ARTEFACTS:
         dest = _MODELS_DIR / name
-        if dest.exists() and dest.stat().st_size > 0:
-            log.info("  ✓ %s already present (%.1f MB) — skipping",
-                     name, dest.stat().st_size / 1e6)
-            continue
-
         url = f"{_BASE_URL}/{name}"
+
+        # Skip only if a local copy already matches the remote size. Comparing
+        # against the remote Content-Length (not just "exists") means a stale
+        # build cache holding an old/larger model is re-fetched, not kept.
+        if dest.exists() and dest.stat().st_size > 0:
+            remote = _remote_size(url)
+            local = dest.stat().st_size
+            if remote is None or remote == local:
+                log.info("  ✓ %s already present (%.1f MB) — skipping",
+                         name, local / 1e6)
+                continue
+            log.info("  ↻ %s size mismatch (local %.1f MB vs remote %.1f MB) — refetching",
+                     name, local / 1e6, remote / 1e6)
+
         log.info("  ↓ %s", url)
         _download(url, dest)
         log.info("    saved %s (%.1f MB)", name, dest.stat().st_size / 1e6)
