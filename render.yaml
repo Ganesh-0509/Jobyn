@@ -44,7 +44,13 @@ services:
     name: campussync-edge
     runtime: static
     rootDir: frontend
-    buildCommand: npm install && npm run build
+    # The committed package-lock.json is generated on Windows and only locks the
+    # win32 rollup binary; the Linux binary (@rollup/rollup-linux-x64-gnu) is
+    # missing, so a plain `npm install` (which honors the lock) fails on Render's
+    # Linux builders with npm bug #4828. Remove the stale lockfile and any cached
+    # node_modules so npm resolves the correct platform binaries. Mirrors ci.yml.
+    # Long-term fix: regenerate the lockfile on Linux, commit it, restore npm ci.
+    buildCommand: rm -rf node_modules package-lock.json && npm install && npm run build
     staticPublishPath: dist
     routes:
       - type: rewrite
