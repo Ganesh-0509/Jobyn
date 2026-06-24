@@ -114,6 +114,13 @@ def extract_skills(text: str) -> list:
     return list(found)
 
 
+def get_skill_synonyms(canonical: str) -> list[str]:
+    """Return the canonical name plus all its synonyms (for locating a skill's
+    mentions in resume text). Used by the proficiency inference engine."""
+    syns = _SKILL_DICT.get(canonical, [])
+    return list({canonical, *syns})
+
+
 def get_skill_category(skill: str) -> str:
     canonical = normalize_skill(skill)
     for category, skill_set in _SKILL_CATEGORIES.items():

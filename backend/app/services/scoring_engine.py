@@ -86,6 +86,42 @@ def weighted_coverage(matched: list, pool: list) -> float:
     return achieved / total_weight if total_weight else 0.0
 
 
+# ── Confidence-discounted ("provisional") coverage ────────────────────────────
+
+# An unverified claimed skill still counts at this fraction of its full value;
+# the remaining slice is the "headroom" the user can unlock by verifying. Set
+# high (0.8) so a genuinely-skilled user with a terse resume is never deflated
+# too far. Max withheld per skill = (1 - floor) of its weight.
+PROVISIONAL_SCORE_FLOOR = 0.8
+
+# Hard cap on total points withheld, so the provisional score is never
+# demoralisingly far below the verified target.
+MAX_SCORE_HEADROOM = 15
+
+
+def confidence_score_factor(confidence: float) -> float:
+    """Map a skill confidence (0-1) to its score weighting (FLOOR-1.0)."""
+    c = max(0.0, min(1.0, confidence))
+    return PROVISIONAL_SCORE_FLOOR + (1.0 - PROVISIONAL_SCORE_FLOOR) * c
+
+
+def weighted_coverage_provisional(matched: list, pool: list, confidence: dict) -> float:
+    """
+    Like weighted_coverage(), but each matched skill's contribution is scaled by
+    confidence_score_factor(confidence[skill]) — so low-confidence (unverified)
+    skills count for less. `confidence` maps skill -> confidence float; missing
+    skills default to fully-confident (factor 1.0).
+    """
+    if not pool:
+        return 0.0
+    factor = lambda s: confidence_score_factor(confidence.get(s, 1.0))
+    if not _SKILL_WEIGHT:
+        return sum(factor(s) for s in matched) / len(pool)
+    total_weight = sum(_SKILL_WEIGHT.get(s, 1.0) for s in pool)
+    achieved = sum(_SKILL_WEIGHT.get(s, 1.0) * factor(s) for s in matched)
+    return achieved / total_weight if total_weight else 0.0
+
+
 def get_readiness_category(final_score: int) -> str:
     """
     Classify score using thresholds from scoring.json:

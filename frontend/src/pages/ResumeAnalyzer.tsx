@@ -262,28 +262,43 @@ export default function ResumeAnalyzer() {
               </div>
             )}
             <CardContent className="flex flex-col items-center py-8">
-              {/* Score Ring */}
+              {/* Score Ring — shows the provisional (confidence-discounted) score */}
+              {(() => { const shown = analysis.provisional_score ?? analysis.final_score; return (
               <div className="relative size-28">
                 <svg viewBox="0 0 120 120" className="size-full -rotate-90">
                   <circle cx="60" cy="60" r="52" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
                   <circle
                     cx="60" cy="60" r="52" fill="none"
-                    stroke={analysis.final_score >= 75 ? 'hsl(var(--success))' : analysis.final_score >= 50 ? 'hsl(var(--primary))' : 'hsl(var(--warning))'}
+                    stroke={shown >= 75 ? 'hsl(var(--success))' : shown >= 50 ? 'hsl(var(--primary))' : 'hsl(var(--warning))'}
                     strokeWidth="8" strokeLinecap="round"
-                    strokeDasharray={`${(analysis.final_score / 100) * 327} 327`}
+                    strokeDasharray={`${(shown / 100) * 327} 327`}
                     className="transition-[stroke-dasharray] duration-1000 ease-out"
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="font-heading text-2xl font-bold text-foreground">{analysis.final_score}</span>
+                  <span className="font-heading text-2xl font-bold text-foreground">{shown}</span>
                   <span className="text-xs text-muted-foreground">Score</span>
                 </div>
               </div>
+              ) })()}
 
               <h2 className="mt-4 font-heading text-xl font-bold text-foreground">{analysis.role}</h2>
               <Badge className="mt-1" variant={analysis.final_score >= 75 ? 'default' : analysis.final_score >= 50 ? 'secondary' : 'destructive'}>
                 {analysis.readiness_category}
               </Badge>
+
+              {/* Provisional score — unlock headroom by verifying claimed skills */}
+              {(analysis.score_headroom ?? 0) > 0 && (
+                <div className="mt-4 w-full rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-center">
+                  <p className="text-sm font-semibold text-foreground">
+                    🔓 Provisional score — unlock <span className="text-primary">+{analysis.score_headroom}</span>
+                    {analysis.verified_score ? <> → <span className="text-primary">{analysis.verified_score}</span></> : null} by verifying your skills
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Some skills are listed on your resume but unverified. A quick skill check confirms them and boosts your score.
+                  </p>
+                </div>
+              )}
 
               {/* Sub-scores */}
               <div className="mt-6 grid w-full grid-cols-2 gap-3 sm:grid-cols-4">

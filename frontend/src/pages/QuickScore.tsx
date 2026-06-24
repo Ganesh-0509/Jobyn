@@ -265,6 +265,19 @@ export default function QuickScore() {
                     <div className="text-xs text-muted-foreground">Skill Gaps</div>
                   </div>
                 </div>
+
+                {/* Provisional score — unlock headroom by verifying skills */}
+                {(result.score_headroom ?? 0) > 0 && (
+                  <div className="mt-6 w-full rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-center">
+                    <p className="text-sm font-semibold text-foreground">
+                      🔓 Unlock up to <span className="text-primary">+{result.score_headroom}</span> points
+                      {result.verified_score ? <> → <span className="text-primary">{result.verified_score}%</span></> : null}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      This is a <strong>provisional</strong> score. Some skills are listed but unverified — confirm them with a 60-second skill check to boost it.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

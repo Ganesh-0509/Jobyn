@@ -9,6 +9,7 @@ db_warning field is added to the response instead of raising a 500.
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, Request
 from app.services.resume_parser import parse_resume
 from app.services.skill_dictionary import extract_skills
+from app.services.skill_proficiency import infer_proficiency
 from app.services.role_readiness_engine import calculate_role_readiness
 from app.services.role_matrix import VALID_ROLES
 from app.core.supabase_client import get_supabase
@@ -86,6 +87,14 @@ async def upload_resume(
 
         skills  = extract_skills(parsed["raw_text"])
 
+        # Proficiency is role-independent — infer once, reuse for every role.
+        proficiency = infer_proficiency(
+            skills,
+            parsed["raw_text"],
+            parsed.get("projects_text", ""),
+            parsed.get("skills_text", ""),
+        )
+
         # ── Auto-detect best role (or use specified role) ────────────────────
         if auto_detect:
             all_results = {}
@@ -95,6 +104,7 @@ async def upload_resume(
                     sections_detected=parsed["sections_detected"],
                     raw_text=parsed["raw_text"],
                     role_name=r,
+                    skill_proficiency=proficiency,
                 )
             # Rank by final_score descending
             ranked = sorted(all_results.items(), key=lambda x: x[1].get("final_score", 0), reverse=True)
@@ -120,6 +130,7 @@ async def upload_resume(
                 sections_detected=parsed["sections_detected"],
                 raw_text=parsed["raw_text"],
                 role_name=role,
+                skill_proficiency=proficiency,
             )
             result["auto_detected"] = False
 

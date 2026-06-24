@@ -125,9 +125,21 @@ export interface RoleMatch {
     total_core: number
 }
 
+export interface SkillProficiency {
+    skill: string
+    level: 'claimed' | 'applied' | 'proficient'
+    confidence: number
+    is_core: boolean
+    verifiable: boolean
+}
+
 export interface UploadResult {
     role: string
-    final_score: number
+    final_score: number            // = verified_score (unlockable target)
+    verified_score?: number
+    provisional_score?: number     // confidence-discounted, shown by default
+    score_headroom?: number        // points unlockable via skill verification
+    skill_proficiency?: SkillProficiency[]
     readiness_category: string
     core_coverage_percent: number
     optional_coverage_percent: number
@@ -648,10 +660,13 @@ export async function endInterview(
 
 // ── Quick Score (anonymous) ───────────────────────────────────
 export interface QuickScoreResult {
-    score: number
+    score: number                 // provisional (confidence-discounted) score
+    verified_score?: number       // score unlockable by verifying skills
+    score_headroom?: number       // points held back pending verification
     role: string
     readiness_category: string
     missing_count: number
+    skill_proficiency?: SkillProficiency[]
 }
 
 export async function quickScoreUpload(file: File): Promise<QuickScoreResult> {
