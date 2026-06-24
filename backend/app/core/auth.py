@@ -12,20 +12,35 @@ for endpoints that work both authenticated and anonymously.
 
 import os
 import logging
+from functools import lru_cache
 from typing import Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt  # PyJWT
+from jwt import PyJWKClient
 
 logger = logging.getLogger(__name__)
 
-# Supabase JWT secret — found in Dashboard → Settings → API → JWT Secret
-# Falls back to empty string; if empty, auth is effectively disabled (dev mode)
+# Supabase JWT secret — found in Dashboard → Settings → API → JWT Secret.
+# Used only for legacy HS256 tokens. Projects on the newer "JWT signing keys"
+# system issue asymmetric (ES256/RS256) tokens verified via JWKS instead.
 JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "").strip()
-JWT_ALGORITHM = "HS256"
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
+HS_ALGORITHM = "HS256"
+ASYMMETRIC_ALGORITHMS = ["ES256", "RS256"]
 
 _bearer = HTTPBearer(auto_error=False)
+
+
+@lru_cache(maxsize=1)
+def _jwks_client() -> PyJWKClient:
+    """Cached client for Supabase's JWKS (public signing keys). PyJWKClient
+    caches the fetched key set internally, so this is one network call per key
+    rotation, not per request."""
+    if not SUPABASE_URL:
+        raise RuntimeError("SUPABASE_URL not set — cannot verify asymmetric JWTs.")
+    return PyJWKClient(f"{SUPABASE_URL}/auth/v1/.well-known/jwks.json")
 
 
 class AuthUser:
@@ -40,7 +55,28 @@ class AuthUser:
 
 
 def _decode_token(token: str) -> dict:
-    """Decode and verify a Supabase JWT. Raises on failure."""
+    """Decode and verify a Supabase JWT. Raises on failure.
+
+    Supports both token types Supabase can issue:
+      - Asymmetric (ES256/RS256) — the current default; verified against the
+        project's public JWKS. This is what the new sb_publishable/sb_secret
+        key system produces.
+      - Legacy HS256 — verified with the shared SUPABASE_JWT_SECRET.
+    """
+    alg = jwt.get_unverified_header(token).get("alg", HS_ALGORITHM)
+
+    # ── Asymmetric tokens (current Supabase default) — verify via JWKS ──────
+    if alg in ASYMMETRIC_ALGORITHMS:
+        signing_key = _jwks_client().get_signing_key_from_jwt(token)
+        return jwt.decode(
+            token,
+            signing_key.key,
+            algorithms=ASYMMETRIC_ALGORITHMS,
+            audience="authenticated",
+            leeway=30,  # tolerate minor clock skew between Supabase and this host
+        )
+
+    # ── Legacy HS256 tokens — verify with the shared secret ────────────────
     if not JWT_SECRET:
         # Enforce strict secret configuration in production hosts (Render or ENV=production)
         is_prod = os.getenv("ENV", "development").lower() == "production" or os.getenv("RENDER") is not None
@@ -57,8 +93,9 @@ def _decode_token(token: str) -> dict:
     return jwt.decode(
         token,
         JWT_SECRET,
-        algorithms=[JWT_ALGORITHM],
+        algorithms=[HS_ALGORITHM],
         audience="authenticated",
+        leeway=30,  # tolerate minor clock skew between Supabase and this host
     )
 
 
@@ -80,6 +117,9 @@ async def get_current_user(
         payload = _decode_token(creds.credentials)
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.PyJWKClientError as e:
+        logger.error("JWKS signing-key retrieval failed: %s", e)
+        raise HTTPException(status_code=401, detail="Could not verify token signature")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
