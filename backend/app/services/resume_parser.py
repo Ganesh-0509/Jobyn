@@ -125,6 +125,13 @@ def _detect_sections(text: str) -> dict:
     }
 
 
+def detect_sections(text: str) -> dict:
+    """Public wrapper: split already-extracted resume text into labelled sections.
+    Used when only raw_text is available (e.g. the verification flow) to recover
+    the projects/skills section text the proficiency engine needs."""
+    return _detect_sections(text or "")
+
+
 def parse_resume(file_bytes: bytes, filename: str) -> dict:
     """
     Parse a PDF or DOCX resume and return structured sections.

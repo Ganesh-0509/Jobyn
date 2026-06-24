@@ -10,6 +10,7 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, R
 from app.services.resume_parser import parse_resume
 from app.services.skill_dictionary import extract_skills
 from app.services.skill_proficiency import infer_proficiency
+from app.services.proficiency_store import load_verified
 from app.services.role_readiness_engine import calculate_role_readiness
 from app.services.role_matrix import VALID_ROLES
 from app.core.supabase_client import get_supabase
@@ -94,6 +95,11 @@ async def upload_resume(
             parsed.get("projects_text", ""),
             parsed.get("skills_text", ""),
         )
+        # Overlay any skills this user already verified (Phase 2) so their score
+        # stays unlocked across re-analyses. No-op if the table isn't applied yet.
+        for skill, info in load_verified(effective_email).items():
+            if skill in proficiency:
+                proficiency[skill] = info
 
         # ── Auto-detect best role (or use specified role) ────────────────────
         if auto_detect:

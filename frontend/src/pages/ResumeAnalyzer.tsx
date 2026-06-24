@@ -7,8 +7,9 @@ import { uploadResume, predictResume, type RoleMatch } from '../api/client'
 import {
   Upload, FileText, CheckCircle, Sparkles, ChevronDown, ChevronUp,
   Zap, Shield, Brain, Target, TrendingUp, ExternalLink, Cpu, Clock,
-  BarChart2, AlertCircle,
+  BarChart2, AlertCircle, ShieldCheck,
 } from 'lucide-react'
+import SkillVerification from '../components/SkillVerification'
 import { usePrivacy } from '../context/PrivacyContext'
 import { useToast } from '../context/ToastContext'
 import { predictOnDevice, isOnDeviceReady } from '../utils/onDevicePredictor'
@@ -55,6 +56,8 @@ export default function ResumeAnalyzer() {
   const [error, setError] = useState('')
   const [stageIdx, setStageIdx] = useState(-1)
   const [whyExpanded, setWhyExpanded] = useState(false)
+  const [verifyOpen, setVerifyOpen] = useState(false)
+  const [unlockedScore, setUnlockedScore] = useState<number | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleFile = useCallback((f: File) => {
@@ -262,8 +265,8 @@ export default function ResumeAnalyzer() {
               </div>
             )}
             <CardContent className="flex flex-col items-center py-8">
-              {/* Score Ring — shows the provisional (confidence-discounted) score */}
-              {(() => { const shown = analysis.provisional_score ?? analysis.final_score; return (
+              {/* Score Ring — provisional score, or the unlocked score after verification */}
+              {(() => { const shown = unlockedScore ?? analysis.provisional_score ?? analysis.final_score; return (
               <div className="relative size-28">
                 <svg viewBox="0 0 120 120" className="size-full -rotate-90">
                   <circle cx="60" cy="60" r="52" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
@@ -288,7 +291,7 @@ export default function ResumeAnalyzer() {
               </Badge>
 
               {/* Provisional score — unlock headroom by verifying claimed skills */}
-              {(analysis.score_headroom ?? 0) > 0 && (
+              {(analysis.score_headroom ?? 0) > 0 && unlockedScore === null && (
                 <div className="mt-4 w-full rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-center">
                   <p className="text-sm font-semibold text-foreground">
                     🔓 Provisional score — unlock <span className="text-primary">+{analysis.score_headroom}</span>
@@ -297,8 +300,24 @@ export default function ResumeAnalyzer() {
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     Some skills are listed on your resume but unverified. A quick skill check confirms them and boosts your score.
                   </p>
+                  <Button size="sm" className="mt-3 gap-1.5" onClick={() => setVerifyOpen(true)}>
+                    <ShieldCheck className="size-4" /> Verify my skills
+                  </Button>
                 </div>
               )}
+              {unlockedScore !== null && (
+                <p className="mt-3 text-sm font-medium text-success">✓ Score updated to {unlockedScore} after verification</p>
+              )}
+
+              <SkillVerification
+                open={verifyOpen}
+                onClose={() => setVerifyOpen(false)}
+                role={analysis.role}
+                skills={analysis.detected_skills}
+                rawText={analysis.raw_text}
+                sections={analysis.sections_detected}
+                onUnlocked={(s) => setUnlockedScore(s)}
+              />
 
               {/* Sub-scores */}
               <div className="mt-6 grid w-full grid-cols-2 gap-3 sm:grid-cols-4">

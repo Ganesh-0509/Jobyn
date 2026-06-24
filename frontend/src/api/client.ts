@@ -675,6 +675,48 @@ export async function quickScoreUpload(file: File): Promise<QuickScoreResult> {
     return apiFetch<QuickScoreResult>('/quick-score', { method: 'POST', rawBody: fd, noAuth: true })
 }
 
+// ── Skill verification (Phase 2 — unlock score headroom) ──────
+export interface AssessmentQuestion {
+    id: string
+    skill: string
+    question: string
+    options: string[]
+}
+export interface AssessmentStart {
+    token: string | null
+    skills_to_verify: string[]
+    questions: AssessmentQuestion[]
+    message?: string
+}
+export interface AssessmentResult {
+    passed_skills: string[]
+    failed_skills: string[]
+    previous_score: number
+    new_score: number
+    unlocked_points: number
+    verified_score: number
+    remaining_headroom: number
+    persisted: boolean
+}
+
+export async function startAssessment(
+    role: string, skills: string[], rawText: string, sections: string[],
+): Promise<AssessmentStart> {
+    return apiFetch<AssessmentStart>('/assessment/start', {
+        method: 'POST',
+        body: { role, skills, raw_text: rawText, sections_detected: sections },
+    })
+}
+
+export async function submitAssessment(
+    token: string, answers: Record<string, number>,
+): Promise<AssessmentResult> {
+    return apiFetch<AssessmentResult>('/assessment/submit', {
+        method: 'POST',
+        body: { token, answers },
+    })
+}
+
 // ── JD Matching ───────────────────────────────────────────────
 export interface JDMatchResult {
     jd_match_score: number
