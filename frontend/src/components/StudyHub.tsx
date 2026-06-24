@@ -9,6 +9,7 @@ import InterviewSimulator from './InterviewSimulator'
 import CodeBlock from './CodeBlock'
 import CodeVisualizer from './CodeVisualizer'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import './StudyHub.css'
 
 interface StudyHubProps {
     skill: string
