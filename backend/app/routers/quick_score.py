@@ -59,13 +59,24 @@ async def quick_score(
         parsed = parse_resume(file_bytes, file.filename or "upload.pdf")
         skills = extract_skills(parsed["raw_text"])
 
-        # Score against a generic role to get a baseline readiness number
+        # Score against a generic role to get a baseline readiness number.
+        # NOTE: role_name must match a key in config/roles.json exactly (title
+        # case), not a snake_case slug — a mismatch makes the engine return an
+        # {"error": ...} dict that would silently score every resume 0.
         result = calculate_role_readiness(
             resume_skills=skills,
             sections_detected=parsed["sections_detected"],
             raw_text=parsed["raw_text"],
-            role_name="full_stack_developer",
+            role_name="Full Stack Developer",
         )
+
+        # Fail loudly instead of returning a misleading 0 score.
+        if result.get("error"):
+            log.error("Quick score readiness error: %s", result["error"])
+            raise HTTPException(
+                status_code=500,
+                detail="Scoring engine misconfigured. Please try again later.",
+            )
 
         missing_count = len(result.get("missing_core_skills", []))
 
