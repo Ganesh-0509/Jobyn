@@ -10,6 +10,11 @@ from collections import defaultdict
 import logging
 from app.core.supabase_client import get_supabase
 from app.core.auth import get_current_user, get_admin_user, AuthUser
+from app.services.encryption_service import decrypt_text
+from app.services.skill_proficiency import infer_proficiency
+from app.services.resume_parser import detect_sections
+from app.services.role_readiness_engine import calculate_role_readiness
+from app.services.proficiency_store import load_verified
 
 logger = logging.getLogger(__name__)
 
@@ -227,6 +232,48 @@ def role_stats(
 
 # ── GET /session/latest/{email} ────────────────────────────────────────────────
 
+def _enrich_recovered_analysis(analysis: dict, resume_row: dict, email: str) -> dict:
+    """
+    Recompute the confidence-aware fields (provisional_score, score_headroom,
+    skill_proficiency) for a recovered session, and attach the resume's skill
+    data — none of which is stored in role_analyses. Overlays the user's verified
+    skills so a returning user sees the score they previously unlocked.
+
+    Best-effort: returns the analysis unchanged if anything is missing/fails, so
+    recovery never breaks.
+    """
+    detected = resume_row.get("detected_skills") or []
+    sections = resume_row.get("sections_detected") or []
+    links = resume_row.get("links") or []
+    # Always surface the resume's skills on the recovered analysis.
+    analysis["detected_skills"] = detected
+    analysis["sections_detected"] = sections
+    analysis["links"] = links
+
+    try:
+        raw_text = decrypt_text(resume_row.get("raw_text") or "")
+        analysis["raw_text"] = raw_text
+        if not detected or not raw_text:
+            return analysis
+        sec = detect_sections(raw_text)
+        prof = infer_proficiency(detected, raw_text, sec.get("projects", ""), sec.get("skills", ""))
+        for skill, info in load_verified(email).items():
+            if skill in prof:
+                prof[skill] = info
+        recomputed = calculate_role_readiness(
+            detected, sections, raw_text, analysis["role"], skill_proficiency=prof
+        )
+        verified = analysis.get("final_score", recomputed["verified_score"])
+        headroom = recomputed["score_headroom"]
+        analysis["verified_score"] = verified
+        analysis["score_headroom"] = headroom
+        analysis["provisional_score"] = max(0, verified - headroom)
+        analysis["skill_proficiency"] = recomputed["skill_proficiency"]
+    except Exception as e:
+        logger.warning("Could not enrich recovered session with proficiency: %s", e)
+    return analysis
+
+
 @router.get("/session/latest/{email}")
 def get_latest_session(email: str, user: AuthUser = Depends(get_current_user)):
     """
@@ -239,13 +286,21 @@ def get_latest_session(email: str, user: AuthUser = Depends(get_current_user)):
     try:
         sb = get_supabase()
 
-        # 1. Get the most recent resume for this email
-        resumes_resp = sb.table("resumes").select("id").eq("user_email", email).order("created_at", desc=True).limit(1).execute()
+        # 1. Get the most recent resume for this email (with its skill data)
+        resumes_resp = (
+            sb.table("resumes")
+            .select("id, detected_skills, sections_detected, links, raw_text")
+            .eq("user_email", email)
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+        )
 
         if not resumes_resp.data:
             return {"analysis": None, "prediction": None}
 
-        resume_id = resumes_resp.data[0]["id"]
+        resume_row = resumes_resp.data[0]
+        resume_id = resume_row["id"]
 
         # 2. Get the latest analysis for that resume
         analysis_resp = sb.table("role_analyses").select("*").eq("resume_id", resume_id).order("created_at", desc=True).limit(1).execute()
@@ -253,9 +308,10 @@ def get_latest_session(email: str, user: AuthUser = Depends(get_current_user)):
         if not analysis_resp.data:
             return {"analysis": None, "prediction": None}
 
+        analysis = _enrich_recovered_analysis(_fmt(analysis_resp.data[0]), resume_row, email)
         return {
-            "analysis": _fmt(analysis_resp.data[0]),
-            "prediction": None # We don't persist predictions yet, but we have the analysis
+            "analysis": analysis,
+            "prediction": None  # We don't persist predictions yet, but we have the analysis
         }
 
     except Exception as e:
