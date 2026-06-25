@@ -135,10 +135,14 @@ app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 # ── CORS ───────────────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins     = settings.CORS_ORIGINS,
-    allow_credentials = True,
-    allow_methods     = ["*"],
-    allow_headers     = ["*"],
+    # Exact production origins come from CORS_ORIGINS (env). The regex additionally
+    # allows any localhost/127.0.0.1 port so local dev works regardless of which
+    # port Vite picks (5173/5174/5175…) without editing the allowlist each time.
+    allow_origins       = settings.CORS_ORIGINS,
+    allow_origin_regex   = r"http://(localhost|127\.0\.0\.1):\d+",
+    allow_credentials   = True,
+    allow_methods       = ["*"],
+    allow_headers       = ["*"],
 )
 
 # ── Request Body Size Limit Middleware ────────────────────────────────────
