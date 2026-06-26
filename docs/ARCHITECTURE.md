@@ -295,7 +295,7 @@ AuthUser(sub, email, role) → Passed to endpoint via Depends()
 | None | — | No auth check |
 | Optional | `optional_user` | Returns AuthUser if valid token, None otherwise |
 | Required | `get_current_user` | 401 if no valid token |
-| Admin | `get_admin_user` | 403 if email not in ADMIN_EMAILS |
+| Admin | `get_admin_user` | 403 unless verified `app_metadata.role == 'admin'` |
 
 ### IDOR Prevention
 

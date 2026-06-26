@@ -17,7 +17,7 @@ Authorization: Bearer <supabase-access-token>
 Three auth levels:
 - **None** — No token required
 - **Required** — Valid JWT required (401 if missing/invalid)
-- **Admin** — Valid JWT + email in `ADMIN_EMAILS` env var (403 if not admin)
+- **Admin** — Valid JWT with a verified `app_metadata.role == 'admin'` claim (403 if not admin)
 
 ---
 

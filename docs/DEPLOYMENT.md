@@ -173,7 +173,6 @@ Open http://localhost:5173
 | `APP_VERSION` | No | `4.2.0` | Version string |
 | `SENTRY_DSN` | No | — | Sentry error monitoring DSN |
 | `RESUME_ENCRYPTION_KEY` | No | — | Fernet key for AES encryption |
-| `ADMIN_EMAILS` | No | `admin@campussync.ai` | Comma-separated admin emails |
 | `MAX_UPLOAD_BYTES` | No | `5000000` | Max file upload size (bytes) |
 | `RATE_LIMIT_DEFAULT` | No | `60/minute` | General rate limit |
 | `RATE_LIMIT_UPLOAD` | No | `10/minute` | Upload rate limit |
@@ -194,7 +193,6 @@ Open http://localhost:5173
 | `VITE_API_URL` | Yes | — | Backend API URL |
 | `VITE_SUPABASE_URL` | Yes | — | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | Yes | — | Supabase anonymous key |
-| `VITE_ADMIN_EMAILS` | No | — | Comma-separated admin emails |
 
 ---
 
