@@ -356,7 +356,7 @@ export default function Onboarding() {
                         </Button>
                       </div>
 
-                      {/* Sample mode + manual entry hint */}
+                      {/* Manual entry hint */}
                       {!file && !loading && (
                         <div className="text-center space-y-1.5">
                           <button

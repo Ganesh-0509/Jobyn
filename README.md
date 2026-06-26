@@ -3,7 +3,7 @@
   <img src="https://img.shields.io/badge/Python-3.12-blue?style=flat-square&logo=python&logoColor=white" alt="Python 3.12" />
   <img src="https://img.shields.io/badge/Node-20+-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node 20+" />
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="MIT License" />
-  <img src="https://img.shields.io/badge/API_Endpoints-48-orange?style=flat-square" alt="48 Endpoints" />
+  <img src="https://img.shields.io/badge/API_Endpoints-79-orange?style=flat-square" alt="79 Endpoints" />
   <img src="https://img.shields.io/badge/ML_Accuracy-95%25-brightgreen?style=flat-square" alt="95% Accuracy" />
 </p>
 
@@ -59,7 +59,7 @@ The platform combines three intelligence layers:
 - MIME type validation, file size limits (5MB), and XSS sanitization
 
 ### Readiness Score
-- Weighted formula: **Core Skills 35%** + Projects 25% + ATS 20% + Structure 10% + Optional 10%
+- Weighted formula: **Core Skills 60%** + Optional 15% + Projects 15% + ATS 5% + Structure 5%
 - 4-tier classification: Beginner / Developing / Placement Ready / Interview Ready
 - Skill importance weighting: high-value skills count 1.5x
 
@@ -152,7 +152,7 @@ The platform combines three intelligence layers:
 ### Privacy & Security
 - **AES encryption** at rest for resume data (Fernet symmetric)
 - **Privacy mode** — processes in-memory only, no cloud storage
-- JWT authentication (Supabase Auth, HS256)
+- JWT authentication (Supabase Auth — asymmetric ES256/RS256 via JWKS; legacy HS256 fallback)
 - 4-tier rate limiting (60/min general, 10/min upload, 20/min AI, 30/min per-user)
 - Security headers: HSTS, X-Content-Type-Options, X-Frame-Options, XSS-Protection
 - MIME validation, body size limits (10MB), input sanitization
@@ -171,7 +171,9 @@ The platform combines three intelligence layers:
 │  Landing  Dashboard  ResumeAnalyzer  SkillGap  ImprovementPlan         │
 │  InterviewReadiness  ProgressTracking  MyProjects  StudyHub             │
 │  IndustryAlignment  ReadinessScore  ResumeComparison  AdminDashboard   │
-│  Settings  Privacy  Terms  Docs                                         │
+│  ResumeBuilder  JDMatch  CompanyPrep  CodingPractice  QuickScore       │
+│  Certificate  Blog  BlogPost  Onboarding  Login  Signup  Settings      │
+│  Privacy  Terms  Docs  NotFound          (28 pages, lazy-loaded)        │
 │                                                                         │
 │  ONNX Runtime (browser-side ML)  |  React Flow (skill graphs)          │
 │  Web Speech API (voice)  |  DOMPurify (XSS protection)                 │
@@ -210,7 +212,7 @@ The platform combines three intelligence layers:
 | **Backend** | FastAPI, Uvicorn, Pydantic v2, SlowAPI, Python 3.12 |
 | **ML / AI** | Scikit-Learn (RandomForest), ONNX Runtime, Google Gemini 2.0 Flash, Gemini Embeddings (3072-dim), Bytez SDK, LangChain Text Splitters |
 | **Database** | Supabase (PostgreSQL 15), PGVector, Redis (optional) |
-| **Auth** | Supabase Auth, PyJWT (HS256), Fernet AES Encryption |
+| **Auth** | Supabase Auth, PyJWT (ES256/RS256 via JWKS, legacy HS256), Fernet AES Encryption |
 | **Document Parsing** | pdfplumber, python-docx, python-magic |
 | **Testing** | Pytest, Vitest, Ruff (linting) |
 | **CI/CD** | GitHub Actions (lint → test → build → deploy) |
@@ -224,7 +226,7 @@ The platform combines three intelligence layers:
 CampusSync-Edge/
 ├── frontend/                         # React + TypeScript SPA
 │   ├── src/
-│   │   ├── pages/                    # 19 page components (lazy-loaded)
+│   │   ├── pages/                    # 28 page components (lazy-loaded)
 │   │   ├── components/               # Reusable UI + design primitives
 │   │   │   ├── ui/                   # shadcn/ui base components
 │   │   │   ├── primitives/           # motion, layout, surface, feedback, viz
@@ -246,7 +248,7 @@ CampusSync-Edge/
 ├── backend/                          # FastAPI + ML backend
 │   ├── app/
 │   │   ├── main.py                   # App factory, middleware, lifespan
-│   │   ├── routers/                  # 9 routers, 48 API endpoints
+│   │   ├── routers/                  # 19 routers, 79 API endpoints
 │   │   ├── services/                 # 18 service modules (business logic)
 │   │   ├── ml_pipeline/              # Training, inference, versioning
 │   │   ├── core/                     # Settings, auth, cache, rate limiter
@@ -254,7 +256,7 @@ CampusSync-Edge/
 │   │   └── scripts/                  # Content seeding, knowledge embedding
 │   ├── config/                       # scoring.json, roles.json, skills.json
 │   ├── data/                         # 9 CSV training datasets
-│   ├── models/                       # Trained ML artifacts (.pkl, .onnx)
+│   ├── models/                       # Trained ML artifacts (.pkl, .onnx) — gitignored, fetched at deploy
 │   ├── knowledge_base/               # Static RAG source documents
 │   ├── tests/                        # Pytest test suite
 │   ├── supabase_schema.sql           # Full database schema (12 tables)
@@ -262,7 +264,7 @@ CampusSync-Edge/
 │   └── requirements.txt              # 34 Python dependencies
 │
 ├── docs/                             # Documentation
-│   ├── API.md                        # Full API reference (48 endpoints)
+│   ├── API.md                        # Full API reference (79 endpoints)
 │   ├── ARCHITECTURE.md               # System architecture & data flow
 │   ├── DEPLOYMENT.md                 # Deployment guide
 │   └── CONTRIBUTING.md               # Developer guide
@@ -365,7 +367,7 @@ docker-compose up --build
 | Model | Algorithm | Accuracy | Dataset | Features |
 |---|---|---|---|---|
 | **Role Classifier v2** | RandomForest (300 trees, depth 20) | **94.98%** (F1: 0.857) | 57,100 real resumes | 152 (147 skill + 5 numeric) |
-| **Score Regressor v2** | RandomForest (300 trees, depth 20) | **R²=0.992** (RMSE: 1.04) | 57,100 real resumes | 152 (147 skill + 5 numeric) |
+| **Score Regressor v2** | RandomForest (300 trees, depth 20) | **R²=0.992** (RMSE: 2.566) | 57,100 real resumes | 152 (147 skill + 5 numeric) |
 
 **Supported Roles** (7): Software Developer, Frontend Developer, Backend Developer, Full Stack Developer, Data Scientist, ML Engineer, DevOps Engineer
 
@@ -377,19 +379,29 @@ docker-compose up --build
 
 ## API Overview
 
-**48 endpoints** across 9 routers. Full reference: [docs/API.md](docs/API.md)
+**79 endpoints** across 19 routers. Full reference: [docs/API.md](docs/API.md)
 
 | Router | Prefix | Endpoints | Purpose |
 |---|---|---|---|
 | Analysis | `/` | 2 | Resume upload, role listing |
-| Inference | `/` | 2 | Health check, ML prediction |
-| Hybrid Intelligence | `/ml` | 8 | Cross-role validation, skill impact, model versioning |
-| Data | `/` | 7 | History, comparison, analytics, export, GDPR deletion |
-| AI Insights | `/ai` | 21 | Study hub, interviews, curriculum, smart plan, admin |
+| Inference | `/` | 1 | ML score/role prediction |
+| Hybrid Intelligence | `/ml` | 10 | Cross-role validation, skill impact, model versioning |
+| Data | `/` | 8 | History, comparison, analytics, export, GDPR deletion |
+| AI Insights | `/ai` | 23 | Study hub, interviews, curriculum, smart plan, admin |
 | Interview | `/interview` | 5 | Rule-based Q&A, skill dependencies |
 | Feedback | `/feedback` | 3 | Prediction corrections |
 | Content Feedback | `/content-feedback` | 3 | Study content quality |
 | Projects | `/projects` | 2 | Project generation, GitHub verification |
+| Assessment | `/assessment` | 2 | Opt-in skill verification |
+| Benchmarks | `/benchmarks` | 1 | Peer benchmarking |
+| Coding Practice | `/coding` | 6 | Coding problems, test runner |
+| Company Prep | `/company-prep` | 2 | Company-specific interview prep |
+| JD Matcher | `/jd` | 2 | Job-description matching |
+| Manual Profile | `/` | 2 | Manual profile entry, skills list |
+| Onboarding | `/onboarding` | 3 | Onboarding email/nudge flow |
+| Quick Score | `/quick-score` | 1 | Public one-shot resume scoring |
+| Resume Builder | `/` | 1 | AI/template resume generation |
+| Sandbox | `/sandbox` | 2 | Code execution sandbox |
 
 ---
 
@@ -488,7 +500,7 @@ cd frontend
 npx vitest run
 ```
 
-**Test coverage**: 4 backend test files covering auth (13 tests), upload validation (6 tests), ML prediction (8 tests), export/history/analytics (14 tests), GDPR deletion (2 tests).
+**Test coverage**: 9 backend test files covering auth, upload validation, ML prediction, the core scoring pipeline, skill assessment, session recovery, skill proficiency, export/history/analytics, and integration. Frontend: Vitest suites for history, sanitization, storage, and streak tracking.
 
 ---
 

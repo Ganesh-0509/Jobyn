@@ -42,7 +42,7 @@ npm run dev
 CampusSync-Edge/
 ├── frontend/                    # React + TypeScript SPA
 │   ├── src/
-│   │   ├── pages/               # 19 page components (lazy-loaded)
+│   │   ├── pages/               # 28 page components (lazy-loaded)
 │   │   ├── components/          # UI components + design primitives
 │   │   ├── context/             # Auth, Resume, Toast, Privacy providers
 │   │   ├── api/                 # Central API client
@@ -53,7 +53,7 @@ CampusSync-Edge/
 ├── backend/                     # FastAPI + ML backend
 │   ├── app/
 │   │   ├── main.py              # App factory + middleware
-│   │   ├── routers/             # 9 routers (API endpoints)
+│   │   ├── routers/             # 19 routers (API endpoints)
 │   │   ├── services/            # 18 service modules (business logic)
 │   │   ├── ml_pipeline/         # ML training + inference
 │   │   ├── core/                # Config, auth, cache, rate limiter
@@ -197,10 +197,15 @@ python -m pytest tests/ -v --tb=short
 ```
 
 **Test files**:
-- `test_auth.py` — Authentication and authorization (13 tests)
-- `test_upload.py` — File upload validation (6 tests)
-- `test_predict.py` — ML prediction endpoints (8 tests)
-- `test_export.py` — History, analytics, export, GDPR (14 tests)
+- `test_auth.py` — Authentication and authorization
+- `test_upload.py` — File upload validation
+- `test_predict.py` — ML prediction endpoints
+- `test_export.py` — History, analytics, export, GDPR
+- `test_assessment.py` — Skill verification / assessment
+- `test_core_pipeline.py` — Core scoring pipeline
+- `test_integration.py` — End-to-end integration
+- `test_session_recovery.py` — Session recovery
+- `test_skill_proficiency.py` — Skill proficiency scoring
 
 ### Frontend Tests
 
@@ -210,7 +215,10 @@ npx vitest run
 ```
 
 **Test files**:
-- `src/test/history.test.ts` — History utility (4 tests)
+- `src/test/history.test.ts` — History utility
+- `src/test/sanitize.test.ts` — Input sanitization
+- `src/test/storage.test.ts` — Local storage helpers
+- `src/test/streakTracker.test.ts` — Streak tracking
 
 ### Writing New Tests
 
@@ -290,5 +298,5 @@ test: add auth endpoint tests
 
 - **Swagger UI**: http://localhost:8000/docs — Interactive API documentation
 - **Architecture**: [docs/ARCHITECTURE.md](ARCHITECTURE.md) — System design
-- **API Reference**: [docs/API.md](API.md) — All 48 endpoints
+- **API Reference**: [docs/API.md](API.md) — all 79 routes across 19 routers
 - **Deployment**: [docs/DEPLOYMENT.md](DEPLOYMENT.md) — Setup guides

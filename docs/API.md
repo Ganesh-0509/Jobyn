@@ -4,6 +4,8 @@
 >
 > **Swagger UI**: `/docs` | **ReDoc**: `/redoc`
 
+> _Partial reference: this document covers the original core routers. The complete API now spans **19 routers / 79 routes** — see `backend/app/routers/` (or the live Swagger UI at `/docs`) for the full set._
+
 ---
 
 ## Authentication
@@ -13,6 +15,8 @@ Most endpoints require a Supabase JWT token in the `Authorization` header:
 ```
 Authorization: Bearer <supabase-access-token>
 ```
+
+Tokens are verified per request using Supabase's asymmetric signing keys (ES256/RS256 via JWKS); HS256 shared-secret verification is a legacy fallback only.
 
 Three auth levels:
 - **None** — No token required
@@ -712,11 +716,11 @@ curl -X POST http://localhost:8000/projects/verify \
 ## Scoring Formula
 
 ```
-Final Score = (Core Coverage    x 0.35) +
-              (Optional Coverage x 0.10) +
-              (Project Score     x 0.25) +
-              (ATS Score         x 0.20) +
-              (Structure Score   x 0.10)
+Final Score = (Core Coverage    x 0.60) +
+              (Optional Coverage x 0.15) +
+              (Project Score     x 0.15) +
+              (ATS Score         x 0.05) +
+              (Structure Score   x 0.05)
 ```
 
 **Readiness Categories:**
@@ -724,7 +728,7 @@ Final Score = (Core Coverage    x 0.35) +
 | Category | Score Range |
 |---|---|
 | Job Ready | >= 75 |
-| Improving | >= 45 |
-| Needs Development | < 45 |
+| Improving | 50 - 74 |
+| Needs Development | < 50 |
 
 **Weighted Skill Coverage:** Skills marked as `high` importance in `scoring.json` count 1.5x, `medium` 1.0x, `low` 0.7x.
