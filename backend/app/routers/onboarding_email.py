@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from app.core.supabase_client import get_supabase
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, AuthUser
 from app.services import email as email_service
 import logging
 
@@ -41,7 +41,7 @@ def _sb():
 # ── POST /onboarding/trigger ─────────────────────────────────────────
 
 @router.post("/trigger")
-async def trigger_onboarding(req: TriggerRequest):
+async def trigger_onboarding(req: TriggerRequest, user: AuthUser = Depends(get_current_user)):
     """
     Called immediately after signup.
     Creates an onboarding_progress row and sends the welcome email.
@@ -54,7 +54,7 @@ async def trigger_onboarding(req: TriggerRequest):
     try:
         sb.table("onboarding_progress").upsert({
             "user_id": "anonymous",  # Will be updated when we have auth
-            "email": req.email,
+            "email": user.email,
             "goal": req.goal,
             "email_welcome_sent": False,
         }, on_conflict="user_id").execute()
@@ -64,26 +64,26 @@ async def trigger_onboarding(req: TriggerRequest):
     # Send welcome email
     sent = False
     if email_service.is_configured():
-        name = req.name or req.email.split("@")[0].title()
+        name = req.name or user.email.split("@")[0].title()
         html = email_service.email_welcome(name)
-        sent = email_service.send_email(req.email, "Your career readiness journey starts now", html)
+        sent = email_service.send_email(user.email, "Your career readiness journey starts now", html)
 
         # Mark as sent
         if sent:
             try:
                 sb.table("onboarding_progress").update({
                     "email_welcome_sent": True,
-                }).eq("email", req.email).execute()
+                }).eq("email", user.email).execute()
             except Exception as e:
                 logger.warning(f"Failed to mark welcome email sent: {e}")
 
-    return {"status": "sent" if sent else "skipped", "email": req.email}
+    return {"status": "sent" if sent else "skipped", "email": user.email}
 
 
 # ── POST /onboarding/check ───────────────────────────────────────────
 
 @router.post("/check")
-async def check_onboarding_emails(req: CheckRequest, user=Depends(get_current_user)):
+async def check_onboarding_emails(req: CheckRequest, user: AuthUser = Depends(get_current_user)):
     """
     Called on login. Checks if any pending drip emails should be sent.
     Returns which emails were sent (if any).
@@ -97,7 +97,7 @@ async def check_onboarding_emails(req: CheckRequest, user=Depends(get_current_us
 
     # Fetch progress record
     try:
-        resp = sb.table("onboarding_progress").select("*").eq("email", req.email).execute()
+        resp = sb.table("onboarding_progress").select("*").eq("email", user.email).execute()
         if not resp.data:
             return {"sent": [], "reason": "no progress record"}
         progress = resp.data[0]
@@ -115,7 +115,7 @@ async def check_onboarding_emails(req: CheckRequest, user=Depends(get_current_us
     # Day 1: No resume upload
     if age_days >= 1 and not progress.get("email_day1_sent") and not progress.get("resume_uploaded_at"):
         html = email_service.email_day1_no_upload()
-        if email_service.send_email(req.email, "Your resume is waiting", html):
+        if email_service.send_email(user.email, "Your resume is waiting", html):
             updates["email_day1_sent"] = True
             sent_emails.append("day1_no_upload")
 
@@ -131,33 +131,33 @@ async def check_onboarding_emails(req: CheckRequest, user=Depends(get_current_us
         except Exception:
             pass
         html = email_service.email_day3_no_explore(score, top_gap)
-        if email_service.send_email(req.email, "Your top skill gaps are ready", html):
+        if email_service.send_email(user.email, "Your top skill gaps are ready", html):
             updates["email_day3_sent"] = True
             sent_emails.append("day3_no_explore")
 
     # Day 5: No interview practice
     if age_days >= 5 and not progress.get("email_day5_sent") and not progress.get("interview_practiced_at"):
         html = email_service.email_day5_no_interview()
-        if email_service.send_email(req.email, "Ready for a mock interview?", html):
+        if email_service.send_email(user.email, "Ready for a mock interview?", html):
             updates["email_day5_sent"] = True
             sent_emails.append("day5_no_interview")
 
     # Day 7: Weekly summary
     if age_days >= 7 and not progress.get("email_day7_sent"):
-        name = req.email.split("@")[0].title()
+        name = user.email.split("@")[0].title()
         html = email_service.email_day7_summary(
             score=progress.get("score", 50),
             skills_detected=progress.get("skills_detected", 0),
             name=name,
         )
-        if email_service.send_email(req.email, "Your first week on CampusSync", html):
+        if email_service.send_email(user.email, "Your first week on CampusSync", html):
             updates["email_day7_sent"] = True
             sent_emails.append("day7_summary")
 
     # Batch update
     if updates:
         try:
-            sb.table("onboarding_progress").update(updates).eq("email", req.email).execute()
+            sb.table("onboarding_progress").update(updates).eq("email", user.email).execute()
         except Exception as e:
             logger.warning(f"Failed to update onboarding progress: {e}")
 
@@ -172,7 +172,7 @@ class MilestoneRequest(BaseModel):
 
 
 @router.post("/milestone")
-async def record_milestone(req: MilestoneRequest):
+async def record_milestone(req: MilestoneRequest, user: AuthUser = Depends(get_current_user)):
     """
     Called when a user hits an onboarding milestone.
     Updates the progress record so drip emails skip completed steps.
@@ -193,7 +193,7 @@ async def record_milestone(req: MilestoneRequest):
     try:
         sb.table("onboarding_progress").update({
             column: _now().isoformat(),
-        }).eq("email", req.email).execute()
+        }).eq("email", user.email).execute()
     except Exception as e:
         logger.warning(f"Failed to record milestone: {e}")
 

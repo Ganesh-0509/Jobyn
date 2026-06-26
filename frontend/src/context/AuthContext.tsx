@@ -15,17 +15,15 @@ interface AuthState {
 
 const Ctx = createContext<AuthState | null>(null)
 
-const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || 'admin@campussync.ai,demo@campussync.ai')
-    .split(',')
-    .map((e: string) => e.trim().toLowerCase())
-    .filter(Boolean)
-
 function toAppUser(su: SupaUser | null | undefined): User | null {
     if (!su || !su.email) return null
+    // Admin identity comes from the Supabase `app_metadata` role claim, which is
+    // server-controlled (NOT user-writable). Never trust `user_metadata` for this.
+    const appMeta = su.app_metadata as { role?: string; roles?: string[] } | undefined
     return {
         name: su.user_metadata?.name || su.email.split('@')[0],
         email: su.email,
-        isAdmin: ADMIN_EMAILS.includes(su.email.toLowerCase()),
+        isAdmin: appMeta?.role === 'admin' || (Array.isArray(appMeta?.roles) && appMeta.roles.includes('admin')),
     }
 }
 

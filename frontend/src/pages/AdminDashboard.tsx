@@ -1,14 +1,20 @@
 import { useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   Check, X, Shield, Users, BookOpen, TrendingUp, AlertCircle, Database, Search,
   RefreshCcw, Activity, ArrowLeft, Terminal, Cpu, Zap, FileText, Trash2,
+  MessageSquareWarning, Star, AlertTriangle, Lightbulb,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   getAdminStats, getPendingContributions, approveContribution,
-  rejectContribution, getFullDataset, deleteAnalysis
+  rejectContribution, getFullDataset, deleteAnalysis,
+  getFeedbackSummary, getFeedbackCorrections, getContentFeedbackSummary, getLowRatedContent,
 } from '../api/client'
-import type { AdminStats, Contribution, AdminStudent } from '../api/client'
+import type {
+  AdminStats, Contribution, AdminStudent,
+  FeedbackSummary, FeedbackCorrection, ContentFeedbackSummary, LowRatedContent,
+} from '../api/client'
 import { LoadingState, ErrorState } from '../components/StateDisplay'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -25,12 +31,57 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState('')
-  const [selectedView, setSelectedView] = useState<string | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const selectedView = searchParams.get('view')
+  const setSelectedView = (view: string | null) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (view) next.set('view', view)
+      else next.delete('view')
+      return next
+    })
+  }
   const [viewingStudent, setViewingStudent] = useState<AdminStudent | null>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
   const [page, setPage] = useState(1)
   const [totalStudents, setTotalStudents] = useState(0)
   const perPage = 50
+
+  // --- Feedback Review state ---
+  const [fbSummary, setFbSummary] = useState<FeedbackSummary | null>(null)
+  const [fbCorrections, setFbCorrections] = useState<FeedbackCorrection[]>([])
+  const [fbCorrectionsTotal, setFbCorrectionsTotal] = useState(0)
+  const [contentSummary, setContentSummary] = useState<ContentFeedbackSummary | null>(null)
+  const [lowRated, setLowRated] = useState<LowRatedContent[]>([])
+  const [fbLoading, setFbLoading] = useState(false)
+  const [fbError, setFbError] = useState<string | null>(null)
+  const [fbPage, setFbPage] = useState(1)
+  const fbPerPage = 50
+
+  const fetchFeedback = async () => {
+    setFbLoading(true)
+    setFbError(null)
+    try {
+      const [summary, corrections, content, low] = await Promise.all([
+        getFeedbackSummary(fbPage, fbPerPage),
+        getFeedbackCorrections(fbPage, fbPerPage),
+        getContentFeedbackSummary(),
+        getLowRatedContent(3.0),
+      ])
+      setFbSummary(summary)
+      setFbCorrections(corrections.corrections)
+      setFbCorrectionsTotal(corrections.total)
+      setContentSummary(content)
+      setLowRated(low)
+    } catch (err: unknown) {
+      setFbError(err instanceof Error ? err.message : 'Failed to load feedback data')
+    } finally { setFbLoading(false) }
+  }
+
+  useEffect(() => {
+    if (selectedView === 'feedback') fetchFeedback()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedView, fbPage])
 
   const fetchData = async (showLoading = true) => {
     if (showLoading) setLoading(true)
@@ -182,6 +233,207 @@ export default function AdminDashboard() {
             </AnimatePresence>
           </CardContent>
         </Card>
+      </motion.div>
+    )
+  }
+
+  // --- Feedback Review View (admin-only sensitive data) ---
+  if (selectedView === 'feedback') {
+    const scoreDist = fbSummary?.score_distribution
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setSelectedView(null)}>
+            <ArrowLeft className="size-4" /> Back to Command Center
+          </Button>
+          <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => fetchFeedback()} disabled={fbLoading}>
+            <RefreshCcw className="size-3.5" /> Refresh
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10"><MessageSquareWarning className="size-5 text-amber-500" /></div>
+          <div>
+            <h1 className="font-heading text-2xl font-bold tracking-tight">Feedback Review</h1>
+            <p className="text-sm text-muted-foreground">Model corrections and study-content quality signals</p>
+          </div>
+        </div>
+
+        {fbLoading && !fbSummary ? (
+          <LoadingState message="Loading feedback data..." />
+        ) : fbError && !fbSummary ? (
+          <ErrorState title="Failed to load feedback" message={fbError} onRetry={() => fetchFeedback()} />
+        ) : (
+          <>
+            {/* Prediction feedback summary */}
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              {[
+                { label: 'Total Feedback', value: fbSummary?.total_feedback ?? 0, icon: MessageSquareWarning, color: 'text-primary', bg: 'bg-primary/10' },
+                { label: 'Corrections', value: fbSummary?.corrections ?? 0, icon: AlertTriangle, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+                { label: 'Confirmations', value: fbSummary?.confirmations ?? 0, icon: Check, color: 'text-green-500', bg: 'bg-green-500/10' },
+                { label: 'Avg Content Rating', value: contentSummary?.average_rating != null ? `${contentSummary.average_rating}★` : '—', icon: Star, color: 'text-violet-500', bg: 'bg-violet-500/10' },
+              ].map((m, i) => (
+                <Card key={i} className="premium-hover-card">
+                  <CardContent className="p-5">
+                    <div className={`mb-2 flex size-8 items-center justify-center rounded-lg ${m.bg}`}>
+                      <m.icon className={`size-4 ${m.color}`} />
+                    </div>
+                    <div className="font-heading text-2xl font-black text-foreground">{m.value}</div>
+                    <p className="mt-0.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{m.label}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Score feedback distribution */}
+            {scoreDist && (
+              <Card className="premium-hover-card">
+                <CardHeader><CardTitle className="text-base">Score Feedback Distribution</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="rounded-lg bg-red-500/5 p-3"><p className="text-xs text-red-500">Too High</p><p className="text-lg font-bold text-red-500">{scoreDist.too_high}</p></div>
+                    <div className="rounded-lg bg-amber-500/5 p-3"><p className="text-xs text-amber-500">Too Low</p><p className="text-lg font-bold text-amber-500">{scoreDist.too_low}</p></div>
+                    <div className="rounded-lg bg-green-500/5 p-3"><p className="text-xs text-green-500">Accurate</p><p className="text-lg font-bold text-green-500">{scoreDist.accurate}</p></div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Mispredictions / corrections table (sensitive) */}
+            <Card className="premium-hover-card">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    Role Mispredictions <Badge variant="outline">{fbCorrectionsTotal}</Badge>
+                  </CardTitle>
+                  <Badge variant="outline" className="gap-1 border-amber-500/30 text-amber-500"><Shield className="size-3" /> Sensitive</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {fbCorrections.length > 0 ? (
+                  <div className="overflow-hidden rounded-lg border">
+                    <table className="w-full text-left text-sm">
+                      <thead className="border-b bg-muted/30">
+                        <tr>
+                          <th className="p-3 text-xs font-semibold text-muted-foreground">User</th>
+                          <th className="p-3 text-xs font-semibold text-muted-foreground">Predicted</th>
+                          <th className="p-3 text-xs font-semibold text-muted-foreground">Correct</th>
+                          <th className="p-3 text-xs font-semibold text-muted-foreground">Analysis</th>
+                          <th className="p-3 text-xs font-semibold text-muted-foreground">When</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {fbCorrections.map((c, i) => (
+                          <tr key={i} className="border-b transition-colors hover:bg-muted/30">
+                            <td className="p-3 text-muted-foreground">{c.user_email ?? '—'}</td>
+                            <td className="p-3"><Badge variant="destructive" className="text-xs">{c.predicted_role}</Badge></td>
+                            <td className="p-3"><Badge variant="outline" className="border-green-500/40 text-green-600 text-xs">{c.correct_role ?? '—'}</Badge></td>
+                            <td className="p-3 font-mono text-xs text-muted-foreground">{c.analysis_id != null ? `#${c.analysis_id}` : '—'}</td>
+                            <td className="p-3 text-xs text-muted-foreground">{c.created_at ? new Date(c.created_at).toLocaleDateString() : '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div className="flex items-center justify-between border-t bg-muted/20 p-3 text-xs text-muted-foreground">
+                      <span>Showing {fbCorrections.length} of {fbCorrectionsTotal}</span>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" disabled={fbPage <= 1} onClick={() => setFbPage(p => p - 1)}>Previous</Button>
+                        <Button variant="outline" size="sm" disabled={fbPage * fbPerPage >= fbCorrectionsTotal} onClick={() => setFbPage(p => p + 1)}>Next</Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed py-10">
+                    <div className="flex size-12 items-center justify-center rounded-full bg-green-500/10"><Check className="size-6 text-green-500" /></div>
+                    <p className="text-sm text-muted-foreground">No mispredictions reported.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Content feedback summary */}
+              <Card className="premium-hover-card">
+                <CardHeader><CardTitle className="flex items-center gap-2 text-base"><BookOpen className="size-4 text-primary" /> Content Quality</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-lg bg-muted/30 p-3"><p className="text-xs text-muted-foreground">Total</p><p className="text-lg font-bold">{contentSummary?.total_feedback ?? 0}</p></div>
+                    <div className="rounded-lg bg-muted/30 p-3"><p className="text-xs text-muted-foreground">Ratings</p><p className="text-lg font-bold">{contentSummary?.rating_count ?? 0}</p></div>
+                    <div className="rounded-lg bg-red-500/5 p-3"><p className="text-xs text-red-500">Error Reports</p><p className="text-lg font-bold text-red-500">{contentSummary?.error_reports ?? 0}</p></div>
+                    <div className="rounded-lg bg-violet-500/5 p-3"><p className="text-xs text-violet-500">Suggestions</p><p className="text-lg font-bold text-violet-500">{contentSummary?.suggestions ?? 0}</p></div>
+                  </div>
+                  {contentSummary && contentSummary.recent_errors.length > 0 && (
+                    <div>
+                      <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-foreground"><AlertTriangle className="size-3.5 text-red-500" /> Recent Errors</p>
+                      <div className="space-y-2">
+                        {contentSummary.recent_errors.map((e, i) => (
+                          <div key={i} className="rounded-lg border bg-muted/10 p-2.5 text-xs">
+                            <span className="font-semibold text-foreground">{e.skill}</span>
+                            {e.section_idx != null && <span className="text-muted-foreground"> · §{e.section_idx}</span>}
+                            {e.comment && <p className="mt-1 text-muted-foreground">{e.comment}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {contentSummary && contentSummary.recent_suggestions.length > 0 && (
+                    <div>
+                      <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-foreground"><Lightbulb className="size-3.5 text-violet-500" /> Recent Suggestions</p>
+                      <div className="space-y-2">
+                        {contentSummary.recent_suggestions.map((s, i) => (
+                          <div key={i} className="rounded-lg border bg-muted/10 p-2.5 text-xs">
+                            <span className="font-semibold text-foreground">{s.skill}</span>
+                            {s.section_idx != null && <span className="text-muted-foreground"> · §{s.section_idx}</span>}
+                            {s.comment && <p className="mt-1 text-muted-foreground">{s.comment}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {contentSummary && contentSummary.total_feedback === 0 && (
+                    <p className="py-6 text-center text-sm text-muted-foreground">No content feedback yet.</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Low-rated content */}
+              <Card className="premium-hover-card">
+                <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Star className="size-4 text-amber-500" /> Low-Rated Content</CardTitle></CardHeader>
+                <CardContent>
+                  {lowRated.length > 0 ? (
+                    <div className="overflow-hidden rounded-lg border">
+                      <table className="w-full text-left text-sm">
+                        <thead className="border-b bg-muted/30">
+                          <tr>
+                            <th className="p-3 text-xs font-semibold text-muted-foreground">Skill</th>
+                            <th className="p-3 text-xs font-semibold text-muted-foreground">Section</th>
+                            <th className="p-3 text-xs font-semibold text-muted-foreground">Avg</th>
+                            <th className="p-3 text-xs font-semibold text-muted-foreground">Ratings</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {lowRated.map((l, i) => (
+                            <tr key={i} className="border-b transition-colors hover:bg-muted/30">
+                              <td className="p-3 font-semibold">{l.skill}</td>
+                              <td className="p-3 text-muted-foreground">{l.section_idx != null ? `§${l.section_idx}` : 'Overview'}</td>
+                              <td className="p-3"><Badge variant="destructive" className="text-xs">{l.average_rating}★</Badge></td>
+                              <td className="p-3 text-muted-foreground">{l.rating_count}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed py-10">
+                      <div className="flex size-12 items-center justify-center rounded-full bg-green-500/10"><Check className="size-6 text-green-500" /></div>
+                      <p className="text-sm text-muted-foreground">No low-rated content flagged.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </>
+        )}
       </motion.div>
     )
   }

@@ -151,7 +151,7 @@ def compare_roles(resume_id: int, user: AuthUser = Depends(get_current_user)):
 def role_stats(
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(50, ge=1, le=200, description="Items per page"),
-    current_user: AuthUser = Depends(get_current_user),
+    current_user: AuthUser = Depends(get_admin_user),
 ):
     """
     Aggregated analytics across all analyses in the database:

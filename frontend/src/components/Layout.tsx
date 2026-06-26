@@ -2,7 +2,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
     LayoutDashboard, FileText, BarChart2, ZapOff,
     CheckSquare, MessageSquare, TrendingUp, GitCompare,
-    Building2, Blocks, Settings, Shield, Menu, LogOut, Eye, EyeOff,
+    Building2, Blocks, Settings, Menu, LogOut, Eye, EyeOff,
     Award, Search, Briefcase, Code, PenLine
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
@@ -17,24 +17,56 @@ import { Avatar, AvatarFallback } from './ui/avatar'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from './ui/sheet'
 import { FEATURE_FLAGS, type FeatureFlag } from '../config/features'
 
-const NAV_ITEMS: { to: string; label: string; Icon: typeof LayoutDashboard; flag?: FeatureFlag }[] = [
-    { to: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
-    { to: '/resume-analyzer', label: 'Resume Analyzer', Icon: FileText },
-    { to: '/readiness-score', label: 'Readiness Score', Icon: BarChart2 },
-    { to: '/skill-gap', label: 'Skill Gap', Icon: ZapOff },
-    { to: '/improvement-plan', label: 'Improvement Plan', Icon: CheckSquare },
-    { to: '/interview-readiness', label: 'Interview Prep', Icon: MessageSquare },
-    { to: '/progress-tracking', label: 'Progress', Icon: TrendingUp },
-    { to: '/resume-comparison', label: 'Comparison', Icon: GitCompare, flag: 'RESUME_COMPARISON' },
-    { to: '/resume-builder', label: 'Resume Builder', Icon: PenLine },
-    { to: '/industry-alignment', label: 'Industry', Icon: Building2 },
-    { to: '/my-projects', label: 'Projects', Icon: Blocks },
-    { to: '/jd-match', label: 'JD Match', Icon: Search, flag: 'JD_MATCHING' },
-    { to: '/company-prep', label: 'Company Prep', Icon: Briefcase, flag: 'COMPANY_PREP' },
-    { to: '/coding-practice', label: 'Coding', Icon: Code, flag: 'CODING_PRACTICE' },
-    { to: '/certificate', label: 'Certificate', Icon: Award, flag: 'SHAREABLE_CERTIFICATE' },
-    { to: '/admin', label: 'Admin', Icon: Shield },
-    { to: '/settings', label: 'Settings', Icon: Settings },
+type NavItem = { to: string; label: string; Icon: typeof LayoutDashboard; flag?: FeatureFlag }
+type NavSection = { section: string | null; items: NavItem[] }
+
+const NAV_SECTIONS: NavSection[] = [
+    {
+        section: 'Overview',
+        items: [
+            { to: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
+        ],
+    },
+    {
+        section: 'Resume',
+        items: [
+            { to: '/resume-analyzer', label: 'Resume Analyzer', Icon: FileText },
+            { to: '/readiness-score', label: 'Readiness Score', Icon: BarChart2 },
+            { to: '/resume-builder', label: 'Resume Builder', Icon: PenLine },
+        ],
+    },
+    {
+        section: 'Growth',
+        items: [
+            { to: '/skill-gap', label: 'Skill Gap', Icon: ZapOff },
+            { to: '/improvement-plan', label: 'Improvement Plan', Icon: CheckSquare },
+            { to: '/progress-tracking', label: 'Progress', Icon: TrendingUp },
+            { to: '/industry-alignment', label: 'Industry', Icon: Building2 },
+        ],
+    },
+    {
+        section: 'Interview',
+        items: [
+            { to: '/interview-readiness', label: 'Interview Prep', Icon: MessageSquare },
+            { to: '/company-prep', label: 'Company Prep', Icon: Briefcase, flag: 'COMPANY_PREP' },
+            { to: '/coding-practice', label: 'Coding', Icon: Code, flag: 'CODING_PRACTICE' },
+            { to: '/jd-match', label: 'JD Match', Icon: Search, flag: 'JD_MATCHING' },
+        ],
+    },
+    {
+        section: 'More',
+        items: [
+            { to: '/my-projects', label: 'Projects', Icon: Blocks },
+            { to: '/resume-comparison', label: 'Comparison', Icon: GitCompare, flag: 'RESUME_COMPARISON' },
+            { to: '/certificate', label: 'Certificate', Icon: Award, flag: 'SHAREABLE_CERTIFICATE' },
+        ],
+    },
+    {
+        section: null,
+        items: [
+            { to: '/settings', label: 'Settings', Icon: Settings },
+        ],
+    },
 ]
 
 function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
@@ -59,24 +91,39 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
 
             {/* Navigation */}
             <ScrollArea className="flex-1 px-2 py-3">
-                <nav aria-label="Main navigation" className="flex flex-col gap-0.5">
-                    {NAV_ITEMS.filter(({ flag }) => !flag || FEATURE_FLAGS[flag]).map(({ to, label, Icon }) => (
-                        <NavLink
-                            key={to}
-                            to={to}
-                            onClick={onNavClick}
-                            className={({ isActive }) =>
-                                `group flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 ${
-                                    isActive
-                                        ? 'bg-accent/10 text-accent shadow-[inset_0_0_0_1px_rgba(79,70,229,0.12)]'
-                                        : 'text-muted-foreground hover:bg-black/[0.04] hover:text-foreground'
-                                }`
-                            }
-                        >
-                            <Icon className="h-4 w-4 shrink-0 opacity-70 group-hover:opacity-100" />
-                            {label}
-                        </NavLink>
-                    ))}
+                <nav aria-label="Main navigation" className="flex flex-col gap-1">
+                    {NAV_SECTIONS.map((group, gi) => {
+                        const visibleItems = group.items.filter(({ flag }) => !flag || FEATURE_FLAGS[flag])
+                        if (visibleItems.length === 0) return null
+                        return (
+                            <div key={group.section ?? `group-${gi}`} className={gi > 0 ? 'mt-3' : ''}>
+                                {group.section && (
+                                    <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                                        {group.section}
+                                    </div>
+                                )}
+                                <div className="flex flex-col gap-0.5">
+                                    {visibleItems.map(({ to, label, Icon }) => (
+                                        <NavLink
+                                            key={to}
+                                            to={to}
+                                            onClick={onNavClick}
+                                            className={({ isActive }) =>
+                                                `group flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 ${
+                                                    isActive
+                                                        ? 'bg-accent/10 text-accent shadow-[inset_0_0_0_1px_rgba(79,70,229,0.12)]'
+                                                        : 'text-muted-foreground hover:bg-black/[0.04] hover:text-foreground'
+                                                }`
+                                            }
+                                        >
+                                            <Icon className="h-4 w-4 shrink-0 opacity-70 group-hover:opacity-100" />
+                                            {label}
+                                        </NavLink>
+                                    ))}
+                                </div>
+                            </div>
+                        )
+                    })}
                 </nav>
             </ScrollArea>
 

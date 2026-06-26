@@ -9,7 +9,7 @@ GET  /content-feedback/low-rated → content candidates for regeneration
 from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel, Field
 
-from app.core.auth import get_current_user, AuthUser
+from app.core.auth import get_current_user, get_admin_user, AuthUser
 from app.services.content_feedback_service import (
     submit_content_feedback,
     get_content_feedback_summary,
@@ -52,7 +52,10 @@ def post_content_feedback(body: ContentFeedbackRequest, current_user: AuthUser =
 
 
 @router.get("/summary")
-def content_feedback_summary(skill: str | None = Query(None)):
+def content_feedback_summary(
+    skill: str | None = Query(None),
+    _: AuthUser = Depends(get_admin_user),
+):
     """Return aggregated content feedback statistics."""
     try:
         return get_content_feedback_summary(skill=skill)
@@ -61,7 +64,10 @@ def content_feedback_summary(skill: str | None = Query(None)):
 
 
 @router.get("/low-rated")
-def low_rated_content(threshold: float = Query(3.0)):
+def low_rated_content(
+    threshold: float = Query(3.0),
+    _: AuthUser = Depends(get_admin_user),
+):
     """Find content with average rating below threshold — candidates for regeneration."""
     try:
         return {"low_rated": get_low_rated_content(threshold=threshold)}

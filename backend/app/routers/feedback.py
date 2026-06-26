@@ -9,7 +9,7 @@ GET  /feedback/corrections → labelled correction pairs for retraining
 from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel, Field
 
-from app.core.auth import get_current_user, AuthUser
+from app.core.auth import get_current_user, get_admin_user, AuthUser
 from app.services.feedback_service import (
     submit_feedback,
     get_feedback_summary,
@@ -51,6 +51,7 @@ def post_feedback(body: FeedbackRequest, current_user: AuthUser = Depends(get_cu
 def feedback_summary(
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(50, ge=1, le=200, description="Items per page"),
+    _: AuthUser = Depends(get_admin_user),
 ):
     """Return aggregated feedback statistics (paginated)."""
     try:
@@ -63,6 +64,7 @@ def feedback_summary(
 def feedback_corrections(
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(50, ge=1, le=200, description="Items per page"),
+    _: AuthUser = Depends(get_admin_user),
 ):
     """
     Return correction pairs where predicted ≠ correct (paginated).

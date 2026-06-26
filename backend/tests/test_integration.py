@@ -107,8 +107,9 @@ class TestDataEndpoints:
         )
         assert resp.status_code == 200
 
-    def test_analytics_returns_stats(self, client, auth_headers):
-        resp = client.get("/analytics/role-stats", headers=auth_headers)
+    def test_analytics_returns_stats(self, client, admin_headers):
+        # Analytics is admin-only (cross-user aggregates).
+        resp = client.get("/analytics/role-stats", headers=admin_headers)
         assert resp.status_code == 200
         data = resp.json()
         assert "total_analyses" in data
@@ -163,8 +164,13 @@ class TestCurriculumEndpoints:
 class TestFeedbackEndpoints:
     """GET /feedback/summary — feedback aggregation."""
 
-    def test_feedback_summary_paginated(self, client):
-        resp = client.get("/feedback/summary", params={"page": 1, "per_page": 10})
+    def test_feedback_summary_requires_admin(self, client, auth_headers):
+        # Feedback aggregation leaks cross-user data -> admin-only now.
+        resp = client.get("/feedback/summary", params={"page": 1}, headers=auth_headers)
+        assert resp.status_code == 403
+
+    def test_feedback_summary_paginated(self, client, admin_headers):
+        resp = client.get("/feedback/summary", params={"page": 1, "per_page": 10}, headers=admin_headers)
         assert resp.status_code == 200
         data = resp.json()
         assert "total_feedback" in data or "corrections" in data

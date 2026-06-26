@@ -70,16 +70,17 @@ def auth_headers():
 
 @pytest.fixture
 def admin_headers():
-    """Headers for an admin user. Uses the first email from ADMIN_EMAILS."""
+    """Headers for an admin user. Admin is now a verified `app_metadata.role`
+    claim (service-key-set in Supabase), not an email allowlist — so the token
+    carries app_metadata.role='admin'. Signed with the real secret => verified."""
     import jwt
-    from app.core.settings import settings
-    admin_email = settings.ADMIN_EMAILS[0] if settings.ADMIN_EMAILS else "admin@campussync.ai"
     token = jwt.encode(
         {
             "sub": "admin-user-uuid-5678",
-            "email": admin_email,
+            "email": "admin@campussync.ai",
             "role": "authenticated",
             "aud": "authenticated",
+            "app_metadata": {"role": "admin"},
         },
         JWT_SECRET,
         algorithm="HS256",

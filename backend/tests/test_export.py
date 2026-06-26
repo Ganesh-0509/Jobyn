@@ -84,9 +84,14 @@ class TestAnalyticsEndpoint:
         resp = client.get("/analytics/role-stats")
         assert resp.status_code == 401
 
-    def test_analytics_with_auth(self, client, auth_headers):
-        """Authenticated user can access analytics."""
+    def test_analytics_requires_admin(self, client, auth_headers):
+        """Analytics is now admin-only — a regular authenticated user is forbidden."""
         resp = client.get("/analytics/role-stats", headers=auth_headers)
+        assert resp.status_code == 403
+
+    def test_analytics_with_admin(self, client, admin_headers):
+        """Admin can access cross-user analytics."""
+        resp = client.get("/analytics/role-stats", headers=admin_headers)
         assert resp.status_code == 200
         data = resp.json()
         assert "role_averages" in data

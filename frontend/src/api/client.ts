@@ -560,6 +560,73 @@ export async function getFullDataset(page = 1, perPage = 50): Promise<{ students
     return { students: data.dataset || [], total: data.total || 0 }
 }
 
+// ── Admin Feedback Review (admin-only) ────────────────────────
+export interface FeedbackSummary {
+    total_feedback: number
+    corrections: number
+    confirmations: number
+    score_distribution: { too_high: number; too_low: number; accurate: number }
+    page: number
+    per_page: number
+}
+
+export interface FeedbackCorrection {
+    predicted_role: string
+    correct_role: string | null
+    analysis_id: number | null
+    user_email: string | null
+    created_at: string
+}
+
+export interface FeedbackCorrectionsResult {
+    corrections: FeedbackCorrection[]
+    total: number
+    page: number
+    per_page: number
+}
+
+export interface ContentFeedbackItem {
+    skill: string
+    section_idx: number | null
+    comment: string
+}
+
+export interface ContentFeedbackSummary {
+    total_feedback: number
+    average_rating: number | null
+    rating_count: number
+    type_distribution: Record<string, number>
+    error_reports: number
+    suggestions: number
+    recent_errors: ContentFeedbackItem[]
+    recent_suggestions: ContentFeedbackItem[]
+}
+
+export interface LowRatedContent {
+    skill: string
+    section_idx: number | null
+    average_rating: number
+    rating_count: number
+}
+
+export async function getFeedbackSummary(page = 1, perPage = 50): Promise<FeedbackSummary> {
+    return apiFetch<FeedbackSummary>(`/feedback/summary?page=${page}&per_page=${perPage}`)
+}
+
+export async function getFeedbackCorrections(page = 1, perPage = 50): Promise<FeedbackCorrectionsResult> {
+    return apiFetch<FeedbackCorrectionsResult>(`/feedback/corrections?page=${page}&per_page=${perPage}`)
+}
+
+export async function getContentFeedbackSummary(skill?: string): Promise<ContentFeedbackSummary> {
+    const query = skill ? `?skill=${encodeURIComponent(skill)}` : ''
+    return apiFetch<ContentFeedbackSummary>(`/content-feedback/summary${query}`)
+}
+
+export async function getLowRatedContent(threshold = 3.0): Promise<LowRatedContent[]> {
+    const data = await apiFetch<{ low_rated: LowRatedContent[] }>(`/content-feedback/low-rated?threshold=${threshold}`)
+    return data.low_rated || []
+}
+
 export async function getLatestSession(email: string): Promise<{ analysis: UploadResult | null; prediction: PredictResult | null }> {
     try {
         return await apiFetch<{ analysis: UploadResult | null; prediction: PredictResult | null }>(`/session/latest/${encodeURIComponent(email)}`)

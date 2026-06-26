@@ -5,6 +5,7 @@ import { ResumeProvider } from './context/ResumeContext'
 import { ToastProvider } from './context/ToastContext'
 import { PrivacyProvider } from './context/PrivacyContext'
 import Layout from './components/Layout'
+import AdminLayout from './components/AdminLayout'
 import ErrorBoundary from './components/ErrorBoundary'
 import React, { Suspense, lazy, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -152,12 +153,16 @@ function AppRoutes() {
                         <Route path="/resume-builder" element={<FeatureErrorBoundary featureName="Resume Builder"><ResumeBuilder /></FeatureErrorBoundary>} />
                         <Route path="/industry-alignment" element={<FeatureErrorBoundary featureName="Industry Alignment"><IndustryAlignment /></FeatureErrorBoundary>} />
                         <Route path="/my-projects" element={<FeatureErrorBoundary featureName="My Projects"><MyProjects /></FeatureErrorBoundary>} />
-                        <Route path="/admin" element={<RequireAdmin><FeatureErrorBoundary featureName="Admin Dashboard"><AdminDashboard /></FeatureErrorBoundary></RequireAdmin>} />
                         <Route path="/settings" element={<FeatureErrorBoundary featureName="Settings"><Settings /></FeatureErrorBoundary>} />
                         <Route path="/certificate" element={<FeatureErrorBoundary featureName="Certificate">{FEATURE_FLAGS.SHAREABLE_CERTIFICATE ? <Certificate /> : <ComingSoon feature="Certificate" />}</FeatureErrorBoundary>} />
                         <Route path="/jd-match" element={<FeatureErrorBoundary featureName="JD Match">{FEATURE_FLAGS.JD_MATCHING ? <JDMatch /> : <ComingSoon feature="JD Matching" />}</FeatureErrorBoundary>} />
                         <Route path="/company-prep" element={<FeatureErrorBoundary featureName="Company Prep">{FEATURE_FLAGS.COMPANY_PREP ? <CompanyPrep /> : <ComingSoon feature="Company Prep" />}</FeatureErrorBoundary>} />
                         <Route path="/coding-practice" element={<FeatureErrorBoundary featureName="Coding Practice">{FEATURE_FLAGS.CODING_PRACTICE ? <CodingPractice /> : <ComingSoon feature="Coding Practice" />}</FeatureErrorBoundary>} />
+                    </Route>
+
+                    {/* Admin — fully separate shell, guarded by auth + admin role */}
+                    <Route element={<RequireAuth><RequireAdmin><AdminLayout /></RequireAdmin></RequireAuth>}>
+                        <Route path="/admin" element={<FeatureErrorBoundary featureName="Admin Dashboard"><AdminDashboard /></FeatureErrorBoundary>} />
                     </Route>
 
                     {/* 404 */}

@@ -45,23 +45,48 @@ def _jwks_client() -> PyJWKClient:
 
 class AuthUser:
     """Minimal user object extracted from a verified JWT."""
-    def __init__(self, sub: str, email: str, role: str = "authenticated"):
-        self.sub = sub      # Supabase user UUID
+    def __init__(self, sub: str, email: str, role: str = "authenticated", is_admin: bool = False):
+        self.sub = sub          # Supabase user UUID
         self.email = email
-        self.role = role
+        self.role = role        # Supabase token role (always "authenticated")
+        self.is_admin = is_admin  # derived from a VERIFIED app_metadata.role claim
 
     def __repr__(self):
-        return f"AuthUser(email={self.email!r})"
+        return f"AuthUser(email={self.email!r}, is_admin={self.is_admin})"
 
 
-def _decode_token(token: str) -> dict:
-    """Decode and verify a Supabase JWT. Raises on failure.
+def _extract_is_admin(payload: dict, verified: bool) -> bool:
+    """
+    Admin = `app_metadata.role == 'admin'` (or 'admin' in `app_metadata.roles`).
+
+    `app_metadata` can only be written with the Supabase service key (dashboard /
+    admin API) — never by the user — and is signed into the JWT, so it can't be
+    forged. `user_metadata` is intentionally IGNORED (user-writable).
+
+    Requires `verified=True`: an unverified (dev-mode, unsigned) token can never
+    grant admin, even if it carries the claim.
+    """
+    if not verified:
+        return False
+    app_meta = payload.get("app_metadata") or {}
+    if app_meta.get("role") == "admin":
+        return True
+    roles = app_meta.get("roles")
+    return isinstance(roles, (list, tuple)) and "admin" in roles
+
+
+def _decode_token(token: str) -> tuple[dict, bool]:
+    """Decode and verify a Supabase JWT. Returns (payload, signature_verified).
+    Raises on failure.
 
     Supports both token types Supabase can issue:
       - Asymmetric (ES256/RS256) — the current default; verified against the
         project's public JWKS. This is what the new sb_publishable/sb_secret
         key system produces.
       - Legacy HS256 — verified with the shared SUPABASE_JWT_SECRET.
+
+    `signature_verified` is False ONLY in the dev no-secret fallback; callers
+    must not grant admin on an unverified token.
     """
     alg = jwt.get_unverified_header(token).get("alg", HS_ALGORITHM)
 
@@ -74,7 +99,7 @@ def _decode_token(token: str) -> dict:
             algorithms=ASYMMETRIC_ALGORITHMS,
             audience="authenticated",
             leeway=30,  # tolerate minor clock skew between Supabase and this host
-        )
+        ), True
 
     # ── Legacy HS256 tokens — verify with the shared secret ────────────────
     if not JWT_SECRET:
@@ -86,9 +111,10 @@ def _decode_token(token: str) -> dict:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Security Error: Authentication service misconfiguration."
             )
-        # Dev mode: no secret configured → trust the token payload without verification
-        logger.warning("SUPABASE_JWT_SECRET not set — skipping JWT verification (dev mode)")
-        return jwt.decode(token, options={"verify_signature": False})
+        # Dev mode: no secret configured → trust the token payload without verification.
+        # signature_verified=False → admin is never granted on this path.
+        logger.warning("SUPABASE_JWT_SECRET not set — skipping JWT verification (dev mode); admin disabled")
+        return jwt.decode(token, options={"verify_signature": False}), False
 
     return jwt.decode(
         token,
@@ -96,7 +122,7 @@ def _decode_token(token: str) -> dict:
         algorithms=[HS_ALGORITHM],
         audience="authenticated",
         leeway=30,  # tolerate minor clock skew between Supabase and this host
-    )
+    ), True
 
 
 async def get_current_user(
@@ -114,7 +140,7 @@ async def get_current_user(
         )
 
     try:
-        payload = _decode_token(creds.credentials)
+        payload, verified = _decode_token(creds.credentials)
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.PyJWKClientError as e:
@@ -127,6 +153,7 @@ async def get_current_user(
         sub=payload.get("sub", ""),
         email=payload.get("email", ""),
         role=payload.get("role", "authenticated"),
+        is_admin=_extract_is_admin(payload, verified),
     )
 
 
@@ -142,11 +169,12 @@ async def optional_user(
         return None
 
     try:
-        payload = _decode_token(creds.credentials)
+        payload, verified = _decode_token(creds.credentials)
         return AuthUser(
             sub=payload.get("sub", ""),
             email=payload.get("email", ""),
             role=payload.get("role", "authenticated"),
+            is_admin=_extract_is_admin(payload, verified),
         )
     except Exception:
         return None
@@ -157,10 +185,9 @@ async def get_admin_user(
 ) -> AuthUser:
     """
     **Required Admin auth** dependency.
-    Raises 403 Forbidden if the user is not an admin.
+    Raises 403 Forbidden unless the verified JWT carries app_metadata.role == 'admin'.
     """
-    from app.core.settings import settings
-    if user.email.lower() not in [e.lower() for e in settings.ADMIN_EMAILS]:
+    if not user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Forbidden: Administrative access required.",

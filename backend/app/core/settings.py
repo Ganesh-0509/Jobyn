@@ -60,12 +60,9 @@ class Settings:
     MIN_QUIZ_UNLOCK_SCORE: float = float(os.getenv("MIN_QUIZ_UNLOCK_SCORE", "70.0"))
 
     # ── Admin ───────────────────────────────────────────────────────
-    # Comma-separated admin email addresses
-    ADMIN_EMAILS: list[str]   = [
-        e.strip().lower()
-        for e in os.getenv("ADMIN_EMAILS", "admin@campussync.ai,demo@campussync.ai").split(",")
-        if e.strip()
-    ]
+    # Admin is no longer an email allowlist. It is a verified Supabase
+    # `app_metadata.role == 'admin'` claim (set only via the service key /
+    # dashboard, never user-modifiable) — see app/core/auth.py get_admin_user.
 
 
 settings = Settings()
