@@ -175,7 +175,7 @@ export default function Layout() {
                 </header>
 
                 {/* Main Content */}
-                <main id="main-content" tabIndex={-1} className="flex-1 lg:pl-[240px]">
+                <main id="main-content" tabIndex={-1} className="flex-1 min-w-0 lg:pl-[240px]">
                     <div className="pt-[57px] lg:pt-0">
                         <AnimatePresence mode="wait">
                             <motion.div

@@ -7,7 +7,7 @@ import { getAnalytics, getBenchmarks, type BenchmarkData } from '../api/client'
 import { loadHistory, getHistoryOrDemo } from '../utils/history'
 import MilestoneCard from '../components/MilestoneCard'
 import OnboardingNudge from '../components/OnboardingNudge'
-import { Upload, AlertCircle, Lightbulb, Activity, TrendingUp, Trophy, ArrowRight, BarChart2, Zap, BookOpen, Target, CheckCircle, Share2, Users, Play } from 'lucide-react'
+import { Upload, AlertCircle, Lightbulb, Activity, TrendingUp, Trophy, ArrowRight, BarChart2, Zap, BookOpen, Target, CheckCircle, Share2, Users } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -72,7 +72,6 @@ export default function Dashboard() {
   const [analytics, setAnalytics] = useState<any>(null)
   const [analyticsError, setAnalyticsError] = useState<string | null>(null)
   const [benchmark, setBenchmark] = useState<BenchmarkData | null>(null)
-  const goal = user?.email ? localStorage.getItem(`${user.email}_cse_goal`) : null
 
   useEffect(() => {
     const ctl = new AbortController()
@@ -104,11 +103,6 @@ export default function Dashboard() {
   const missingCore = useMemo(() => (analysis?.missing_core_skills ?? []).filter(s => !masteredLower.has(s.toLowerCase())), [analysis, masteredLower])
   const missingOpt = useMemo(() => (analysis?.missing_optional_skills ?? []).filter(s => !masteredLower.has(s.toLowerCase())), [analysis, masteredLower])
   const missingCount = missingCore.length + missingOpt.length
-  const goalText = goal === 'placement' ? 'Close your top skill gap before placement season'
-    : goal === 'explore' ? 'Explore your AI-recommended career path'
-    : goal === 'resume' ? `Your resume scored ${score}% — here's how to reach 80%`
-    : goal === 'interview' ? 'Practice your first interview question'
-    : 'ML trained on 57,100 resumes — 95% accuracy. Your data never leaves your browser.'
   const isFirstTime = !analysis && !loading
   const originalCorePct = analysis?.core_coverage_percent ?? 0
   const totalCoreSkills = (analysis?.detected_skills?.length ?? 0) + (analysis?.missing_core_skills?.length ?? 0)
@@ -164,7 +158,7 @@ export default function Dashboard() {
                 {analysis ? `Your Career Readiness: ${score}%` : 'Welcome to CampusSync'}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                {user ? `Welcome back, ${user.name}! ` : ''}{analysis ? 'ML trained on 57,100 resumes — 95% accuracy. Your data never leaves your browser.' : goalText}
+                {user ? `Welcome back, ${user.name}! ` : ''}{analysis ? 'ML trained on 57,100 resumes — 95% accuracy. Your data never leaves your browser.' : 'Upload your resume to see your AI-powered career readiness.'}
               </p>
             </div>
             <div className="flex gap-2 shrink-0">
@@ -172,12 +166,6 @@ export default function Dashboard() {
                 <Upload className="size-4" />
                 {analysis ? 'Re-Upload Resume' : 'Upload Resume'}
               </Button>
-              {!analysis && (
-                <Button variant="outline" onClick={() => navigate('/onboarding?mode=sample')} className="gap-2">
-                  <Play className="size-4" />
-                  Try Sample
-                </Button>
-              )}
             </div>
           </CardContent>
         </Card>
@@ -188,7 +176,7 @@ export default function Dashboard() {
         <OnboardingNudge />
       </motion.div>
 
-      {/* What To Do Today — JTBD Daily Ritual (goal-personalized) */}
+      {/* What To Do Today — JTBD Daily Ritual */}
       <motion.div variants={item}>
         <Card className="premium-hover-card relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-violet/5">
           <CardContent className="py-5">
@@ -202,21 +190,6 @@ export default function Dashboard() {
                   <>
                     <div className="text-sm font-semibold text-foreground">Upload your resume to see your career readiness</div>
                     <div className="text-xs text-muted-foreground mt-0.5">60 seconds to find out where you stand</div>
-                  </>
-                ) : goal === 'explore' ? (
-                  <>
-                    <div className="text-sm font-semibold text-foreground">Explore your AI-recommended career path</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">You scored {score}% — see which roles fit best</div>
-                  </>
-                ) : goal === 'resume' ? (
-                  <>
-                    <div className="text-sm font-semibold text-foreground">Your resume scored {score}% — here's how to reach 80%</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{missingCount} skills to close for a stronger resume</div>
-                  </>
-                ) : goal === 'interview' ? (
-                  <>
-                    <div className="text-sm font-semibold text-foreground">Practice your first interview question</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">Role-specific questions for {analysis.role}</div>
                   </>
                 ) : missingCore.length > 0 ? (
                   <>
@@ -239,17 +212,11 @@ export default function Dashboard() {
                 className="shrink-0 gap-1.5"
                 onClick={() => navigate(
                   !analysis ? '/resume-analyzer'
-                    : goal === 'explore' ? '/skill-gap'
-                    : goal === 'resume' ? '/improvement-plan'
-                    : goal === 'interview' ? '/interview-readiness'
                     : missingCore.length > 0 ? '/improvement-plan'
                     : '/interview-readiness'
                 )}
               >
                 {!analysis ? 'Upload'
-                  : goal === 'explore' ? 'Explore'
-                  : goal === 'resume' ? 'Improve'
-                  : goal === 'interview' ? 'Practice'
                   : missingCore.length > 0 ? 'Learn'
                   : 'Practice'} <ArrowRight className="size-3" />
               </Button>
@@ -282,13 +249,6 @@ export default function Dashboard() {
                 <Button size="lg" className="gap-2" onClick={() => navigate('/resume-analyzer')}>
                   <Upload className="size-4" /> Upload Your Resume
                 </Button>
-                <button
-                  onClick={() => navigate('/onboarding?mode=sample')}
-                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <Play className="size-3" />
-                  Or try with sample data
-                </button>
               </div>
               <div className="mt-8 flex flex-col sm:flex-row justify-center gap-6 sm:gap-10">
                 {[

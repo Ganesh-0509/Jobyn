@@ -939,7 +939,21 @@ export async function submitManualProfile(data: {
 }
 
 export async function getSkillsList(): Promise<{ skills: string[] }> {
-    return cachedFetch<{ skills: string[] }>('/skills/list', 10 * 60_000)
+    try {
+        const data = await cachedFetch<{ skills: string[] }>('/skills/list', 10 * 60_000)
+        if (Array.isArray(data?.skills) && data.skills.length) return data
+        throw new Error('empty skills list')
+    } catch {
+        // Fallback to the bundled ML vocabulary so the manual profile form's skill
+        // picker still works when the backend is unreachable (mirrors getRoles()).
+        try {
+            const res = await fetch('/models/vocabulary_v2_list.json')
+            const skills = await res.json()
+            return { skills: Array.isArray(skills) ? skills : [] }
+        } catch {
+            return { skills: [] }
+        }
+    }
 }
 
 // ── Resume Builder ────────────────────────────────────────────────
