@@ -114,7 +114,9 @@ def weighted_coverage_provisional(matched: list, pool: list, confidence: dict) -
     """
     if not pool:
         return 0.0
-    factor = lambda s: confidence_score_factor(confidence.get(s, 1.0))
+    def factor(s):
+        return confidence_score_factor(confidence.get(s, 1.0))
+
     if not _SKILL_WEIGHT:
         return sum(factor(s) for s in matched) / len(pool)
     total_weight = sum(_SKILL_WEIGHT.get(s, 1.0) for s in pool)
