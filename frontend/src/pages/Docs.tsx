@@ -171,8 +171,8 @@ const docPages: DocSection[] = [
                     Clone the repository and install core dependencies. Make sure you have Node.js 18+ loaded on your host machine.
                 </p>
                 <CodeBlock title="Terminal">
-{`$ git clone https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai.git
-$ cd Campus-Sync-Edge-Ai/frontend
+{`$ git clone https://github.com/Ganesh-0509/Jobyn.git
+$ cd Jobyn/frontend
 $ npm install`}
                 </CodeBlock>
 

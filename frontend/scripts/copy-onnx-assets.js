@@ -17,7 +17,7 @@ const ortSourceDir = path.join(frontendDir, 'node_modules/onnxruntime-web/dist')
 // backend uses. Override the host with MODELS_BASE_URL if the release moves.
 const MODELS_BASE_URL = (
     process.env.MODELS_BASE_URL ||
-    'https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai/releases/download/models-v2'
+    'https://github.com/Ganesh-0509/Jobyn/releases/download/models-v2'
 ).replace(/\/$/, '');
 
 // Helper to ensure directory exists

@@ -365,7 +365,7 @@ The Web Speech API got me 80% of the way. The last 20% — telephony, voice synt
 
 ---
 
-*Built with React, FastAPI, Supabase, Google Gemini, and the Web Speech API. Open source at [Jobyn](https://github.com/Ganesh-0509/CampusSync-Edge).*`,
+*Built with React, FastAPI, Supabase, Google Gemini, and the Web Speech API. Open source at [Jobyn](https://github.com/Ganesh-0509/Jobyn).*`,
   },
   {
     slug: 'how-to-analyze-resume-for-campus-placements',

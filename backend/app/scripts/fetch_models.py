@@ -40,7 +40,7 @@ _MODELS_DIR = Path(__file__).resolve().parent.parent.parent / "models"
 
 # GitHub Release that hosts the prebuilt artefacts. Override with MODELS_BASE_URL.
 _DEFAULT_BASE_URL = (
-    "https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai/releases/download/models-v2"
+    "https://github.com/Ganesh-0509/Jobyn/releases/download/models-v2"
 )
 _BASE_URL = os.getenv("MODELS_BASE_URL", _DEFAULT_BASE_URL).rstrip("/")
 

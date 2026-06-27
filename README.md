@@ -221,7 +221,7 @@ The platform combines three intelligence layers:
 ## Project Structure
 
 ```
-CampusSync-Edge/
+Jobyn/
 ├── frontend/                         # React + TypeScript SPA
 │   ├── src/
 │   │   ├── pages/                    # 19 page components (lazy-loaded)
@@ -287,8 +287,8 @@ CampusSync-Edge/
 ### 1. Clone
 
 ```bash
-git clone https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai.git
-cd Campus-Sync-Edge-Ai
+git clone https://github.com/Ganesh-0509/Jobyn.git
+cd Jobyn
 ```
 
 ### 2. Backend

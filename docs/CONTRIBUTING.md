@@ -14,8 +14,8 @@
 
 ```bash
 # Clone
-git clone https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai.git
-cd Campus-Sync-Edge-Ai
+git clone https://github.com/Ganesh-0509/Jobyn.git
+cd Jobyn
 
 # Backend
 cd backend
@@ -39,7 +39,7 @@ npm run dev
 ## Project Structure
 
 ```
-CampusSync-Edge/
+Jobyn/
 ├── frontend/                    # React + TypeScript SPA
 │   ├── src/
 │   │   ├── pages/               # 19 page components (lazy-loaded)

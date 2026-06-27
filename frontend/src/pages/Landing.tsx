@@ -902,7 +902,7 @@ export default function Landing() {
 
           <div className="flex flex-wrap justify-center gap-4 pt-2">
             <Link to="/signup" className={buttonVariants({ size: "lg" }) + " shadow-md font-semibold gap-2 rounded-full px-9 py-6 text-sm"}>Assess My Profile</Link>
-            <a href="https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai" target="_blank" rel="noreferrer" className={buttonVariants({ variant: "outline", size: "lg" }) + " font-semibold gap-2 rounded-full border-stone-200 bg-white hover:bg-stone-50 px-9 py-6 text-sm"}>
+            <a href="https://github.com/Ganesh-0509/Jobyn" target="_blank" rel="noreferrer" className={buttonVariants({ variant: "outline", size: "lg" }) + " font-semibold gap-2 rounded-full border-stone-200 bg-white hover:bg-stone-50 px-9 py-6 text-sm"}>
               <Github className="size-4" /> View Repository <ExternalLink className="size-3" />
             </a>
           </div>
@@ -990,7 +990,7 @@ export default function Landing() {
           </div>
           <div className="flex flex-wrap justify-center gap-6 text-xs font-bold uppercase tracking-wider text-muted-foreground">
             <a href="https://jobyn.pages.dev" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors flex items-center gap-1">Live App <ArrowUpRight className="inline size-3" /></a>
-            <a href="https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors flex items-center gap-1">GitHub <ArrowUpRight className="inline size-3" /></a>
+            <a href="https://github.com/Ganesh-0509/Jobyn" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors flex items-center gap-1">GitHub <ArrowUpRight className="inline size-3" /></a>
             <Link to="/privacy" className="hover:text-primary transition-colors flex items-center gap-1">Privacy <ArrowUpRight className="inline size-3" /></Link>
             <Link to="/docs" className="hover:text-primary transition-colors flex items-center gap-1">Docs <ArrowUpRight className="inline size-3" /></Link>
           </div>

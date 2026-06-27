@@ -15,8 +15,8 @@
 ### Step 1: Fork & Push
 
 ```bash
-git clone https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai.git
-cd Campus-Sync-Edge-Ai
+git clone https://github.com/Ganesh-0509/Jobyn.git
+cd Jobyn
 ```
 
 ### Step 2: Create Render Blueprint
