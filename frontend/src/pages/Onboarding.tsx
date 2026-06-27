@@ -212,7 +212,7 @@ export default function Onboarding() {
                   <LogoMark size={72} className="mx-auto" />
                   <div>
                     <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                      Welcome to CampusSync
+                      Welcome to Jobyn
                     </h1>
                     <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
                       Your AI career coach is ready. Let's get you set up in under 2 minutes.
