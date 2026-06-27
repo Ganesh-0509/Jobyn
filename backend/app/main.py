@@ -223,7 +223,14 @@ app.include_router(sandbox_router.router)
 
 @app.api_route("/", methods=["GET", "HEAD"], tags=["Status"], summary="Service root status")
 def root():
-    db   = check_connection()
+    # Cache the Supabase connectivity probe briefly. Uptime monitors, load
+    # balancers, and Render's health checks hit "/" constantly; without this each
+    # one triggers a live DB round-trip (slow, and misleading 500s when a free-tier
+    # Supabase project is paused). Lightweight uptime checks should target /health.
+    db = _app_cache.get("root:db_status")
+    if db is None:
+        db = check_connection()
+        _app_cache.set("root:db_status", db, ttl=30)
     meta = get_metadata() if is_loaded() else {}
     return {
         "status":        "Resume Intelligence API Running",
