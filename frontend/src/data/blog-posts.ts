@@ -10,6 +10,95 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: 'measure-placement-readiness-engineering-students',
+    title: 'How to Measure Your Placement Readiness as an Engineering Student (2026 Guide)',
+    excerpt: 'A practical 2026 guide to placement readiness for engineering students — what it means, the five dimensions that matter, how to measure it, and how AI resume scoring compares to manual review and general-purpose AI tools.',
+    date: '2026-06-27',
+    readTime: '9 min read',
+    category: 'Career',
+    content: `# How to Measure Your Placement Readiness as an Engineering Student (2026 Guide)
+
+**Placement readiness is how prepared you are to clear a specific role's hiring bar — measured across your skills, projects, resume quality, and interview ability for that target role.** It is not one vague rating; it is the gap between what a role requires and what your profile currently proves.
+
+*Last updated: June 27, 2026*
+
+---
+
+## What is placement readiness?
+
+Placement readiness measures whether your current skills, projects, and resume align with the requirements of a specific engineering role — such as Frontend Developer or Data Scientist. The same student can be "ready" for one role and far from ready for another, because each role weights skills differently.
+
+Unlike a generic resume rating, readiness is **role-relative**: it compares your profile against the real requirements of the role you are targeting, then shows the exact gaps to close.
+
+## The five dimensions of readiness
+
+Reliable readiness assessments break the score into measurable dimensions rather than one number:
+
+| Dimension | What it measures | Typical weight |
+|---|---|---|
+| Core skills | Must-have skills for the target role | Highest |
+| Optional skills | Nice-to-have skills that differentiate you | Medium |
+| Projects | Evidence you have applied the skills | Medium |
+| ATS / resume structure | Whether software and recruiters can parse your resume | Lower |
+| Formatting & clarity | Readability and signal density | Lower |
+
+Scoring each dimension separately turns "your resume is a 6 out of 10" into "you cover data structures and REST APIs but are missing system-design depth and a deployed project."
+
+## How to measure placement readiness: 4 approaches compared
+
+Students typically assess readiness in one of four ways. Here is how they stack up:
+
+| Approach | Role-specific? | Objective? | Actionable next steps? | Cost |
+|---|---|---|---|---|
+| Self-assessment | Rarely | No (bias) | Vague | Free |
+| College placement cell | Sometimes | Partly | Generic | Free |
+| General-purpose AI assistant | Only if prompted well | Inconsistent | Text only, not tracked | Free / paid |
+| Dedicated readiness platform | Yes | Yes (ML + rules) | Specific and tracked | Varies |
+
+A general-purpose AI assistant can critique a resume if you prompt it carefully, but it returns unstructured text, no consistent score, and no way to track progress over time. A dedicated platform scores against real role requirements and turns the gaps into a study plan.
+
+## How AI resume scoring works
+
+Modern readiness tools combine three layers:
+
+1. **Deterministic scoring** — a transparent, weighted formula across the five dimensions above.
+2. **Machine learning** — models trained on large resume datasets predict your best-fit role and a quality score. Jobyn's models are trained on 57,100 real resumes and reach about 95% role-classification accuracy across 7 roles.
+3. **Generative AI** — produces tailored study material, mock-interview questions, and feedback.
+
+The machine-learning layer is what makes scoring objective and repeatable: the same resume gets the same score every time, reflecting patterns learned from tens of thousands of real resumes rather than one reviewer's opinion.
+
+## A step-by-step readiness checklist
+
+1. **Pick one target role** — readiness is meaningless without a target.
+2. **Score your resume against that role** across the five dimensions.
+3. **Identify your top 3 gaps**, ordered by impact and prerequisites.
+4. **Close gaps with projects, not just courses** — applied evidence outscores certificates.
+5. **Practice role-specific interviews out loud**, then check which concepts you actually covered.
+6. **Re-score every few weeks** to confirm the number is moving.
+
+## Does your resume have to leave your device?
+
+No. The most privacy-protective tools run the scoring model directly in your browser using on-device machine learning (via WebAssembly), so your resume is analyzed locally and never uploaded. If a tool requires uploading your resume to its servers just to score it, that is a product choice, not a technical requirement.
+
+## Frequently asked questions
+
+### What is a good placement readiness score?
+A readiness score is best read against role tiers rather than a universal pass mark. Many platforms use bands like Beginner, Developing, Placement Ready, and Interview Ready. Aim to reach "Placement Ready" for your target role before applying, and "Interview Ready" before interviews.
+
+### Can a general AI chatbot tell me if I am placement ready?
+It can give you feedback text, but not a consistent, role-specific, trackable score. General assistants are not trained specifically on placement outcomes, so they can give different answers to the same resume on different days.
+
+### How often should I re-check my readiness?
+Every two to four weeks while you are actively closing gaps. Readiness changes as you add projects and skills, so a single score has a short shelf life.
+
+### Is resume scoring free for students?
+Some tools are. Jobyn is free for engineering students and offers an instant resume readiness score with no signup required.
+
+---
+
+*Want to see your role-specific readiness score in 60 seconds? Try the free scorer at [Jobyn](https://getjobyn.pages.dev/quick-score) — no signup, and privacy mode means your resume never leaves your browser.*`,
+  },
+  {
     slug: 'browser-native-voice-interview-simulator',
     title: 'How I Built a Browser-Native Voice Interview Simulator (And Why Privacy Made Me Skip the Cloud)',
     excerpt: 'Building a voice-powered technical interview practice tool using only the browser\'s Web Speech API — no audio uploads, no cloud processing, no data leaving the device.',

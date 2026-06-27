@@ -427,7 +427,7 @@ export default function Landing() {
             transition={{ delay: 0.3, duration: 0.6 }}
             className="max-w-2xl mx-auto text-base md:text-lg leading-relaxed text-muted-foreground font-medium"
           >
-            ChatGPT gives text. We give a structured, tracked, verified roadmap.
+            Generic AI gives you text. We give you a structured, tracked, verified roadmap.
           </motion.p>
 
           <motion.p

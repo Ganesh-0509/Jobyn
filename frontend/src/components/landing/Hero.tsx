@@ -70,7 +70,7 @@ export default function Hero() {
               fontWeight: 500,
             }}
           >
-            ChatGPT gives you text. We give you a structured, tracked, verified roadmap.
+            Generic AI gives you text. We give you a structured, tracked, verified roadmap.
             Upload your resume. See your gaps. Close them before placement season.
           </motion.p>
 
