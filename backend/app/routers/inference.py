@@ -6,15 +6,15 @@ Endpoints:
     POST     /predict → full resume intelligence prediction
 """
 
-from __future__ import annotations
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 from app.schemas     import ResumeInput, ResumePrediction
 from app.predictor   import predict_resume
 from app.model_loader import is_loaded
 from app.inference_utils import Timer
+from app.core.rate_limiter import ai_limit
 
 log = logging.getLogger("inference")
 router = APIRouter(tags=["ML Inference"])
@@ -37,7 +37,8 @@ def health_check() -> dict[str, str]:
     response_model = ResumePrediction,
     summary        = "Predict role and score from resume features",
 )
-def predict_endpoint(body: ResumeInput) -> ResumePrediction:
+@ai_limit
+async def predict_endpoint(request: Request, body: ResumeInput) -> ResumePrediction:
     """
     Run full ML inference on a resume feature vector.
 

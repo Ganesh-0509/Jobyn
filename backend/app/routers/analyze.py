@@ -18,6 +18,7 @@ from app.services.encryption_service import encrypt_text, is_encryption_enabled
 from app.core.auth import optional_user, AuthUser
 from app.utils.validation import validate_email, validate_resume_text, sanitize_filename
 from app.core.rate_limiter import upload_limit
+from pydantic import BaseModel
 from typing import Optional
 import asyncio
 import logging
@@ -247,7 +248,11 @@ async def upload_resume(
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
-@router.get("/roles")
+class RolesResponse(BaseModel):
+    valid_roles: list[str]
+
+
+@router.get("/roles", response_model=RolesResponse)
 def list_roles():
     """Return supported roles (loaded from roles.json)."""
     return {"valid_roles": VALID_ROLES}

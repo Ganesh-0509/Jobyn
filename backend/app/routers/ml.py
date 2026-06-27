@@ -8,11 +8,12 @@ Endpoints:
   POST /ml/recompute-model    → rebuild and persist hybrid_v1.json snapshot
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, Field
 
 from app.core.settings import settings
 from app.core.auth import get_admin_user
+from app.core.rate_limiter import ai_limit
 from app.ml_pipeline.data_loader     import load_dataset
 from app.ml_pipeline.skill_impact    import compute_skill_impact
 from app.ml_pipeline.projection_engine import project_score
@@ -61,7 +62,8 @@ def _require_data() -> list[dict]:
 # ── POST /ml/predict-role ──────────────────────────────────────────────────────
 
 @router.post("/predict-role")
-def ml_predict_role(request: RolePredictRequest):
+@ai_limit
+async def ml_predict_role(request: Request, body: RolePredictRequest):
     """
     Predict the best-fit role by calculating the Readiness Score
     for the current resume across all supported roles.
@@ -79,10 +81,10 @@ def ml_predict_role(request: RolePredictRequest):
         )
 
         # ── Compute shared sub-scores once ─────────────────────────
-        resume_set = set(request.skills)
-        project_data   = calculate_project_score(request.raw_text)
-        ats_data       = calculate_ats_score(request.raw_text)
-        structure_data = calculate_structure_score(request.sections_detected)
+        resume_set = set(body.skills)
+        project_data   = calculate_project_score(body.raw_text)
+        ats_data       = calculate_ats_score(body.raw_text)
+        structure_data = calculate_structure_score(body.sections_detected)
 
         best_role  = ""
         best_score = -1
@@ -119,11 +121,11 @@ def ml_predict_role(request: RolePredictRequest):
         all_results.sort(key=lambda x: -x["score"])
 
         # Calculate reasoning
-        if request.current_role and best_role == request.current_role:
+        if body.current_role and best_role == body.current_role:
              reasoning = f"Your resume is a perfect fit for {best_role}! You match {int(best_score)}% of the core requirements."
-        elif request.current_role:
-            current_score = next((r["score"] for r in all_results if r["role"] == request.current_role), 0)
-            reasoning = f"Your profile matches {best_role} at {int(best_score)}%, which is a much stronger match than {request.current_role} ({int(current_score)}%)."
+        elif body.current_role:
+            current_score = next((r["score"] for r in all_results if r["role"] == body.current_role), 0)
+            reasoning = f"Your profile matches {best_role} at {int(best_score)}%, which is a much stronger match than {body.current_role} ({int(current_score)}%)."
         else:
             reasoning = f"Your highest potential match is {best_role} with a score of {int(best_score)}%."
 
