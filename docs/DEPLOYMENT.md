@@ -1,4 +1,4 @@
-# Deployment Guide — CampusSync Edge
+# Deployment Guide — Jobyn
 
 ## Prerequisites
 
@@ -24,8 +24,8 @@ cd Jobyn
 1. Go to [Render Dashboard](https://dashboard.render.com/)
 2. **New** → **Blueprint** → Connect your GitHub repo
 3. Render reads `render.yaml` and auto-creates two services:
-   - `campussync-edge-api` — Python web service
-   - `campussync-edge` — Static site
+   - `jobyn-api` — Python web service
+   - `jobyn` — Static site
 
 ### Step 3: Set Environment Variables
 
@@ -248,7 +248,7 @@ This will:
 ### Expected Output
 
 ```
-CAMPUSSYNC EDGE — Model Training v2.0
+JOBYN — Model Training v2.0
 Step 1/5 — Loading dataset (real + synthetic_v2) …
   Loaded 57,100 records
 Step 2/5 — Engineering features …

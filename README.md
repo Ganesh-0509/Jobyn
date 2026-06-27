@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/ML_Accuracy-95%25-brightgreen?style=flat-square" alt="95% Accuracy" />
 </p>
 
-<h1 align="center">CampusSync Edge AI</h1>
+<h1 align="center">Jobyn</h1>
 
 <p align="center">
   <b>AI-Powered Career Intelligence Platform for Engineering Students</b><br/>
@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="https://campussync-edge.onrender.com/">Live Demo</a> &middot;
+  <a href="https://jobyn.pages.dev/">Live Demo</a> &middot;
   <a href="docs/API.md">API Reference</a> &middot;
   <a href="docs/ARCHITECTURE.md">Architecture</a> &middot;
   <a href="docs/DEPLOYMENT.md">Deployment</a> &middot;
@@ -37,9 +37,9 @@
 
 ---
 
-## What is CampusSync Edge?
+## What is Jobyn?
 
-CampusSync Edge is a **full-stack career intelligence platform** purpose-built for engineering students. Upload your resume, get a granular readiness score for your target role, identify precise skill gaps with dependency-aware learning paths, practice interviews with real-time concept analysis, build AI-generated projects, and track your growth — all powered by on-device ML and generative AI.
+Jobyn is a **full-stack career intelligence platform** purpose-built for engineering students. Upload your resume, get a granular readiness score for your target role, identify precise skill gaps with dependency-aware learning paths, practice interviews with real-time concept analysis, build AI-generated projects, and track your growth — all powered by on-device ML and generative AI.
 
 > **Not a resume scanner. A career intelligence system.**
 
@@ -467,8 +467,8 @@ Full schema: [backend/supabase_schema.sql](backend/supabase_schema.sql)
 1. Push to GitHub
 2. Render Dashboard → **New Blueprint** → Connect repo
 3. Render auto-creates:
-   - `campussync-edge-api` — Python web service (FastAPI + Uvicorn)
-   - `campussync-edge` — Static site (Vite build + Nginx)
+   - `jobyn-api` — Python web service (FastAPI + Uvicorn)
+   - `jobyn` — Static site (Vite build + Nginx)
 4. Set environment variables in Render dashboard
 
 ### Docker
@@ -509,5 +509,5 @@ MIT License. See [LICENSE](LICENSE) for details.
 ---
 
 <p align="center">
-  <b>CampusSync Edge — From Resume to Ready.</b>
+  <b>Jobyn — From Resume to Ready.</b>
 </p>

@@ -1,8 +1,8 @@
-# Architecture — CampusSync Edge
+# Architecture — Jobyn
 
 ## System Overview
 
-CampusSync Edge is a three-tier web application: a React SPA frontend, a FastAPI Python backend, and a Supabase (PostgreSQL) data layer. The system combines deterministic scoring, ML inference, and generative AI to provide career intelligence to engineering students.
+Jobyn is a three-tier web application: a React SPA frontend, a FastAPI Python backend, and a Supabase (PostgreSQL) data layer. The system combines deterministic scoring, ML inference, and generative AI to provide career intelligence to engineering students.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -392,13 +392,13 @@ Cache versioning via `CACHE_VERSION` constant — bump to invalidate all cached 
 ┌─────────────────────────────────────────┐
 │ Render Blueprint (render.yaml)           │
 │                                          │
-│  campussync-edge-api (Web Service)       │
+│  jobyn-api (Web Service)                 │
 │  ├── Python 3.12 + Uvicorn              │
 │  ├── Port: 8000                          │
 │  ├── Health: GET /docs                   │
 │  └── Region: Oregon                      │
 │                                          │
-│  campussync-edge (Static Site)           │
+│  jobyn (Static Site)                     │
 │  ├── Vite build → dist/                  │
 │  ├── Nginx serving                       │
 │  ├── SPA fallback (index.html)           │

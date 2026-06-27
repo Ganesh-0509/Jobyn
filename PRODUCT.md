@@ -1,4 +1,4 @@
-# PRODUCT.md — CampusSync Edge
+# PRODUCT.md — Jobyn
 
 ## Register
 **Product** — authenticated SaaS dashboard where users are in-task. The tool should disappear into the task.

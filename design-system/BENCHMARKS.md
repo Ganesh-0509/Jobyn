@@ -1,8 +1,8 @@
-# Visual Benchmarks — CampusSync Edge
+# Visual Benchmarks — Jobyn
 
 ## Desired Feel
 
-These products set the bar for what CampusSync Edge should feel like:
+These products set the bar for what Jobyn should feel like:
 
 ### Linear
 - Clean dark surfaces with proper elevation

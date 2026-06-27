@@ -89,7 +89,7 @@ def retrieve_context(query: str, match_count: int = 5) -> List[Dict[str, Any]]:
 # ── Redis Cache ────────────────────────────────────────────────────────────────
 def _cache_key(skill: str, content_type: str = "tutorial") -> str:
     normalized = hashlib.md5(skill.lower().strip().encode()).hexdigest()[:8]
-    return f"campussync:{content_type}:{normalized}:{skill.lower().strip()}"
+    return f"jobyn:{content_type}:{normalized}:{skill.lower().strip()}"
 
 
 def _cache_get(key: str) -> Optional[Dict]:

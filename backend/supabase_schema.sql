@@ -1,5 +1,5 @@
 -- ============================================================
---  CampusSync Edge — Supabase Schema
+--  Jobyn — Supabase Schema
 --  Run this in the Supabase SQL Editor (Dashboard → SQL Editor)
 -- ============================================================
 

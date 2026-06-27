@@ -1,4 +1,4 @@
-# Data Density Philosophy — CampusSync Edge
+# Data Density Philosophy — Jobyn
 
 ## Core Principle
 

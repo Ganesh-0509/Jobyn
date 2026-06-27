@@ -1,4 +1,4 @@
-name: CampusSync Edge CI
+name: Jobyn CI
 
 on:
   push:

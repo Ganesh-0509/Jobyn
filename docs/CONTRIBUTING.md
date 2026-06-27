@@ -1,4 +1,4 @@
-# Contributing to CampusSync Edge
+# Contributing to Jobyn
 
 ## Local Development Setup
 

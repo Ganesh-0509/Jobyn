@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-CampusSync Edge is an AI career-readiness platform for engineering students: upload a resume, get ML + deterministic scoring across job roles, dependency-aware study plans, a RAG-backed AI tutor, voice mock interviews, and GitHub project verification. Monorepo with a `frontend/` (React SPA) and `backend/` (FastAPI + ML).
+Jobyn is an AI career-readiness platform for engineering students: upload a resume, get ML + deterministic scoring across job roles, dependency-aware study plans, a RAG-backed AI tutor, voice mock interviews, and GitHub project verification. Monorepo with a `frontend/` (React SPA) and `backend/` (FastAPI + ML).
 
 ## Commands
 

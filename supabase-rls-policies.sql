@@ -1,5 +1,5 @@
 -- ============================================================
--- CampusSync Edge — Row Level Security (RLS) Policies
+-- Jobyn — Row Level Security (RLS) Policies
 -- Run this in Supabase SQL Editor
 -- ============================================================
 

@@ -63,7 +63,7 @@ def run(seed: int = 42) -> dict:
     """
     t0 = time.time()
     log.info("=" * 60)
-    log.info("  CAMPUSSYNC EDGE — Model Training v2.0")
+    log.info("  JOBYN — Model Training v2.0")
     log.info(f"  Hyperparams: n_estimators={HYPERPARAMS['n_estimators']}, "
              f"max_depth={HYPERPARAMS['max_depth']}, "
              f"min_samples_leaf={HYPERPARAMS['min_samples_leaf']}")
@@ -173,7 +173,7 @@ def run(seed: int = 42) -> dict:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Train CampusSync Edge ML models v2.0 (synthetic_v2 dataset)"
+        description="Train Jobyn ML models v2.0 (synthetic_v2 dataset)"
     )
     parser.add_argument(
         "--seed", type=int, default=42,

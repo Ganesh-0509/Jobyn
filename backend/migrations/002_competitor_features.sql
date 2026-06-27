@@ -1,5 +1,5 @@
 -- ============================================================
---  CampusSync Edge — Competitor Features Migration
+--  Jobyn — Competitor Features Migration
 --  Run this in Supabase SQL Editor AFTER COMPLETE_SCHEMA.sql
 --
 --  New tables (6):

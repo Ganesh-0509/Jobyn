@@ -1,5 +1,5 @@
 -- ============================================================
---  CampusSync Edge — COMPLETE Supabase Schema
+--  Jobyn — COMPLETE Supabase Schema
 --  Run this in the Supabase SQL Editor (Dashboard → SQL Editor)
 --
 --  This file contains ALL tables, indexes, functions, and grants

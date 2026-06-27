@@ -1,4 +1,4 @@
-# CampusSync Edge — Backend Dependencies
+# Jobyn — Backend Dependencies
 #
 # Pinning policy (set 2026-06-10):
 #   == pins are exact versions verified working (app import + test suite +

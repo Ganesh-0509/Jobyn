@@ -1,4 +1,4 @@
-# DESIGN.md — CampusSync Edge
+# DESIGN.md — Jobyn
 
 ## Visual Theme
 Professional SaaS dashboard. Linear/Stripe/Vercel inspired. Clean surfaces, proper elevation, tinted neutrals. NOT cyberpunk, NOT glassmorphism-first.

@@ -63,7 +63,7 @@ def run(seed: int = 42) -> dict:
     """
     t0 = time.time()
     log.info("═" * 55)
-    log.info("  CAMPUSSYNC EDGE — Model Training v1.0")
+    log.info("  JOBYN — Model Training v1.0")
     log.info("═" * 55)
 
     # ── 1. Load data ─────────────────────────────────────────────────────────
@@ -154,7 +154,7 @@ def run(seed: int = 42) -> dict:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Train CampusSync Edge ML models v1.0"
+        description="Train Jobyn ML models v1.0"
     )
     parser.add_argument(
         "--seed", type=int, default=42,

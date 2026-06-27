@@ -27,7 +27,7 @@ class Settings:
     APP_VERSION: str          = os.getenv("APP_VERSION", "4.2.0")
 
     # ── CORS ────────────────────────────────────────────────────────
-    # Comma-separated origins.  Example: "http://localhost:5173,https://app.campussync.ai"
+    # Comma-separated origins.  Example: "http://localhost:5173,https://jobyn.pages.dev"
     CORS_ORIGINS: list[str]   = [
         o.strip()
         for o in os.getenv(

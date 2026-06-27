@@ -1,6 +1,6 @@
-# API Reference — CampusSync Edge
+# API Reference — Jobyn
 
-> **Base URL**: `http://localhost:8000` (development) / `https://campussync-edge-api.onrender.com` (production)
+> **Base URL**: `http://localhost:8000` (development) / `https://jobyn-api.onrender.com` (production)
 >
 > **Swagger UI**: `/docs` | **ReDoc**: `/redoc`
 

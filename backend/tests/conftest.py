@@ -1,5 +1,5 @@
 """
-conftest.py — shared fixtures for CampusSync Edge backend tests.
+conftest.py — shared fixtures for Jobyn backend tests.
 """
 
 import os
@@ -77,7 +77,7 @@ def admin_headers():
     token = jwt.encode(
         {
             "sub": "admin-user-uuid-5678",
-            "email": "admin@campussync.ai",
+            "email": "admin@jobyn.dev",
             "role": "authenticated",
             "aud": "authenticated",
             "app_metadata": {"role": "admin"},

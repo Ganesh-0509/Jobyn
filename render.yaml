@@ -1,4 +1,4 @@
-# ─── Render Blueprint — CampusSync Edge ───────────────────
+# ─── Render Blueprint — Jobyn ───────────────────
 # Deploy both frontend (static site) and backend (web service)
 # from a single repo.
 #
@@ -8,7 +8,7 @@
 services:
   # ── Backend: FastAPI + ML ──────────────────────────────────
   - type: web
-    name: campussync-edge-api
+    name: jobyn-api
     runtime: python
     region: oregon
     plan: free
@@ -36,7 +36,7 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: CORS_ORIGINS
-        sync: false          # set to your frontend URL, e.g. https://campussync-edge.onrender.com
+        sync: false          # set to your frontend URL, e.g. https://jobyn.pages.dev
       - key: REDIS_URL
         sync: false          # set to your Upstash Redis URL (rediss://...)
       - key: RESUME_ENCRYPTION_KEY
@@ -46,7 +46,7 @@ services:
 
   # ── Frontend: Vite Static Site ─────────────────────────────
   - type: web
-    name: campussync-edge
+    name: jobyn
     runtime: static
     rootDir: frontend
     # The committed package-lock.json is generated on Windows and only locks the
@@ -63,7 +63,7 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        sync: false          # set to backend URL, e.g. https://campussync-edge-api.onrender.com
+        sync: false          # set to backend URL, e.g. https://jobyn-api.onrender.com
       - key: VITE_SUPABASE_URL
         sync: false
       - key: VITE_SUPABASE_ANON_KEY
