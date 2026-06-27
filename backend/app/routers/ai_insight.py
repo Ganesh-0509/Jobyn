@@ -401,11 +401,17 @@ def _sb():
 
 @router.post("/study/contribute")
 @heavy_limit
-async def submit_contribution(request: Request, req: ContributionRequest):
+async def submit_contribution(
+    request: Request,
+    req: ContributionRequest,
+    user: AuthUser = Depends(get_current_user),
+):
     from app.utils.validation import sanitize_plain, sanitize_recursive
 
     clean_skill = sanitize_plain(req.skill).lower()
-    clean_submitted_by = sanitize_plain(req.submitted_by)
+    # Attribute to the AUTHENTICATED user, never the client-supplied field — this
+    # prevents anonymous/spoofed submissions flooding the admin review queue.
+    clean_submitted_by = user.email
     clean_content = sanitize_recursive(req.notes_content)
 
     if not clean_skill or not clean_submitted_by or not clean_content:
@@ -528,6 +534,14 @@ async def ingest_course(request: Request, req: IngestCourseRequest, admin=Depend
     from app.core.supabase_client import get_supabase
 
     skill_norm = req.skill.lower().strip()
+
+    # SSRF guard: block URLs that resolve to private/internal addresses (cloud
+    # metadata, internal services) before the server fetches them.
+    from app.utils.validation import validate_public_url
+    try:
+        validate_public_url(req.url)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     # 1. Scrape content
     try:

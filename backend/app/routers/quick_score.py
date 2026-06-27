@@ -11,6 +11,7 @@ from app.services.skill_dictionary import extract_skills
 from app.services.skill_proficiency import infer_proficiency
 from app.services.role_readiness_engine import calculate_role_readiness
 from app.core.rate_limiter import limiter
+import asyncio
 import logging
 
 log = logging.getLogger(__name__)
@@ -57,7 +58,9 @@ async def quick_score(
 
     try:
         # ── Core pipeline ──────────────────────────────────────────────
-        parsed = parse_resume(file_bytes, file.filename or "upload.pdf")
+        # parse_resume is blocking CPU work (pdfplumber/python-docx) — offload
+        # to a thread so it doesn't stall the event loop for other requests.
+        parsed = await asyncio.to_thread(parse_resume, file_bytes, file.filename or "upload.pdf")
         skills = extract_skills(parsed["raw_text"])
 
         # Score against a generic role to get a baseline readiness number.

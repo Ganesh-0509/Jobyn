@@ -81,7 +81,7 @@ class GeminiService:
         backoff = INITIAL_BACKOFF
         for attempt in range(1, MAX_RETRIES + 1):
             try:
-                response = self.client.models.generate_content(
+                response = await self.client.aio.models.generate_content(
                     model=settings.GEMINI_MODEL,
                     contents=prompt,
                 )

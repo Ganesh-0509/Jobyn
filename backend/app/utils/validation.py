@@ -90,6 +90,36 @@ def sanitize_filename(filename: str) -> str:
     return safe_filename
 
 
+def validate_public_url(url: str) -> str:
+    """SSRF guard for server-side fetchers.
+
+    Rejects non-http(s) URLs and URLs whose host resolves to a private,
+    loopback, link-local, reserved, or otherwise-internal address. This blocks
+    access to cloud metadata endpoints (e.g. 169.254.169.254) and internal
+    services. Returns the URL if safe, otherwise raises ValueError.
+    """
+    import ipaddress
+    import socket
+    from urllib.parse import urlparse
+
+    parsed = urlparse((url or "").strip())
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError("Only http and https URLs are allowed.")
+    host = parsed.hostname
+    if not host:
+        raise ValueError("URL has no host.")
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except socket.gaierror:
+        raise ValueError("Could not resolve URL host.")
+    for info in infos:
+        ip = ipaddress.ip_address(info[4][0])
+        if (ip.is_private or ip.is_loopback or ip.is_link_local
+                or ip.is_reserved or ip.is_multicast or ip.is_unspecified):
+            raise ValueError("URLs that resolve to private or internal addresses are not permitted.")
+    return parsed.geturl()
+
+
 def sanitize_recursive(val: any) -> any:
     """Recursively sanitize strings inside nested objects (dicts, lists, primitives)."""
     if isinstance(val, str):

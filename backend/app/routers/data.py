@@ -72,8 +72,10 @@ def get_history(resume_id: int, user: AuthUser = Depends(get_current_user)):
         if not resume_resp.data:
             raise HTTPException(status_code=404, detail=f"Resume {resume_id} not found.")
 
-        # IDOR prevention check
-        if resume_resp.data.get("user_email") and resume_resp.data["user_email"] != user.email:
+        # IDOR prevention check. A missing/NULL owner is treated as a MISMATCH
+        # (deny), not a pass — otherwise any authed user could read records that
+        # have no owner by guessing the integer id.
+        if resume_resp.data.get("user_email") != user.email:
             raise HTTPException(status_code=403, detail="Forbidden: You do not own this resource.")
 
         analyses_resp = sb.table("role_analyses").select("*").eq(
@@ -112,8 +114,10 @@ def compare_roles(resume_id: int, user: AuthUser = Depends(get_current_user)):
         if not resume_resp.data:
             raise HTTPException(status_code=404, detail=f"Resume {resume_id} not found.")
 
-        # IDOR prevention check
-        if resume_resp.data.get("user_email") and resume_resp.data["user_email"] != user.email:
+        # IDOR prevention check. A missing/NULL owner is treated as a MISMATCH
+        # (deny), not a pass — otherwise any authed user could read records that
+        # have no owner by guessing the integer id.
+        if resume_resp.data.get("user_email") != user.email:
             raise HTTPException(status_code=403, detail="Forbidden: You do not own this resource.")
 
         # Fetch all analyses ordered newest-first, then keep latest per role
@@ -402,7 +406,8 @@ def delete_analysis(analysis_id: int, user: AuthUser = Depends(get_current_user)
         if not resume_resp.data:
             raise HTTPException(status_code=404, detail="Associated resume not found.")
 
-        if resume_resp.data[0].get("user_email") and resume_resp.data[0]["user_email"] != user.email:
+        # NULL owner is treated as a mismatch (deny), not a pass.
+        if resume_resp.data[0].get("user_email") != user.email:
             raise HTTPException(status_code=403, detail="Forbidden: You do not own this resource.")
 
         # 3. Delete analysis
@@ -424,7 +429,8 @@ def delete_resume(resume_id: int, user: AuthUser = Depends(get_current_user)):
         if not resume_resp.data:
             raise HTTPException(status_code=404, detail="Resume not found.")
 
-        if resume_resp.data[0].get("user_email") and resume_resp.data[0]["user_email"] != user.email:
+        # NULL owner is treated as a mismatch (deny), not a pass.
+        if resume_resp.data[0].get("user_email") != user.email:
             raise HTTPException(status_code=403, detail="Forbidden: You do not own this resource.")
 
         # 2. Delete resume

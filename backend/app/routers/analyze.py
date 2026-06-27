@@ -19,6 +19,7 @@ from app.core.auth import optional_user, AuthUser
 from app.utils.validation import validate_email, validate_resume_text, sanitize_filename
 from app.core.rate_limiter import upload_limit
 from typing import Optional
+import asyncio
 import logging
 import magic
 
@@ -83,7 +84,9 @@ async def upload_resume(
             raise HTTPException(status_code=413, detail=f"File too large. Maximum size is {_settings.MAX_UPLOAD_BYTES // 1_000_000}MB.")
 
         # ── Core deterministic pipeline ──────────────────────────────────────
-        parsed  = parse_resume(file_bytes, safe_filename)
+        # parse_resume is blocking CPU work (pdfplumber/python-docx) — offload to
+        # a thread so it doesn't stall the event loop for concurrent requests.
+        parsed  = await asyncio.to_thread(parse_resume, file_bytes, safe_filename)
 
         # Validate extracted text
         text_ok, text_msg = validate_resume_text(parsed["raw_text"])
