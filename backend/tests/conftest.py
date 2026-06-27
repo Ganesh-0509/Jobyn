@@ -23,7 +23,7 @@ _REQUIRES_SUPABASE = {
     "test_export_with_admin",
     "test_export_dataset_fields",
     "test_session_latest_with_auth",
-    "test_analytics_with_auth",
+    "test_analytics_with_admin",
     "test_delete_with_auth",
     "test_session_latest_returns_data",
     "test_analytics_returns_stats",
