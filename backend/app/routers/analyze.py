@@ -55,8 +55,12 @@ async def upload_resume(
             detail=f"Invalid role '{role}'. Choose from: {VALID_ROLES}",
         )
 
-    # Prefer authenticated user's email, fall back to form field
-    effective_email = validate_email((auth_user.email if auth_user else None) or user_email)
+    # Only the AUTHENTICATED user's verified email may attribute persisted data.
+    # A client-supplied `user_email` is NOT trusted: trusting it would let an
+    # attacker POST a resume with someone else's email and have it land in that
+    # victim's account/history (IDOR via attribution). Anonymous uploads are
+    # still scored and returned, but never persisted.
+    effective_email = validate_email(auth_user.email) if (auth_user and auth_user.email) else None
 
     try:
         file_bytes = await file.read()
@@ -97,7 +101,7 @@ async def upload_resume(
         )
         # Overlay any skills this user already verified (Phase 2) so their score
         # stays unlocked across re-analyses. No-op if the table isn't applied yet.
-        for skill, info in load_verified(effective_email).items():
+        for skill, info in (load_verified(effective_email) if effective_email else {}).items():
             if skill in proficiency:
                 proficiency[skill] = info
 
@@ -153,6 +157,10 @@ async def upload_resume(
 
         if privacy_mode:
             db_warning = "Privacy Mode Active: Data processed in-memory only. No cloud storage used."
+        elif effective_email is None:
+            # Anonymous upload — score and return, but do not persist (we will not
+            # attribute data to an unverified, client-supplied identity).
+            db_warning = "Sign in to save your analysis. Your result is shown but not stored."
         else:
             try:
                 sb = get_supabase()
