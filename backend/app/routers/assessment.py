@@ -22,7 +22,7 @@ import uuid
 import logging
 
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.core.auth import get_current_user, AuthUser
 from app.core.cache import cache
@@ -46,7 +46,7 @@ TOKEN_TTL = 1800          # 30 min
 class StartReq(BaseModel):
     role: str
     skills: list[str]
-    raw_text: str = ""
+    raw_text: str = Field(default="", max_length=500_000)
     sections_detected: list[str] = []
 
 

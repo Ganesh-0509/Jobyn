@@ -53,7 +53,7 @@ async def trigger_onboarding(req: TriggerRequest, user: AuthUser = Depends(get_c
     # Upsert progress record
     try:
         sb.table("onboarding_progress").upsert({
-            "user_id": "anonymous",  # Will be updated when we have auth
+            "user_id": user.sub,  # authenticated Supabase user UUID (was hardcoded "anonymous")
             "email": user.email,
             "goal": req.goal,
             "email_welcome_sent": False,

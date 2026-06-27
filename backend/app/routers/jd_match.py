@@ -6,7 +6,7 @@ persists the match result, and provides match history.
 """
 
 from fastapi import APIRouter, HTTPException, Depends, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 
 from app.core.auth import get_current_user, AuthUser
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/jd", tags=["JD Matcher"])
 
 
 class JDMatchRequest(BaseModel):
-    jd_text: str
+    jd_text: str = Field(..., max_length=20000)
     jd_title: Optional[str] = None
     jd_company: Optional[str] = None
 

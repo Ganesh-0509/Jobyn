@@ -139,7 +139,10 @@ app.add_middleware(
     # allows any localhost/127.0.0.1 port so local dev works regardless of which
     # port Vite picks (5173/5174/5175…) without editing the allowlist each time.
     allow_origins       = settings.CORS_ORIGINS,
-    allow_origin_regex   = r"http://(localhost|127\.0\.0\.1):\d+",
+    # Restrict the dev regex to the actual Vite ports rather than ANY port — with
+    # allow_credentials=True, a wildcard \d+ would let any local app make
+    # credentialed cross-origin requests.
+    allow_origin_regex   = r"http://(localhost|127\.0\.0\.1):(517[3-9]|518[0-5])",
     allow_credentials   = True,
     allow_methods       = ["*"],
     allow_headers       = ["*"],

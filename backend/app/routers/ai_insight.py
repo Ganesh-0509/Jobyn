@@ -346,7 +346,7 @@ class InterviewStartRequest(BaseModel):
 class InterviewAnswerRequest(BaseModel):
     skill: str
     question: str
-    answer: str
+    answer: str = Field(..., max_length=10000)
     question_number: int = 1
     difficulty: str = "medium"
     history: Optional[List[Dict[str, Any]]] = []
