@@ -1,7 +1,7 @@
 # Jobyn — Deployment (Cloudflare Pages) & Google Visibility (Search Console)
 
 > Goal: get Jobyn live on a free, fast host and make it show up in Google search.
-> Repo: https://github.com/Ganesh-0509/Jobyn  •  Frontend target URL: https://jobyn.pages.dev
+> Repo: https://github.com/Ganesh-0509/Jobyn  •  Frontend target URL: https://getjobyn.pages.dev
 
 This is the recreated hosting/SEO playbook (the original notes lived on a branch that was lost).
 
@@ -10,7 +10,7 @@ This is the recreated hosting/SEO playbook (the original notes lived on a branch
 ## 0. Why it's not in Google yet
 A site only appears in Google once it is (a) **publicly hosted at a stable URL** and (b) **crawled & indexed** by Google. Right now the project isn't on a public production URL that Google has discovered. The two phases below fix exactly that: **Phase A** puts it online; **Phase B** tells Google about it.
 
-The SEO groundwork is already in the code: per-page `<title>`/meta, OpenGraph/Twitter tags, canonical URLs, JSON-LD, `robots.txt`, and `sitemap.xml` — all already pointing at `jobyn.pages.dev`. A SPA fallback (`frontend/public/_redirects`) is now in place so deep links don't 404.
+The SEO groundwork is already in the code: per-page `<title>`/meta, OpenGraph/Twitter tags, canonical URLs, JSON-LD, `robots.txt`, and `sitemap.xml` — all already pointing at `getjobyn.pages.dev`. A SPA fallback (`frontend/public/_redirects`) is now in place so deep links don't 404.
 
 ---
 
@@ -31,7 +31,7 @@ Everything is already on `main` at `github.com/Ganesh-0509/Jobyn`. Commit & push
 ### A2. Create the Pages project
 1. Go to **dash.cloudflare.com** → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
 2. Authorize GitHub and select the repo **Ganesh-0509/Jobyn**.
-3. **Project name:** `jobyn`  → this gives you **https://jobyn.pages.dev**.
+3. **Project name:** `jobyn`  → this gives you **https://getjobyn.pages.dev**.
 
 ### A3. Build settings
 | Setting | Value |
@@ -56,14 +56,14 @@ Everything is already on `main` at `github.com/Ganesh-0509/Jobyn`. Commit & push
 (Optional: `VITE_SENTRY_DSN`.)
 
 ### A5. Save & Deploy
-Cloudflare builds and publishes to **https://jobyn.pages.dev**. Watch the build log; first build ~2–4 min.
+Cloudflare builds and publishes to **https://getjobyn.pages.dev**. Watch the build log; first build ~2–4 min.
 
 ### A6. Point the backend CORS at the new URL (REQUIRED — else API calls fail)
 Render dashboard → backend service → **Environment** → set/append `CORS_ORIGINS`:
 ```
-https://jobyn.pages.dev,http://localhost:5173
+https://getjobyn.pages.dev,http://localhost:5173
 ```
-Save → backend redeploys. Without this, the browser blocks every API call from jobyn.pages.dev.
+Save → backend redeploys. Without this, the browser blocks every API call from getjobyn.pages.dev.
 
 > Note on Render service names: `render.yaml` now defines `jobyn-api` / `jobyn`. Your **existing live services may still be named `campussync-edge-*`** — either rename them in the Render dashboard to match, or keep the old names and just use their real `.onrender.com` URL for `VITE_API_URL` above. Don't blindly re-sync the blueprint or it may create duplicate services.
 
@@ -71,11 +71,11 @@ Save → backend redeploys. Without this, the browser blocks every API call from
 
 ## PHASE B — Make it visible in Google (Search Console)
 
-Do this **after** jobyn.pages.dev is live.
+Do this **after** getjobyn.pages.dev is live.
 
 ### B1. Add the property
 1. Go to **search.google.com/search-console**.
-2. **Add property** → choose **URL prefix** → enter `https://jobyn.pages.dev`.
+2. **Add property** → choose **URL prefix** → enter `https://getjobyn.pages.dev`.
 
 ### B2. Verify ownership (HTML tag method — easiest for Pages)
 1. Search Console gives you a tag like:
@@ -86,18 +86,18 @@ Do this **after** jobyn.pages.dev is live.
 
 ### B3. Submit your sitemap
 Search Console → **Sitemaps** → enter `sitemap.xml` → **Submit**.
-(It's already live at `https://jobyn.pages.dev/sitemap.xml`.)
+(It's already live at `https://getjobyn.pages.dev/sitemap.xml`.)
 
 ### B4. Request indexing of key pages
 Use **URL Inspection** (top bar) → paste each URL → **Request indexing**:
-- `https://jobyn.pages.dev/`
-- `https://jobyn.pages.dev/quick-score`
-- `https://jobyn.pages.dev/docs`
-- `https://jobyn.pages.dev/blog`
+- `https://getjobyn.pages.dev/`
+- `https://getjobyn.pages.dev/quick-score`
+- `https://getjobyn.pages.dev/docs`
+- `https://getjobyn.pages.dev/blog`
 
 ### B5. Wait & monitor
 Indexing takes **days to a few weeks**. Check progress:
-- Google search: `site:jobyn.pages.dev` (shows what's indexed)
+- Google search: `site:getjobyn.pages.dev` (shows what's indexed)
 - Search Console **Pages / Coverage** report (shows indexed vs. excluded + reasons)
 
 ---
@@ -113,8 +113,8 @@ Indexing takes **days to a few weeks**. Check progress:
 - [ ] `frontend/public/_redirects` committed & pushed
 - [ ] Cloudflare Pages project `jobyn` created, build = `npm run prebuild && npx tsc && npx vite build`, root = `frontend`, output = `dist`
 - [ ] Pages env vars set (VITE_API_URL, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, NODE_VERSION=20, PUPPETEER_SKIP_DOWNLOAD=1)
-- [ ] `https://jobyn.pages.dev` loads
-- [ ] Render `CORS_ORIGINS` includes `https://jobyn.pages.dev`
+- [ ] `https://getjobyn.pages.dev` loads
+- [ ] Render `CORS_ORIGINS` includes `https://getjobyn.pages.dev`
 - [ ] Search Console property added + verified (meta tag in index.html)
 - [ ] `sitemap.xml` submitted
 - [ ] Key URLs requested for indexing

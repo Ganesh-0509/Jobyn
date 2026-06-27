@@ -36,7 +36,7 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: CORS_ORIGINS
-        sync: false          # set to your frontend URL, e.g. https://jobyn.pages.dev
+        sync: false          # set to your frontend URL, e.g. https://getjobyn.pages.dev
       - key: REDIS_URL
         sync: false          # set to your Upstash Redis URL (rediss://...)
       - key: RESUME_ENCRYPTION_KEY

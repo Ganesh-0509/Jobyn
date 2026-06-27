@@ -18,7 +18,7 @@ export default function SEO({
   keywords,
 }: SEOProps) {
   const fullTitle = title.includes('Jobyn') ? title : `${title} — Jobyn`
-  const canonicalUrl = canonical || `https://jobyn.pages.dev${window.location.pathname}`
+  const canonicalUrl = canonical || `https://getjobyn.pages.dev${window.location.pathname}`
 
   return (
     <Helmet>

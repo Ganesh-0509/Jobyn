@@ -989,7 +989,7 @@ export default function Landing() {
             </div>
           </div>
           <div className="flex flex-wrap justify-center gap-6 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            <a href="https://jobyn.pages.dev" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors flex items-center gap-1">Live App <ArrowUpRight className="inline size-3" /></a>
+            <a href="https://getjobyn.pages.dev" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors flex items-center gap-1">Live App <ArrowUpRight className="inline size-3" /></a>
             <a href="https://github.com/Ganesh-0509/Jobyn" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors flex items-center gap-1">GitHub <ArrowUpRight className="inline size-3" /></a>
             <Link to="/privacy" className="hover:text-primary transition-colors flex items-center gap-1">Privacy <ArrowUpRight className="inline size-3" /></Link>
             <Link to="/docs" className="hover:text-primary transition-colors flex items-center gap-1">Docs <ArrowUpRight className="inline size-3" /></Link>

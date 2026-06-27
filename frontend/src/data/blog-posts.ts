@@ -193,7 +193,7 @@ This is documented in our privacy policy: "Voice recordings processed by Speech 
 
 ---
 
-*This post describes the voice interview feature in [Jobyn](https://jobyn.pages.dev), an open-source career readiness platform built with React, FastAPI, and Supabase.*`,
+*This post describes the voice interview feature in [Jobyn](https://getjobyn.pages.dev), an open-source career readiness platform built with React, FastAPI, and Supabase.*`,
   },
   {
     slug: 'voice-ai-interview-simulator-web-speech-api',
@@ -434,7 +434,7 @@ If you're not sure, run it through a tool that can give you objective, data-driv
 
 ---
 
-*Try the free resume scorer at [Jobyn](https://jobyn.pages.dev/quick-score) — no signup required.*`,
+*Try the free resume scorer at [Jobyn](https://getjobyn.pages.dev/quick-score) — no signup required.*`,
   },
   {
     slug: '5-resume-mistakes-engineering-students-make',
@@ -504,7 +504,7 @@ Your resume doesn't need to be perfect. It needs to be clear, specific, and hone
 
 ---
 
-*Get instant, objective feedback on your resume at [Jobyn](https://jobyn.pages.dev/quick-score).*`,
+*Get instant, objective feedback on your resume at [Jobyn](https://getjobyn.pages.dev/quick-score).*`,
   },
   {
     slug: 'skill-gap-analysis-what-top-companies-want',
@@ -602,7 +602,7 @@ Quality of preparation beats quantity every time.
 
 ---
 
-*Get a personalized skill gap analysis at [Jobyn](https://jobyn.pages.dev/skill-gap) — powered by real placement data.*`,
+*Get a personalized skill gap analysis at [Jobyn](https://getjobyn.pages.dev/skill-gap) — powered by real placement data.*`,
   },
 ]
 

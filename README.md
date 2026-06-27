@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="https://jobyn.pages.dev/">Live Demo</a> &middot;
+  <a href="https://getjobyn.pages.dev/">Live Demo</a> &middot;
   <a href="docs/API.md">API Reference</a> &middot;
   <a href="docs/ARCHITECTURE.md">Architecture</a> &middot;
   <a href="docs/DEPLOYMENT.md">Deployment</a> &middot;

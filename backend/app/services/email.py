@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 FROM_EMAIL = os.getenv("EMAIL_FROM", "Jobyn <onboarding@campussync.dev>")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "https://jobyn.pages.dev")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://getjobyn.pages.dev")
 
 _resend = None
 

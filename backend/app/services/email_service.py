@@ -57,7 +57,7 @@ def welcome_email(name: str) -> tuple[str, str]:
             <li><strong>See your skill gaps</strong> — know exactly what to learn</li>
             <li><strong>Practice an interview</strong> — AI-powered role-specific questions</li>
         </ol>
-        <a href="https://jobyn.pages.dev/onboarding"
+        <a href="https://getjobyn.pages.dev/onboarding"
            style="display: inline-block; margin-top: 24px; padding: 12px 28px; background: #6366f1; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
             Complete Your Setup →
         </a>
@@ -80,7 +80,7 @@ def resume_reminder_email(name: str) -> tuple[str, str]:
             It takes 60 seconds to see where you stand. Our ML model (95% accuracy)
             will score your placement readiness and show your top 3 skill gaps.
         </p>
-        <a href="https://jobyn.pages.dev/resume-analyzer"
+        <a href="https://getjobyn.pages.dev/resume-analyzer"
            style="display: inline-block; margin-top: 24px; padding: 12px 28px; background: #6366f1; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
             Upload Resume →
         </a>
@@ -103,7 +103,7 @@ def skill_gap_email(name: str, top_skill: str) -> tuple[str, str]:
             We've identified the skills holding you back. Start with <strong>{top_skill}</strong>
             — it's the most impactful gap to close before placement season.
         </p>
-        <a href="https://jobyn.pages.dev/skill-gap"
+        <a href="https://getjobyn.pages.dev/skill-gap"
            style="display: inline-block; margin-top: 24px; padding: 12px 28px; background: #6366f1; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
             View Your Gaps →
         </a>
@@ -123,7 +123,7 @@ def interview_reminder_email(name: str) -> tuple[str, str]:
             You've seen your score and gaps — now test yourself with role-specific
             interview questions. Our AI adapts to your skill level.
         </p>
-        <a href="https://jobyn.pages.dev/interview-readiness"
+        <a href="https://getjobyn.pages.dev/interview-readiness"
            style="display: inline-block; margin-top: 24px; padding: 12px 28px; background: #6366f1; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
             Start Mock Interview →
         </a>
@@ -150,7 +150,7 @@ def weekly_summary_email(name: str, score: int, gaps: int, days_active: int) -> 
         <p style="font-size: 15px; color: #333; line-height: 1.6; margin-top: 16px;">
             Keep going — students who close 3+ gaps are 4x more likely to get placed.
         </p>
-        <a href="https://jobyn.pages.dev/dashboard"
+        <a href="https://getjobyn.pages.dev/dashboard"
            style="display: inline-block; margin-top: 24px; padding: 12px 28px; background: #6366f1; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
             Go to Dashboard →
         </a>

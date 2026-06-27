@@ -5,4 +5,4 @@ Disallow: /api/
 Disallow: /login
 Disallow: /signup
 
-Sitemap: https://jobyn.pages.dev/sitemap.xml
+Sitemap: https://getjobyn.pages.dev/sitemap.xml
