@@ -178,7 +178,7 @@ export default function App() {
         // Skip splash if user has visited before
         return !sessionStorage.getItem('cs_splash_seen')
     })
-    const [statusMessage, setStatusMessage] = useState('Initializing CampusSync Edge OS...')
+    const [statusMessage, setStatusMessage] = useState('Initializing Jobyn OS...')
     const [loadStep, setLoadStep] = useState(0)
 
     useEffect(() => {
@@ -269,10 +269,10 @@ export default function App() {
                                                             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                                                             className="absolute bottom-4 w-[340px] h-[190px] bg-white rounded-xl shadow-md border border-stone-200/60 p-5 flex flex-col items-center justify-center space-y-3 origin-bottom"
                                                         >
-                                                            {/* Miniature CampusSync Page Header Mock */}
+                                                            {/* Miniature Jobyn Page Header Mock */}
                                                             <div className="flex items-center gap-2">
                                                                 <LogoMark size={24} />
-                                                                <span className="font-heading text-xs font-bold text-foreground tracking-tight">CampusSync</span>
+                                                                <span className="font-heading text-xs font-bold text-foreground tracking-tight">Jobyn</span>
                                                             </div>
                                                             <div className="w-16 h-1 bg-primary/20 rounded-full animate-pulse" />
                                                             <div className="text-center space-y-1">
@@ -321,7 +321,7 @@ export default function App() {
                                                         animate={{ opacity: loadStep >= 3 ? 0 : 1 }}
                                                         className="text-center mt-12 space-y-1.5"
                                                     >
-                                                        <h4 className="font-heading text-stone-500 text-sm font-semibold tracking-wide">CampusSync Edge OS</h4>
+                                                        <h4 className="font-heading text-stone-500 text-sm font-semibold tracking-wide">Jobyn OS</h4>
                                                         <p className="font-mono text-[10px] uppercase tracking-wider text-stone-400 animate-pulse">UNSEALING PLACEMENT CREDENTIALS...</p>
                                                     </motion.div>
                                                 </div>

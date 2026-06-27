@@ -17,8 +17,8 @@ export default function SEO({
   ogType = 'website',
   keywords,
 }: SEOProps) {
-  const fullTitle = title.includes('CampusSync') ? title : `${title} — CampusSync`
-  const canonicalUrl = canonical || `https://campussync.ai${window.location.pathname}`
+  const fullTitle = title.includes('Jobyn') ? title : `${title} — Jobyn`
+  const canonicalUrl = canonical || `https://jobyn.pages.dev${window.location.pathname}`
 
   return (
     <Helmet>

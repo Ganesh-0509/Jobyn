@@ -9,8 +9,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-FROM_EMAIL = os.getenv("EMAIL_FROM", "CampusSync <onboarding@campussync.dev>")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "https://campussync.dev")
+FROM_EMAIL = os.getenv("EMAIL_FROM", "Jobyn <onboarding@campussync.dev>")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://jobyn.pages.dev")
 
 _resend = None
 
@@ -64,13 +64,13 @@ def _layout(content: str) -> str:
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f8fafc;padding:32px;margin:0">
 <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;box-shadow:0 1px 3px rgba(0,0,0,0.1)">
   <div style="margin-bottom:24px">
-    <span style="font-size:20px;font-weight:700;color:#1e293b">CampusSync</span>
+    <span style="font-size:20px;font-weight:700;color:#1e293b">Jobyn</span>
     <span style="font-size:12px;color:#94a3b8;display:block;margin-top:2px">Your AI Career Coach</span>
   </div>
   {content}
   <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0">
   <p style="font-size:11px;color:#94a3b8;text-align:center">
-    You're receiving this because you signed up for CampusSync.
+    You're receiving this because you signed up for Jobyn.
     <a href="{FRONTEND_URL}/settings" style="color:#6366f1">Manage notifications</a>
   </p>
 </div></body></html>"""
@@ -99,7 +99,7 @@ def email_day1_no_upload() -> str:
   </p>
   <div style="margin:20px 0">{_button("Analyze Your Resume", f"{FRONTEND_URL}/resume-analyzer")}</div>
   <p style="font-size:13px;color:#64748b">
-    No resume? Try our sample analysis to see what CampusSync can do.
+    No resume? Try our sample analysis to see what Jobyn can do.
   </p>
 """)
 
@@ -130,7 +130,7 @@ def email_day5_no_interview() -> str:
 
 def email_day7_summary(score: int, skills_detected: int, name: str) -> str:
     return _layout(f"""
-  <h1 style="font-size:18px;color:#1e293b;margin:0 0 12px">Your first week on CampusSync</h1>
+  <h1 style="font-size:18px;color:#1e293b;margin:0 0 12px">Your first week on Jobyn</h1>
   <p style="font-size:14px;color:#475569;line-height:1.6">
     Hey {name}, here's your progress this week:
   </p>

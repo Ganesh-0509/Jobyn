@@ -73,7 +73,7 @@ function CodeTabs({ js, py }: { js: string; py: string }) {
 const docPages: DocSection[] = [
     {
         id: 'intro',
-        title: 'Welcome to CampusSync',
+        title: 'Welcome to Jobyn',
         category: 'Getting Started',
         icon: BookOpen,
         toc: [
@@ -84,10 +84,10 @@ const docPages: DocSection[] = [
         content: (
             <div>
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-4 font-[family-name:var(--font-heading)]">
-                    Welcome to CampusSync Edge
+                    Welcome to Jobyn
                 </h1>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                    CampusSync Edge AI is a state-of-the-art career readiness intelligence engine designed to align academic curriculum and engineering student portfolios directly with live industry benchmarks. By leveraging on-device machine learning, the system acts as a real-time advisor for technical skill building.
+                    Jobyn is a state-of-the-art career readiness intelligence engine designed to align academic curriculum and engineering student portfolios directly with live industry benchmarks. By leveraging on-device machine learning, the system acts as a real-time advisor for technical skill building.
                 </p>
 
                 <Card className="bg-cyan/5 border-cyan/15 mb-8">
@@ -106,7 +106,7 @@ const docPages: DocSection[] = [
                     Overview
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-                    Traditional career portals rely on heavy relational structures that store sensitive student telemetry in third-party cloud databases. CampusSync Edge introduces a peerless <strong className="text-foreground">local edge engine</strong> built to index portfolios directly in sandboxed database environments, matching engineering gaps with immediate precision.
+                    Traditional career portals rely on heavy relational structures that store sensitive student telemetry in third-party cloud databases. Jobyn introduces a peerless <strong className="text-foreground">local edge engine</strong> built to index portfolios directly in sandboxed database environments, matching engineering gaps with immediate precision.
                 </p>
 
                 <h2 id="why-edge" className="text-xl font-bold tracking-tight mt-8 mb-4 pb-2 border-b border-border/50 font-[family-name:var(--font-heading)]">
@@ -125,7 +125,7 @@ const docPages: DocSection[] = [
                     The Growth Loop Metaphor
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                    Instead of treating preparation as isolated assignments, CampusSync orchestrates an elegant, closed-loop growth pathway:
+                    Instead of treating preparation as isolated assignments, Jobyn orchestrates an elegant, closed-loop growth pathway:
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {[
@@ -161,7 +161,7 @@ const docPages: DocSection[] = [
                     Quickstart Guide
                 </h1>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                    Deploy and run CampusSync Edge on your local development machine in under two minutes.
+                    Deploy and run Jobyn on your local development machine in under two minutes.
                 </p>
 
                 <h2 id="installation" className="text-xl font-bold tracking-tight mt-8 mb-4 pb-2 border-b border-border/50 font-[family-name:var(--font-heading)]">
@@ -212,7 +212,7 @@ $ npm install`}
                     ONNX WebAssembly AI Engine
                 </h1>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                    Learn how CampusSync Edge loads and runs machine learning models offline inside the client sandbox using WASM execution pipelines.
+                    Learn how Jobyn loads and runs machine learning models offline inside the client sandbox using WASM execution pipelines.
                 </p>
 
                 <h2 id="how-onnx-works" className="text-xl font-bold tracking-tight mt-8 mb-4 pb-2 border-b border-border/50 font-[family-name:var(--font-heading)]">
@@ -238,7 +238,7 @@ $ npm install`}
                     Local Model Specifications
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                    CampusSync Edge ships with three client-side model files:
+                    Jobyn ships with three client-side model files:
                 </p>
                 <div className="rounded-lg border border-border/50 overflow-hidden mb-6">
                     <table className="w-full text-xs text-left">
@@ -311,7 +311,7 @@ def run_role_inference(input_features):
                     Privacy Shield Framework
                 </h1>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                    CampusSync Edge AI is engineered with rigorous structural guarantees to ensure student credentials never face exposure.
+                    Jobyn is engineered with rigorous structural guarantees to ensure student credentials never face exposure.
                 </p>
 
                 <h2 id="compliance" className="text-xl font-bold tracking-tight mt-8 mb-4 pb-2 border-b border-border/50 font-[family-name:var(--font-heading)]">
@@ -350,8 +350,8 @@ export default function Docs() {
     return (
         <div className="min-h-screen bg-background">
             <SEO
-                title="Documentation — CampusSync Edge AI"
-                description="Learn how CampusSync Edge works. ONNX-powered AI, privacy-first resume analysis, skill gap detection, and career readiness scoring."
+                title="Documentation — Jobyn"
+                description="Learn how Jobyn works. ONNX-powered AI, privacy-first resume analysis, skill gap detection, and career readiness scoring."
             />
             {/* Header */}
             <header className="sticky top-0 z-50 flex items-center justify-between border-b border-border/50 bg-background/80 backdrop-blur-xl px-4 py-3">
@@ -359,7 +359,7 @@ export default function Docs() {
                     <Link to="/" className="flex items-center justify-center h-8 w-8 rounded-lg bg-white/[0.03] border border-border/50 text-foreground hover:bg-white/[0.06] transition-colors">
                         <ArrowLeft className="h-4 w-4" />
                     </Link>
-                    <span className="text-sm font-bold tracking-tight">CampusSync Edge Docs</span>
+                    <span className="text-sm font-bold tracking-tight">Jobyn Docs</span>
                 </div>
                 <span className="text-xs font-mono text-muted-foreground">v1.2.0 · Local AI Mode</span>
             </header>

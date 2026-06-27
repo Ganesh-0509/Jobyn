@@ -40,7 +40,7 @@ const policySections: PolicySection[] = [
         content: (
             <div>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                    CampusSync Edge AI operates on a <strong className="text-foreground">Zero-Cloud-Retention Architecture</strong>. Unlike traditional platforms that harvest technical portfolios and resumes onto centralized databases, our system relies on client-side sandboxed environments. Your data belongs exclusively to you and remains hosted on your physical machine.
+                    Jobyn operates on a <strong className="text-foreground">Zero-Cloud-Retention Architecture</strong>. Unlike traditional platforms that harvest technical portfolios and resumes onto centralized databases, our system relies on client-side sandboxed environments. Your data belongs exclusively to you and remains hosted on your physical machine.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                     <Card className="bg-mint/5 border-mint/15">
@@ -113,14 +113,14 @@ const policySections: PolicySection[] = [
         content: (
             <div>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                    CampusSync Edge AI explicitly aligns its internal structures with standard global compliance frameworks:
+                    Jobyn explicitly aligns its internal structures with standard global compliance frameworks:
                 </p>
                 <div className="flex flex-col gap-2">
                     <AccordionItem title="GDPR Alignment (Articles 15 & 17)">
                         Under GDPR Article 17 (Right to Erasure), any user can wipe their technical indicators, parsed resumes, and performance logs instantly. Because all calculations run within browser IndexedDB sandboxes, erasing the state is fully local and does not leave residual backups on remote servers.
                     </AccordionItem>
                     <AccordionItem title="CCPA Alignment (Data Sharing & Transparency)">
-                        CampusSync does not sell, barter, or distribute your technical assessments or speech telemetry. All models running on ONNX Runtime Web execute offline in sandboxed client scripts. We have zero central access to your portfolios.
+                        Jobyn does not sell, barter, or distribute your technical assessments or speech telemetry. All models running on ONNX Runtime Web execute offline in sandboxed client scripts. We have zero central access to your portfolios.
                     </AccordionItem>
                     <AccordionItem title="FERPA Alignment (Student Telemetry Protection)">
                         Our platform strictly aligns with the Family Educational Rights and Privacy Act (FERPA) by ensuring that academic scores, portfolio benchmarks, and technical training profiles are not public or exposed without user-authorized cloud synchronization.
@@ -146,7 +146,7 @@ export default function Privacy() {
                     <Link to="/" className="flex items-center justify-center h-8 w-8 rounded-lg bg-white/[0.03] border border-border/50 text-foreground hover:bg-white/[0.06] transition-colors">
                         <ArrowLeft className="h-4 w-4" />
                     </Link>
-                    <span className="text-sm font-bold tracking-tight">CampusSync Privacy Center</span>
+                    <span className="text-sm font-bold tracking-tight">Jobyn Privacy Center</span>
                 </div>
                 <Badge variant="outline" className="text-xs border-mint/30 text-mint">
                     <CheckCircle className="h-3 w-3 mr-1" /> Compliance Audited

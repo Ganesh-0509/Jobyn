@@ -89,7 +89,7 @@ export default function Settings() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `campussync-export-${new Date().toISOString().slice(0, 10)}.json`
+    a.download = `jobyn-export-${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -337,7 +337,7 @@ export default function Settings() {
               <CardTitle className="flex items-center gap-2 text-sm"><Info className="size-3.5" /> About</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-xs">
-              <p className="font-bold text-foreground">CampusSync Edge AI - v2.0</p>
+              <p className="font-bold text-foreground">Jobyn - v2.0</p>
               <p className="leading-relaxed text-muted-foreground">Locally cached ONNX model for classification + Gemini 2.0 Flash for semantic reasoning. Built to help students bridge the gap between academic skills and industry expectations.</p>
               <p className="font-mono text-xs text-muted-foreground/60">FastAPI · React · Supabase · ONNX Runtime</p>
             </CardContent>

@@ -18,7 +18,7 @@ const termChapters: TermChapter[] = [
         title: '1. Agreement to Terms',
         content: (
             <p className="text-sm text-muted-foreground leading-relaxed">
-                By accessing or utilizing the CampusSync Edge AI platform, you agree to be bound by these Terms and Conditions in their entirety. If you do not agree with any clause of these terms, you are prohibited from using the platform and must immediately cease all sandbox execution and clear your browser storage data.
+                By accessing or utilizing the Jobyn platform, you agree to be bound by these Terms and Conditions in their entirety. If you do not agree with any clause of these terms, you are prohibited from using the platform and must immediately cease all sandbox execution and clear your browser storage data.
             </p>
         )
     },
@@ -28,11 +28,11 @@ const termChapters: TermChapter[] = [
         content: (
             <div className="text-sm text-muted-foreground leading-relaxed">
                 <p className="mb-3">
-                    CampusSync Edge is a decentralized, browser-level analytical interface. You acknowledge and agree to the following technical operational parameters:
+                    Jobyn is a decentralized, browser-level analytical interface. You acknowledge and agree to the following technical operational parameters:
                 </p>
                 <ul className="space-y-3 pl-5 list-disc">
                     <li>
-                        <strong className="text-foreground">Hardware Overhead:</strong> Machine learning inference pipelines (including ONNX Runtime Web and WASM models) are executed directly on your hardware processor. CampusSync is not responsible for local device performance fluctuations, thermal limits, or browser crashes during runtime execution.
+                        <strong className="text-foreground">Hardware Overhead:</strong> Machine learning inference pipelines (including ONNX Runtime Web and WASM models) are executed directly on your hardware processor. Jobyn is not responsible for local device performance fluctuations, thermal limits, or browser crashes during runtime execution.
                     </li>
                     <li>
                         <strong className="text-foreground">Local Storage Telemetry:</strong> Calculated readiness indexes, assessment scores, and training progress markers are cached strictly inside your local sandbox (IndexedDB). Wiping your browser history or resetting the local sandbox will permanently delete this telemetry.
@@ -47,14 +47,14 @@ const termChapters: TermChapter[] = [
         content: (
             <div className="text-sm text-muted-foreground leading-relaxed">
                 <p className="mb-3">
-                    Your intellectual property rights are sacred. CampusSync Edge AI does not acquire ownership over any technical portfolios, documents, resumes, or voice recordings processed through our interface:
+                    Your intellectual property rights are sacred. Jobyn does not acquire ownership over any technical portfolios, documents, resumes, or voice recordings processed through our interface:
                 </p>
                 <ul className="space-y-3 pl-5 list-disc">
                     <li>
                         <strong className="text-foreground">Absolute Retention:</strong> Uploaded technical credentials, CVs, and portfolios remain 100% your property. Since all parsing is sandboxed inside ephemeral browser memory, we do not store, copy, or distribute your intellectual property.
                     </li>
                     <li>
-                        <strong className="text-foreground">Platform Materials:</strong> All proprietary source code, vector graphics, interface timelines, and ONNX compiled model binaries represent the exclusive intellectual property of CampusSync Edge AI, protected under international copyright treaties.
+                        <strong className="text-foreground">Platform Materials:</strong> All proprietary source code, vector graphics, interface timelines, and ONNX compiled model binaries represent the exclusive intellectual property of Jobyn, protected under international copyright treaties.
                     </li>
                 </ul>
             </div>
@@ -65,7 +65,7 @@ const termChapters: TermChapter[] = [
         title: '4. Limitation of Liability',
         content: (
             <p className="text-sm text-muted-foreground leading-relaxed">
-                In no event shall CampusSync Edge, its creators, or partners be liable for any indirect, punitive, incidental, or consequential damages (including, without limitation, missed recruitment opportunities, incorrect skill assessment scoring, or rejection from placement campaigns) arising out of or in connection with the use or performance of our local AI advisor.
+                In no event shall Jobyn, its creators, or partners be liable for any indirect, punitive, incidental, or consequential damages (including, without limitation, missed recruitment opportunities, incorrect skill assessment scoring, or rejection from placement campaigns) arising out of or in connection with the use or performance of our local AI advisor.
             </p>
         )
     }
@@ -86,7 +86,7 @@ export default function Terms() {
                     <Link to="/" className="flex items-center justify-center h-8 w-8 rounded-lg bg-white/[0.03] border border-border/50 text-foreground hover:bg-white/[0.06] transition-colors">
                         <ArrowLeft className="h-4 w-4" />
                     </Link>
-                    <span className="text-sm font-bold tracking-tight">CampusSync Terms of Service</span>
+                    <span className="text-sm font-bold tracking-tight">Jobyn Terms of Service</span>
                 </div>
                 <Badge variant="outline" className="text-xs border-cyan/30 text-cyan">
                     <Scale className="h-3 w-3 mr-1" /> Legal Framework

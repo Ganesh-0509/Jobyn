@@ -150,7 +150,7 @@ async def check_onboarding_emails(req: CheckRequest, user: AuthUser = Depends(ge
             skills_detected=progress.get("skills_detected", 0),
             name=name,
         )
-        if email_service.send_email(user.email, "Your first week on CampusSync", html):
+        if email_service.send_email(user.email, "Your first week on Jobyn", html):
             updates["email_day7_sent"] = True
             sent_emails.append("day7_summary")
 

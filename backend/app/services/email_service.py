@@ -10,7 +10,7 @@ import logging
 log = logging.getLogger("email")
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-FROM_EMAIL = os.getenv("EMAIL_FROM", "CampusSync <onboarding@campussync.ai>")
+FROM_EMAIL = os.getenv("EMAIL_FROM", "Jobyn <onboarding@campussync.ai>")
 ENABLED = bool(RESEND_API_KEY)
 
 if not ENABLED:
@@ -42,7 +42,7 @@ def _send_email(to: str, subject: str, html: str) -> bool:
 # ── Email templates ──────────────────────────────────────────────────────────
 
 def welcome_email(name: str) -> tuple[str, str]:
-    subject = "Welcome to CampusSync — Your AI Career Coach"
+    subject = "Welcome to Jobyn — Your AI Career Coach"
     html = f"""
     <div style="font-family: -apple-system, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px;">
         <h1 style="font-size: 24px; font-weight: 700; color: #111; margin-bottom: 16px;">
@@ -57,12 +57,12 @@ def welcome_email(name: str) -> tuple[str, str]:
             <li><strong>See your skill gaps</strong> — know exactly what to learn</li>
             <li><strong>Practice an interview</strong> — AI-powered role-specific questions</li>
         </ol>
-        <a href="https://campussync.ai/onboarding"
+        <a href="https://jobyn.pages.dev/onboarding"
            style="display: inline-block; margin-top: 24px; padding: 12px 28px; background: #6366f1; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
             Complete Your Setup →
         </a>
         <p style="margin-top: 32px; font-size: 13px; color: #888;">
-            — The CampusSync Team
+            — The Jobyn Team
         </p>
     </div>
     """
@@ -80,7 +80,7 @@ def resume_reminder_email(name: str) -> tuple[str, str]:
             It takes 60 seconds to see where you stand. Our ML model (95% accuracy)
             will score your placement readiness and show your top 3 skill gaps.
         </p>
-        <a href="https://campussync.ai/resume-analyzer"
+        <a href="https://jobyn.pages.dev/resume-analyzer"
            style="display: inline-block; margin-top: 24px; padding: 12px 28px; background: #6366f1; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
             Upload Resume →
         </a>
@@ -103,7 +103,7 @@ def skill_gap_email(name: str, top_skill: str) -> tuple[str, str]:
             We've identified the skills holding you back. Start with <strong>{top_skill}</strong>
             — it's the most impactful gap to close before placement season.
         </p>
-        <a href="https://campussync.ai/skill-gap"
+        <a href="https://jobyn.pages.dev/skill-gap"
            style="display: inline-block; margin-top: 24px; padding: 12px 28px; background: #6366f1; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
             View Your Gaps →
         </a>
@@ -123,7 +123,7 @@ def interview_reminder_email(name: str) -> tuple[str, str]:
             You've seen your score and gaps — now test yourself with role-specific
             interview questions. Our AI adapts to your skill level.
         </p>
-        <a href="https://campussync.ai/interview-readiness"
+        <a href="https://jobyn.pages.dev/interview-readiness"
            style="display: inline-block; margin-top: 24px; padding: 12px 28px; background: #6366f1; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
             Start Mock Interview →
         </a>
@@ -150,7 +150,7 @@ def weekly_summary_email(name: str, score: int, gaps: int, days_active: int) -> 
         <p style="font-size: 15px; color: #333; line-height: 1.6; margin-top: 16px;">
             Keep going — students who close 3+ gaps are 4x more likely to get placed.
         </p>
-        <a href="https://campussync.ai/dashboard"
+        <a href="https://jobyn.pages.dev/dashboard"
            style="display: inline-block; margin-top: 24px; padding: 12px 28px; background: #6366f1; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
             Go to Dashboard →
         </a>

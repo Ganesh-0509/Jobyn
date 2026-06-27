@@ -38,7 +38,7 @@ function AdminSidebarContent({ onNavClick }: { onNavClick?: () => void }) {
                 <LogoMark size={28} />
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold tracking-tight text-foreground">CampusSync</span>
+                        <span className="text-sm font-semibold tracking-tight text-foreground">Jobyn</span>
                         <Badge variant="outline" className="gap-1 border-primary/40 text-primary text-[10px] px-1.5 py-0">
                             <Shield className="h-2.5 w-2.5" /> Admin
                         </Badge>
@@ -150,7 +150,7 @@ export default function AdminLayout() {
                 <header role="banner" className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-border/50 bg-background/80 backdrop-blur-xl px-4 py-3">
                     <div className="flex items-center gap-2">
                         <LogoMark size={24} />
-                        <span className="text-sm font-semibold tracking-tight">CampusSync</span>
+                        <span className="text-sm font-semibold tracking-tight">Jobyn</span>
                         <Badge variant="outline" className="gap-1 border-primary/40 text-primary text-[10px] px-1.5 py-0">
                             <Shield className="h-2.5 w-2.5" /> Admin
                         </Badge>

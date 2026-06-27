@@ -113,7 +113,7 @@ async def lifespan(app: FastAPI):
 # ── App factory ────────────────────────────────────────────────────────────────
 
 app = FastAPI(
-    title       = "CampusSync Edge — Resume Intelligence API",
+    title       = "Jobyn — Resume Intelligence API",
     description = (
         "**Phase 4B — Production ML Inference**\n\n"
         "- **Deterministic scoring** (config-driven)\n"

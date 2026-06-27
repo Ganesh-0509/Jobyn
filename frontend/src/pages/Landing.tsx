@@ -264,7 +264,7 @@ export default function Landing() {
       className="min-h-screen bg-background text-foreground selection:bg-primary/10 overflow-x-hidden"
     >
       <SEO
-        title="CampusSync Edge AI — Career Readiness Intelligence for Engineering Students"
+        title="Jobyn — Career Readiness Intelligence for Engineering Students"
         description="AI-powered career readiness platform for engineering students. Upload your resume, identify skill gaps, and get placed faster. Free to start."
         keywords="resume analyzer, skill gap analysis, campus placement, career readiness, engineering students"
       />
@@ -272,7 +272,7 @@ export default function Landing() {
       <JsonLd data={{
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
-        "name": "CampusSync Edge AI",
+        "name": "Jobyn",
         "applicationCategory": "EducationalApplication",
         "operatingSystem": "Web",
         "description": "AI-powered career readiness platform for engineering students. Resume analysis, skill gap detection, interview practice, and placement preparation.",
@@ -290,26 +290,26 @@ export default function Landing() {
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "How does CampusSync analyze my resume?",
+            "name": "How does Jobyn analyze my resume?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "CampusSync uses a 3-layer analysis engine combining deterministic scoring, ML inference trained on 57,100 real resumes, and generative AI for personalized feedback. Your resume is processed on-device and never leaves your browser."
+              "text": "Jobyn uses a 3-layer analysis engine combining deterministic scoring, ML inference trained on 57,100 real resumes, and generative AI for personalized feedback. Your resume is processed on-device and never leaves your browser."
             }
           },
           {
             "@type": "Question",
-            "name": "Is CampusSync free to use?",
+            "name": "Is Jobyn free to use?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes, CampusSync is free for engineering students. You can upload your resume, get a readiness score, identify skill gaps, and access study materials at no cost."
+              "text": "Yes, Jobyn is free for engineering students. You can upload your resume, get a readiness score, identify skill gaps, and access study materials at no cost."
             }
           },
           {
             "@type": "Question",
-            "name": "What career roles does CampusSync support?",
+            "name": "What career roles does Jobyn support?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "CampusSync supports 7 career roles: Software Developer, Frontend Developer, Backend Developer, Full Stack Developer, Data Scientist, ML Engineer, and DevOps Engineer."
+              "text": "Jobyn supports 7 career roles: Software Developer, Frontend Developer, Backend Developer, Full Stack Developer, Data Scientist, ML Engineer, and DevOps Engineer."
             }
           },
           {
@@ -325,7 +325,7 @@ export default function Landing() {
             "name": "Is my resume data private?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. CampusSync offers an on-device mode where your resume is processed entirely in your browser using ONNX WebAssembly. Your data never leaves your device, and we store zero resume content on our servers."
+              "text": "Yes. Jobyn offers an on-device mode where your resume is processed entirely in your browser using ONNX WebAssembly. Your data never leaves your device, and we store zero resume content on our servers."
             }
           }
         ]
@@ -337,8 +337,8 @@ export default function Landing() {
           <Link to="/" className="flex items-center gap-2.5">
             <LogoMark size={28} />
             <div>
-              <span className="font-heading text-sm font-bold tracking-tight text-foreground">CampusSync</span>
-              <span className="ml-1 text-xs font-semibold uppercase tracking-widest text-primary">Edge OS</span>
+              <span className="font-heading text-sm font-bold tracking-tight text-foreground">Jobyn</span>
+              <span className="ml-1 text-xs font-semibold uppercase tracking-widest text-primary">OS</span>
             </div>
           </Link>
 
@@ -512,7 +512,7 @@ export default function Landing() {
               Direct pipeline to active placements.
             </h2>
             <p className="text-base leading-relaxed text-muted-foreground font-medium">
-              Eliminate arbitrary agency screeners. CampusSync continuously syncs your verified profile milestones directly to partnering company applicant databases.
+              Eliminate arbitrary agency screeners. Jobyn continuously syncs your verified profile milestones directly to partnering company applicant databases.
             </p>
 
             <div className="space-y-5 pt-3">
@@ -667,7 +667,7 @@ export default function Landing() {
                   <div className="space-y-4">
                     <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Required Architectural Signatures</span>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <AnimatePresence mode="wait">
+                      <AnimatePresence>
                         {SKILL_DOMAINS[activeDomainIdx].skills.map((subSkill, subIdx) => (
                           <motion.div
                             key={subSkill}
@@ -828,7 +828,7 @@ export default function Landing() {
               Verify structural project authorship.
             </h2>
             <p className="text-base leading-relaxed text-muted-foreground font-medium">
-              Stand out immediately in recruitment boards. CampusSync registers codebase attributions, verifying actual commit signatures, build success logs, and complexity audits directly to your student credentials.
+              Stand out immediately in recruitment boards. Jobyn registers codebase attributions, verifying actual commit signatures, build success logs, and complexity audits directly to your student credentials.
             </p>
           </div>
 
@@ -984,17 +984,17 @@ export default function Landing() {
           <div className="flex items-center gap-3">
             <LogoMark size={24} />
             <div>
-              <div className="text-xs font-bold text-foreground">CampusSync Edge OS</div>
+              <div className="text-xs font-bold text-foreground">Jobyn OS</div>
               <div className="text-xs text-stone-400 font-semibold uppercase tracking-widest mt-0.5">Continuous Placement Engine</div>
             </div>
           </div>
           <div className="flex flex-wrap justify-center gap-6 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            <a href="https://campussync-edge.onrender.com" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors flex items-center gap-1">Live App <ArrowUpRight className="inline size-3" /></a>
+            <a href="https://jobyn.pages.dev" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors flex items-center gap-1">Live App <ArrowUpRight className="inline size-3" /></a>
             <a href="https://github.com/Ganesh-0509/Campus-Sync-Edge-Ai" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors flex items-center gap-1">GitHub <ArrowUpRight className="inline size-3" /></a>
             <Link to="/privacy" className="hover:text-primary transition-colors flex items-center gap-1">Privacy <ArrowUpRight className="inline size-3" /></Link>
             <Link to="/docs" className="hover:text-primary transition-colors flex items-center gap-1">Docs <ArrowUpRight className="inline size-3" /></Link>
           </div>
-          <div className="text-xs text-stone-400 font-medium">© 2026 CampusSync Edge • Placement OS</div>
+          <div className="text-xs text-stone-400 font-medium">© 2026 Jobyn • Placement OS</div>
         </div>
       </footer>
     </motion.div>

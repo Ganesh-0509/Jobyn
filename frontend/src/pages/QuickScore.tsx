@@ -84,8 +84,8 @@ export default function QuickScore() {
           <Link to="/" className="flex items-center gap-2.5">
             <LogoMark size={28} />
             <div>
-              <span className="font-heading text-sm font-bold tracking-tight text-foreground">CampusSync</span>
-              <span className="ml-1 text-xs font-semibold uppercase tracking-widest text-primary">Edge OS</span>
+              <span className="font-heading text-sm font-bold tracking-tight text-foreground">Jobyn</span>
+              <span className="ml-1 text-xs font-semibold uppercase tracking-widest text-primary">OS</span>
             </div>
           </Link>
           <div className="flex items-center gap-3">

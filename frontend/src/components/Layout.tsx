@@ -81,8 +81,8 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
             <div className="flex items-center gap-3 px-4 py-5">
                 <LogoMark size={28} />
                 <div>
-                    <div className="text-sm font-semibold tracking-tight text-foreground">CampusSync</div>
-                    <div className="text-xs font-medium uppercase tracking-widest text-cyan">Edge AI</div>
+                    <div className="text-sm font-semibold tracking-tight text-foreground">Jobyn</div>
+                    <div className="text-xs font-medium uppercase tracking-widest text-cyan">AI</div>
                     <div className="text-[10px] text-muted-foreground/70 mt-0.5">Upload your resume. Get hired faster.</div>
                 </div>
             </div>
@@ -206,7 +206,7 @@ export default function Layout() {
                 <header role="banner" className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-border/50 bg-background/80 backdrop-blur-xl px-4 py-3">
                     <div className="flex items-center gap-3">
                         <LogoMark size={24} />
-                        <span className="text-sm font-semibold tracking-tight">CampusSync</span>
+                        <span className="text-sm font-semibold tracking-tight">Jobyn</span>
                     </div>
                     <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                         <SheetTrigger

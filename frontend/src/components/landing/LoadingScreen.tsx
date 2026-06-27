@@ -43,7 +43,7 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
           transition={{ delay: 0.3, duration: 0.5 }}
         >
           <span className="font-heading text-xl font-bold tracking-tight text-[#F8FAFC]">
-            CampusSync
+            Jobyn
           </span>
         </motion.div>
 

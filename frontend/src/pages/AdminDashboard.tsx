@@ -453,7 +453,7 @@ export default function AdminDashboard() {
             </div></CardHeader>
             <CardContent>
               <div className="h-80 overflow-y-auto rounded-lg border bg-background p-4 font-mono text-xs leading-relaxed">
-                <p className="text-muted-foreground">[CampusSync Edge - System Console]</p>
+                <p className="text-muted-foreground">[Jobyn - System Console]</p>
                 <p className="mt-2 text-green-500">&gt; Status: {stats ? 'Connected' : 'Checking...'}</p>
                 <p className="text-primary">&gt; Pending Reviews: {stats?.pending_reviews ?? '...'}</p>
                 <p className="text-primary">&gt; Approved Content: {stats?.approved_contributions ?? '...'}</p>

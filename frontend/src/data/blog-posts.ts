@@ -34,7 +34,7 @@ I wanted to build something different: a voice interview simulator that processe
 
 ## The Architecture
 
-CampusSync Edge is a career readiness platform built with React + TypeScript on the frontend and FastAPI + Python on the backend. The voice interview feature sits in the \`InterviewReadiness\` page, which has three layers:
+Jobyn is a career readiness platform built with React + TypeScript on the frontend and FastAPI + Python on the backend. The voice interview feature sits in the \`InterviewReadiness\` page, which has three layers:
 
 \`\`\`
 ┌─────────────────────────────────────────────────┐
@@ -193,7 +193,7 @@ This is documented in our privacy policy: "Voice recordings processed by Speech 
 
 ---
 
-*This post describes the voice interview feature in [CampusSync Edge](https://campussync-edge.onrender.com), an open-source career readiness platform built with React, FastAPI, and Supabase.*`,
+*This post describes the voice interview feature in [Jobyn](https://jobyn.pages.dev), an open-source career readiness platform built with React, FastAPI, and Supabase.*`,
   },
   {
     slug: 'voice-ai-interview-simulator-web-speech-api',
@@ -216,7 +216,7 @@ I wanted to build something different — an interview simulator where you talk 
 
 ## The Architecture
 
-CampusSync Edge is a full-stack career readiness platform (React + FastAPI + Supabase). The interview simulator is one of its core features. Here's how the voice part works:
+Jobyn is a full-stack career readiness platform (React + FastAPI + Supabase). The interview simulator is one of its core features. Here's how the voice part works:
 
 \`\`\`
 ┌─────────────────┐     Web Speech API     ┌──────────────────┐
@@ -355,7 +355,7 @@ The voice part is commodity — everyone has speech-to-text. The differentiator 
 - Structured scoring that maps to job readiness
 - Personalized improvement recommendations
 
-This is where CampusSync Edge's interview engine shines. It doesn't just say "your answer was 7/10" — it says "you covered hash functions and collision resolution, but missed load factor and the equals/hashcode contract. Here's what to study next."
+This is where Jobyn's interview engine shines. It doesn't just say "your answer was 7/10" — it says "you covered hash functions and collision resolution, but missed load factor and the equals/hashcode contract. Here's what to study next."
 
 ## What's Next
 
@@ -365,7 +365,7 @@ The Web Speech API got me 80% of the way. The last 20% — telephony, voice synt
 
 ---
 
-*Built with React, FastAPI, Supabase, Google Gemini, and the Web Speech API. Open source at [CampusSync Edge](https://github.com/Ganesh-0509/CampusSync-Edge).*`,
+*Built with React, FastAPI, Supabase, Google Gemini, and the Web Speech API. Open source at [Jobyn](https://github.com/Ganesh-0509/CampusSync-Edge).*`,
   },
   {
     slug: 'how-to-analyze-resume-for-campus-placements',
@@ -420,9 +420,9 @@ Fancy templates with columns, tables, and graphics break ATS parsing. Stick to s
 
 **Target:** Clean, parseable structure.
 
-## How CampusSync Edge Automates This
+## How Jobyn Automates This
 
-Manual resume analysis takes 30-45 minutes per resume. CampusSync Edge does it in 30 seconds using an ML model trained on 57,100 real resumes with 95% accuracy.
+Manual resume analysis takes 30-45 minutes per resume. Jobyn does it in 30 seconds using an ML model trained on 57,100 real resumes with 95% accuracy.
 
 It scores your resume across all 5 dimensions and gives you specific, actionable feedback — not generic advice like "add more keywords," but "add Docker and Kubernetes to your skills section; 87% of similar resumes for this role mention containerization."
 
@@ -434,7 +434,7 @@ If you're not sure, run it through a tool that can give you objective, data-driv
 
 ---
 
-*Try the free resume scorer at [CampusSync Edge](https://campussync.ai/quick-score) — no signup required.*`,
+*Try the free resume scorer at [Jobyn](https://jobyn.pages.dev/quick-score) — no signup required.*`,
   },
   {
     slug: '5-resume-mistakes-engineering-students-make',
@@ -504,7 +504,7 @@ Your resume doesn't need to be perfect. It needs to be clear, specific, and hone
 
 ---
 
-*Get instant, objective feedback on your resume at [CampusSync Edge](https://campussync.ai/quick-score).*`,
+*Get instant, objective feedback on your resume at [Jobyn](https://jobyn.pages.dev/quick-score).*`,
   },
   {
     slug: 'skill-gap-analysis-what-top-companies-want',
@@ -578,9 +578,9 @@ Here's a simple framework:
 5. **Identify the gaps** — where you're "beginner" on a skill they list as "required"
 6. **Prioritize by impact** — close the gaps that appear in multiple JDs first
 
-## How CampusSync Edge Automates This
+## How Jobyn Automates This
 
-Manual skill gap analysis takes hours of research per company. CampusSync Edge matches your resume against role-specific requirements from real placement data and gives you a prioritized list of skills to develop.
+Manual skill gap analysis takes hours of research per company. Jobyn matches your resume against role-specific requirements from real placement data and gives you a prioritized list of skills to develop.
 
 It doesn't just say "you're missing Docker." It says "87% of successful candidates for this role had Docker experience. Here's a 2-week learning plan to get you from zero to deployable."
 
@@ -602,7 +602,7 @@ Quality of preparation beats quantity every time.
 
 ---
 
-*Get a personalized skill gap analysis at [CampusSync Edge](https://campussync.ai/skill-gap) — powered by real placement data.*`,
+*Get a personalized skill gap analysis at [Jobyn](https://jobyn.pages.dev/skill-gap) — powered by real placement data.*`,
   },
 ]
 

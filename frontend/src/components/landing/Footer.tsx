@@ -50,7 +50,7 @@ export default function Footer() {
               color: '#F8FAFC',
               letterSpacing: '-0.02em',
             }}>
-              CampusSync
+              Jobyn
             </span>
           </div>
           <p style={{
@@ -119,7 +119,7 @@ export default function Footer() {
           Built for ambitious engineers.
         </p>
         <p style={{ fontSize: 12, color: '#475569', margin: 0, fontWeight: 500 }}>
-          &copy; 2026 CampusSync Edge AI
+          &copy; 2026 Jobyn
         </p>
       </div>
 

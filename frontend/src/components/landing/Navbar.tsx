@@ -40,7 +40,7 @@ export default function Navbar() {
         <Link to="/" className="flex items-center gap-2.5">
           <LogoMark size={24} />
           <span className="font-heading text-sm font-bold tracking-tight text-[#F8FAFC]">
-            CampusSync
+            Jobyn
           </span>
         </Link>
 

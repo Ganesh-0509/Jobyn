@@ -250,7 +250,7 @@ export default function Onboarding() {
                   <LogoMark size={72} className="mx-auto" />
                   <div>
                     <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                      Welcome to CampusSync
+                      Welcome to Jobyn
                     </h1>
                     <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
                       Your AI career coach is ready. Let's get you set up in under 2 minutes.
@@ -282,7 +282,7 @@ export default function Onboarding() {
                 <CardContent className="p-8 space-y-6">
                   <div className="text-center">
                     <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-                      What brings you to CampusSync?
+                      What brings you to Jobyn?
                     </h1>
                     <p className="mt-2 text-sm text-muted-foreground">
                       We'll personalize your experience based on your goal.

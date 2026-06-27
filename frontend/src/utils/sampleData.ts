@@ -1,7 +1,7 @@
 import type { UploadResult, PredictResult } from '../api/client'
 
 /**
- * Hardcoded sample analysis data for users who want to try CampusSync
+ * Hardcoded sample analysis data for users who want to try Jobyn
  * without uploading their own resume. Represents a realistic mid-tier
  * Software Developer candidate (68% readiness).
  */

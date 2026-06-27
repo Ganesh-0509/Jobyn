@@ -21,14 +21,14 @@ export default function BlogPost() {
   if (!post) {
     return (
       <div className="min-h-screen bg-background text-foreground">
-        <SEO title="Post Not Found — CampusSync Edge" description="The blog post you're looking for doesn't exist." />
+        <SEO title="Post Not Found — Jobyn" description="The blog post you're looking for doesn't exist." />
         <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
           <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
             <Link to="/" className="flex items-center gap-2.5">
               <LogoMark size={28} />
               <div>
-                <span className="font-heading text-sm font-bold tracking-tight text-foreground">CampusSync</span>
-                <span className="ml-1 text-xs font-semibold uppercase tracking-widest text-primary">Edge OS</span>
+                <span className="font-heading text-sm font-bold tracking-tight text-foreground">Jobyn</span>
+                <span className="ml-1 text-xs font-semibold uppercase tracking-widest text-primary">OS</span>
               </div>
             </Link>
           </div>
@@ -64,8 +64,8 @@ export default function BlogPost() {
           <Link to="/" className="flex items-center gap-2.5">
             <LogoMark size={28} />
             <div>
-              <span className="font-heading text-sm font-bold tracking-tight text-foreground">CampusSync</span>
-              <span className="ml-1 text-xs font-semibold uppercase tracking-widest text-primary">Edge OS</span>
+              <span className="font-heading text-sm font-bold tracking-tight text-foreground">Jobyn</span>
+              <span className="ml-1 text-xs font-semibold uppercase tracking-widest text-primary">OS</span>
             </div>
           </Link>
           <Link to="/blog" className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">

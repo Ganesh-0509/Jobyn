@@ -33,7 +33,7 @@ export default function Blog() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEO
-        title="Blog — CampusSync Edge AI"
+        title="Blog — Jobyn"
         description="Insights on resume optimization, skill development, campus placements, and career readiness for engineering students."
         keywords="resume tips, campus placements, career readiness, engineering students, skill gap analysis"
       />
@@ -44,8 +44,8 @@ export default function Blog() {
           <Link to="/" className="flex items-center gap-2.5">
             <LogoMark size={28} />
             <div>
-              <span className="font-heading text-sm font-bold tracking-tight text-foreground">CampusSync</span>
-              <span className="ml-1 text-xs font-semibold uppercase tracking-widest text-primary">Edge OS</span>
+              <span className="font-heading text-sm font-bold tracking-tight text-foreground">Jobyn</span>
+              <span className="ml-1 text-xs font-semibold uppercase tracking-widest text-primary">OS</span>
             </div>
           </Link>
           <div className="flex items-center gap-3">
@@ -72,7 +72,7 @@ export default function Blog() {
               <BookOpen className="size-3" /> Insights & Guides
             </Badge>
             <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
-              The CampusSync <span className="gradient-text">Blog</span>
+              The Jobyn <span className="gradient-text">Blog</span>
             </h1>
             <p className="mt-4 text-base leading-relaxed text-muted-foreground max-w-xl mx-auto">
               Insights on resume optimization, skill development, campus placements, and career readiness for engineering students.

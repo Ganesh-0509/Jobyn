@@ -72,12 +72,12 @@ function drawCertificate(canvas: HTMLCanvasElement, props: CertificateCanvasProp
     ctx.stroke()
   })
 
-  // ── Title: "CampusSync Edge" ──
+  // ── Title: "Jobyn" ──
   const centerX = w / 2
   ctx.textAlign = 'center'
   ctx.fillStyle = COLORS.copper
   ctx.font = `700 28px ${FONTS.heading}`
-  ctx.fillText('CampusSync Edge', centerX, 80)
+  ctx.fillText('Jobyn', centerX, 80)
 
   // ── Horizontal rule under title ──
   ctx.strokeStyle = COLORS.copper

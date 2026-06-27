@@ -30,7 +30,7 @@ export default function Certificate() {
     const dataUrl = canvas.toDataURL('image/png')
     const a = document.createElement('a')
     a.href = dataUrl
-    a.download = `campussync-certificate-${analysis?.role?.replace(/\s+/g, '-').toLowerCase() ?? 'score'}.png`
+    a.download = `jobyn-certificate-${analysis?.role?.replace(/\s+/g, '-').toLowerCase() ?? 'score'}.png`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -45,7 +45,7 @@ export default function Certificate() {
     }
   }, [])
 
-  const shareMessage = `I scored ${analysis?.final_score ?? 0}% readiness for ${analysis?.role ?? 'Software Engineer'} on CampusSync Edge! Check out your placement readiness score.`
+  const shareMessage = `I scored ${analysis?.final_score ?? 0}% readiness for ${analysis?.role ?? 'Software Engineer'} on Jobyn! Check out your placement readiness score.`
 
   const handleWhatsApp = useCallback(() => {
     window.open(`https://wa.me/?text=${encodeURIComponent(shareMessage)}`, '_blank')

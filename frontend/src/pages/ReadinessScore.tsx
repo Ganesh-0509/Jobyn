@@ -156,7 +156,7 @@ export default function ReadinessScore() {
               {/* Share Row */}
               <div className="flex items-center gap-2">
                 <a
-                  href={`https://wa.me/?text=${encodeURIComponent(`I scored ${score}% for ${analysis?.role} on CampusSync Edge! Check your placement readiness: ${window.location.origin}/quick-score`)}`}
+                  href={`https://wa.me/?text=${encodeURIComponent(`I scored ${score}% for ${analysis?.role} on Jobyn! Check your placement readiness: ${window.location.origin}/quick-score`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 rounded-lg bg-[#25D366] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1da851] transition-colors"
