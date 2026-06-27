@@ -26,7 +26,7 @@
         "framer-motion": "^12.40.0",
         "lucide-react": "^0.344.0",
         "next-themes": "^0.4.6",
-        "onnxruntime-web": "^1.24.2",
+        "onnxruntime-web": "1.24.2",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "react-helmet-async": "^3.0.0",
