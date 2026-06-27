@@ -7,6 +7,11 @@ venv/
 env/
 node_modules/
 dist/
+# Lockfile is intentionally NOT committed: it was generated on Windows and omits
+# the Linux rollup native binary (@rollup/rollup-linux-x64-gnu), which breaks
+# `npm ci` on Linux builders (npm/cli#4828). All envs (CI, Render, Cloudflare)
+# install via `npm install` so the correct per-platform binary is resolved.
+frontend/package-lock.json
 .DS_Store
 *.pdf
 *.docx
