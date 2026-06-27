@@ -36,7 +36,7 @@ The CI workflow (`.github/workflows/*.yml`) is the source of truth for the canon
   - ML inference: ONNX → sklearn pickle
   - Skill matching (`skill_dictionary.py`): exact → fuzzy (Levenshtein ≤ 2)
 - **RAG** (`rag_service.py`): query → Gemini embedding → PGVector cosine search (`match_knowledge` RPC) → Gemini generation → judge validation → cache.
-- **Auth** (`core/auth.py`): Supabase JWT (HS256) verified per-request, three tiers (public / required / admin). Every user-data endpoint does an ownership check (IDOR prevention) against the authenticated user's email.
+- **Auth** (`core/auth.py`): Supabase JWT verified per-request (asymmetric ES256/RS256 via JWKS; legacy HS256 fallback), three tiers (public / required / admin). Every user-data endpoint does an ownership check (IDOR prevention) against the authenticated user's email.
 - **ML pipeline** (`app/ml_pipeline/`, `predictor.py`): RandomForest classifier (role) + regressor (score) on a 152-dim feature vector (147 binary skill flags + 5 normalized numeric scores). The vocabulary order is shared between server inference and browser ONNX, so it must stay stable.
 
 ### Frontend — React SPA with browser-side ML
@@ -56,4 +56,4 @@ Supabase (PostgreSQL 15) — schema in `backend/COMPLETE_SCHEMA.sql` / `supabase
 - **Deployment:** Render Blueprint (`render.yaml`, primary) builds both services; Docker Compose (`docker-compose.yml`) is secondary. Env vars are `sync: false` (set manually in the Render dashboard).
 
 ## Note on docs
-`PROJECT_INTELLIGENCE_FILE.md` and `README.md` are thorough but lag the code (they say "9 routers / 48 endpoints" and "296MB pickles committed" — the app now has ~19 routers / 83 routes, and models are gitignored). Trust the code over those docs when they conflict.
+`README.md` and `docs/` are thorough but lag the code (they say "9 routers / 48 endpoints" — the app now has 19 routers / 79 routes, and trained models are gitignored, not committed). Trust the code over those docs when they conflict.

@@ -1,11 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { useResume } from '../context/ResumeContext'
 import { uploadResume, predictResume } from '../api/client'
 import { predictOnDevice, isOnDeviceReady } from '../utils/onDevicePredictor'
-import { SAMPLE_ANALYSIS, SAMPLE_PREDICTION } from '../utils/sampleData'
 import { usePrivacy } from '../context/PrivacyContext'
 import CircularProgress from '../components/CircularProgress'
 import LogoMark from '../components/LogoMark'
@@ -18,16 +17,9 @@ import { Progress } from '@/components/ui/progress'
 import {
   Upload, ArrowRight, ArrowLeft, CheckCircle2, Target,
   Sparkles, FileText, Brain, BarChart2, Zap,
-  GraduationCap, Compass, FileEdit, MessageSquare, Play,
+  MessageSquare,
   PenLine,
 } from 'lucide-react'
-
-const GOALS = [
-  { id: 'placement', icon: GraduationCap, label: 'Preparing for campus placement', desc: 'Get placement-ready with skill gap analysis' },
-  { id: 'explore', icon: Compass, label: 'Exploring career paths', desc: 'Find the best-fit role for your skills' },
-  { id: 'resume', icon: FileEdit, label: 'Improving my resume', desc: 'Get AI feedback on your resume' },
-  { id: 'interview', icon: MessageSquare, label: 'Preparing for interviews', desc: 'Practice with role-specific questions' },
-]
 
 const STAGES = [
   { icon: FileText, label: 'Parsing document structure', dur: 800 },
@@ -39,23 +31,17 @@ const STAGES = [
 
 export default function Onboarding() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
   const { user } = useAuth()
   const { setAnalysis, setPrediction } = useResume()
   const { privacy } = usePrivacy()
 
   const [step, setStep] = useState(0)
-  const [goal, setGoal] = useState<string | null>(() => {
-    if (user?.email) return localStorage.getItem(`${user.email}_cse_goal`)
-    return null
-  })
   const [file, setFile] = useState<File | null>(null)
   const [drag, setDrag] = useState(false)
   const [loading, setLoading] = useState(false)
   const [stageIdx, setStageIdx] = useState(-1)
   const [error, setError] = useState('')
   const [result, setResult] = useState<any>(null)
-  const [isSampleMode, setIsSampleMode] = useState(false)
   const [manualMode, setManualMode] = useState(false)
   const [checklist, setChecklist] = useState<ChecklistState>(() => getChecklistState(user?.email))
   const inputRef = useRef<HTMLInputElement>(null)
@@ -66,18 +52,10 @@ export default function Onboarding() {
     }
   }, [user?.email])
 
-  // Refresh checklist state when entering step 4
+  // Refresh checklist state when entering the final step
   useEffect(() => {
-    if (step === 4) setChecklist(getChecklistState(user?.email))
+    if (step === 3) setChecklist(getChecklistState(user?.email))
   }, [step, user?.email])
-
-  // Auto-trigger sample mode from URL param (runs once on mount)
-  useEffect(() => {
-    if (searchParams.get('mode') === 'sample') {
-      handleSampleMode()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   // Track signup date for nudge system
   useEffect(() => {
@@ -96,14 +74,6 @@ export default function Onboarding() {
     if (!f.name.endsWith('.pdf') && !f.name.endsWith('.docx')) { setError('Only PDF and DOCX files are supported.'); return }
     setFile(f); setError('')
   }, [])
-
-  const handleSampleMode = useCallback(() => {
-    setIsSampleMode(true)
-    setAnalysis(SAMPLE_ANALYSIS)
-    setPrediction(SAMPLE_PREDICTION)
-    setResult(SAMPLE_ANALYSIS)
-    setStep(3)
-  }, [setAnalysis, setPrediction])
 
   // Handle manual profile form submission
   const handleManualSubmit = useCallback(async (analysis: any) => {
@@ -137,16 +107,8 @@ export default function Onboarding() {
       })
     }
     setResult(analysis)
-    setStep(3)
+    setStep(2)
   }, [setAnalysis, setPrediction])
-
-  // Persist goal when selected
-  const handleGoalSelect = useCallback((goalId: string) => {
-    setGoal(goalId)
-    if (user?.email) {
-      localStorage.setItem(`${user.email}_cse_goal`, goalId)
-    }
-  }, [user?.email])
 
   // Animate stages during upload
   useEffect(() => {
@@ -201,7 +163,7 @@ export default function Onboarding() {
       }
 
       setResult(analysis)
-      setStep(3) // Go to score reveal
+      setStep(2) // Go to score reveal
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Upload failed. Make sure the backend is running.')
     } finally { setLoading(false) }
@@ -229,10 +191,10 @@ export default function Onboarding() {
       <div className="relative w-full max-w-lg">
         {/* Progress bar */}
         <div className="mb-6 flex items-center gap-2">
-          {[0, 1, 2, 3, 4].map(i => (
+          {[0, 1, 2, 3].map(i => (
             <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${i <= step ? 'bg-primary' : 'bg-muted'}`} />
           ))}
-          <span className="text-xs font-medium text-muted-foreground ml-2">{step + 1}/5</span>
+          <span className="text-xs font-medium text-muted-foreground ml-2">{step + 1}/4</span>
         </div>
 
         <AnimatePresence mode="wait">
@@ -250,7 +212,7 @@ export default function Onboarding() {
                   <LogoMark size={72} className="mx-auto" />
                   <div>
                     <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                      Welcome to Jobyn
+                      Welcome to CampusSync
                     </h1>
                     <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
                       Your AI career coach is ready. Let's get you set up in under 2 minutes.
@@ -266,64 +228,13 @@ export default function Onboarding() {
                     <Button onClick={() => setStep(1)} className="gap-2 w-full sm:w-auto">
                       Get Started <ArrowRight className="size-4" />
                     </Button>
-                    <div>
-                      <button onClick={() => { markDone(); navigate('/dashboard') }} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                        Skip to dashboard
-                      </button>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
             )}
 
-            {/* Step 1: Goal Selection */}
+            {/* Step 1: Upload Resume or Enter Manually */}
             {step === 1 && (
-              <Card className="premium-hover-card border-border/50 shadow-lg">
-                <CardContent className="p-8 space-y-6">
-                  <div className="text-center">
-                    <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-                      What brings you to Jobyn?
-                    </h1>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      We'll personalize your experience based on your goal.
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-1 gap-3">
-                    {GOALS.map(g => (
-                      <button
-                        key={g.id}
-                        onClick={() => handleGoalSelect(g.id)}
-                        className={`flex items-center gap-4 rounded-xl border p-4 text-left transition-all ${
-                          goal === g.id
-                            ? 'border-primary bg-primary/5 shadow-sm'
-                            : 'border-border/50 hover:border-primary/20 hover:bg-muted/30'
-                        }`}
-                      >
-                        <div className={`rounded-lg p-2 ${goal === g.id ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                          <g.icon className="size-5" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-semibold text-foreground">{g.label}</div>
-                          <div className="text-xs text-muted-foreground">{g.desc}</div>
-                        </div>
-                        {goal === g.id && <CheckCircle2 className="ml-auto size-5 text-primary" />}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex gap-3 justify-center">
-                    <Button variant="outline" onClick={() => setStep(0)} className="gap-2">
-                      <ArrowLeft className="size-4" /> Back
-                    </Button>
-                    <Button onClick={() => goal && setStep(2)} disabled={!goal} className="gap-2">
-                      Continue <ArrowRight className="size-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Step 2: Upload Resume or Enter Manually */}
-            {step === 2 && (
               <Card className="premium-hover-card border-border/50 shadow-lg">
                 <CardContent className="p-8 space-y-6">
                   <div className="text-center">
@@ -363,7 +274,7 @@ export default function Onboarding() {
                     /* Manual Profile Form */
                     <ManualProfileForm
                       onSubmit={handleManualSubmit}
-                      onBack={() => setStep(1)}
+                      onBack={() => setStep(0)}
                     />
                   ) : (
                     <>
@@ -437,7 +348,7 @@ export default function Onboarding() {
                       )}
 
                       <div className="flex gap-3 justify-center">
-                        <Button variant="outline" onClick={() => setStep(1)} className="gap-2" disabled={loading}>
+                        <Button variant="outline" onClick={() => setStep(0)} className="gap-2" disabled={loading}>
                           <ArrowLeft className="size-4" /> Back
                         </Button>
                         <Button onClick={handleUpload} disabled={!file || loading} className="gap-2">
@@ -445,7 +356,7 @@ export default function Onboarding() {
                         </Button>
                       </div>
 
-                      {/* Sample mode + manual entry hint */}
+                      {/* Manual entry hint */}
                       {!file && !loading && (
                         <div className="text-center space-y-1.5">
                           <button
@@ -456,16 +367,6 @@ export default function Onboarding() {
                             <PenLine className="size-3" />
                             Don't have a resume? Enter your details manually
                           </button>
-                          <div>
-                            <button
-                              type="button"
-                              onClick={handleSampleMode}
-                              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/60 hover:text-foreground transition-colors"
-                            >
-                              <Play className="size-3" />
-                              Or try with sample data
-                            </button>
-                          </div>
                         </div>
                       )}
                     </>
@@ -474,15 +375,10 @@ export default function Onboarding() {
               </Card>
             )}
 
-            {/* Step 3: Score Reveal — THE AHA MOMENT */}
-            {step === 3 && result && (
+            {/* Step 2: Score Reveal — THE AHA MOMENT */}
+            {step === 2 && result && (
               <Card className="premium-hover-card border-border/50 shadow-lg">
                 <CardContent className="p-8 space-y-6">
-                  {isSampleMode && (
-                    <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-2.5 text-xs text-primary text-center">
-                      This is sample data — upload your real resume for personalized results
-                    </div>
-                  )}
                   <div className="text-center space-y-4">
                     <div className="flex justify-center">
                       <CircularProgress pct={score} size={140} stroke={10} />
@@ -518,18 +414,15 @@ export default function Onboarding() {
                     </div>
                   )}
 
-                  {/* Goal-specific tip */}
+                  {/* Next-step tip */}
                   <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-center">
                     <p className="text-xs text-primary">
-                      {goal === 'interview' ? 'Focus on interview prep next — practice with role-specific questions to build confidence.' :
-                       goal === 'resume' ? 'Your skill gaps are the key to a stronger resume — close them to stand out.' :
-                       goal === 'explore' ? 'Try generating a project to test-drive different career paths.' :
-                       'Close your skill gaps first — that\'s the fastest path to placement readiness.'}
+                      Close your skill gaps first — that's the fastest path to placement readiness.
                     </p>
                   </div>
 
                   <div className="flex gap-3 justify-center">
-                    <Button onClick={() => setStep(4)} className="gap-2">
+                    <Button onClick={() => setStep(3)} className="gap-2">
                       See Your Next Steps <ArrowRight className="size-4" />
                     </Button>
                   </div>
@@ -537,8 +430,8 @@ export default function Onboarding() {
               </Card>
             )}
 
-            {/* Step 4: Next Steps Checklist */}
-            {step === 4 && (
+            {/* Step 3: Next Steps Checklist */}
+            {step === 3 && (
               <Card className="premium-hover-card border-border/50 shadow-lg">
                 <CardContent className="p-8 space-y-6">
                   <div className="text-center">
@@ -546,10 +439,7 @@ export default function Onboarding() {
                       Here's Your Plan
                     </h1>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      {goal === 'interview' ? 'Ace your interviews with this roadmap.' :
-                       goal === 'resume' ? 'Build a standout resume step by step.' :
-                       goal === 'explore' ? 'Discover your best-fit career path.' :
-                       'Follow these steps to get placement-ready.'}
+                      Follow these steps to get placement-ready.
                     </p>
                   </div>
 
@@ -562,13 +452,7 @@ export default function Onboarding() {
                         { done: checklist.started_learning, label: 'Start learning your first skill', xp: '+50 XP', icon: Zap, key: 'learn', path: '/improvement-plan' },
                         { done: checklist.generated_project, label: 'Generate your first project', xp: '+75 XP', icon: FileText, key: 'project', path: '/my-projects' },
                       ]
-                      const goalOrder: Record<string, string[]> = {
-                        placement: ['profile', 'gaps', 'interview', 'learn', 'project'],
-                        interview: ['profile', 'interview', 'gaps', 'learn', 'project'],
-                        resume: ['profile', 'gaps', 'learn', 'interview', 'project'],
-                        explore: ['profile', 'gaps', 'project', 'learn', 'interview'],
-                      }
-                      const order = goalOrder[goal || ''] || goalOrder.placement
+                      const order = ['profile', 'gaps', 'interview', 'learn', 'project']
                       return [...allItems].sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key))
                     })()
                     .map((item, i) => (

@@ -217,6 +217,9 @@
 .content-prose pre { max-width: 100%; overflow-x: auto; background: var(--hub-bg); padding: 12px; border-radius: 8px; }
 .content-prose code { word-break: break-word; font-size: 0.9em; }
 .content-prose table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; }
+/* Cell padding + borders so columns never visually run together (AI-generated tables ship without them). */
+.content-prose th, .content-prose td { padding: 6px 12px; border: 1px solid var(--hub-border); text-align: left; vertical-align: top; }
+.content-prose th { font-weight: 700; background: var(--hub-bg); }
 .content-prose img { max-width: 100%; height: auto; }
 .content-prose a { color: var(--blue); word-break: break-all; }
 

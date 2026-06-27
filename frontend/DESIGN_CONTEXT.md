@@ -1,19 +1,19 @@
 # Design Context for Agents
 
-## Design Tokens (Dark Theme - Default)
-- Background: #0A0B0F
-- Surface/Card: #12131A
-- Surface Elevated: #1A1B24
-- Primary/Accent: #00F2FE (cyan)
-- Secondary: #9B51E0 (violet)
-- Success/Mint: #05FFC5
+## Design Tokens (Light Theme - Default)
+- Background: #FAF8F5 (warm alabaster)
+- Surface/Card: #FFFFFF
+- Surface Elevated: #F3ECE3 (soft sandstone)
+- Primary: #A84832 (warm copper terracotta)
+- Accent: #0F766E (deep teal/emerald)
+- Success/Mint: #10B981
 - Warning/Amber: #F59E0B
-- Destructive/Crimson: #FF3F6C
-- Text Primary/Foreground: #F0F0F2
-- Text Muted: #8B8D97
-- Border: rgba(255,255,255,0.08)
-- Input: rgba(255,255,255,0.10)
-- Sidebar: #0D0E13
+- Destructive/Crimson: #EF4444
+- Text Primary/Foreground: #1E1B18 (dark walnut)
+- Text Muted: #5C5650 (taupe slate)
+- Border: #EFEBE4
+- Input: #EFEBE4
+- Sidebar: #FFFFFF
 
 ## Fonts
 - Headings: Clash Display (font-heading)
@@ -74,17 +74,18 @@ import { ProgressRing, SparkLine, ReadinessIndicator, SkillBar, ScoreGauge } fro
 - SkillBar: horizontal skill progress bar
 
 ## CSS Utility Classes
-- `glow-cyan` - cyan glow shadow on dark
-- `glow-border` - glowing cyan border
-- `gradient-accent` - cyan to violet gradient background
-- `gradient-text` - gradient text (cyan to violet)
+- `glow-cyan` - soft tinted glow shadow (legacy name)
+- `glow-border` - subtle glowing border
+- `gradient-accent` - indigo-to-violet gradient background
+- `gradient-text` - gradient text (deep indigo)
 - `glass` - glass morphism effect
+- `premium-hover-card` / `premium-hover-pill` - warm lift-on-hover transitions
 
-## Tailwind Custom Colors
-- `text-cyan`, `bg-cyan` - #00F2FE
-- `text-violet`, `bg-violet` - #9B51E0
-- `text-mint`, `bg-mint` - #05FFC5
-- `text-crimson`, `bg-crimson` - #FF3F6C
+## Tailwind Custom Colors (legacy names, current values)
+- `text-cyan`, `bg-cyan` - #C2593F (copper)
+- `text-violet`, `bg-violet` - #0F766E (teal)
+- `text-mint`, `bg-mint` - #10B981
+- `text-crimson`, `bg-crimson` - #EF4444
 - `text-amber`, `bg-amber` - #F59E0B
 - `bg-surface`, `bg-surface-elevated`
 
@@ -113,7 +114,7 @@ import { uploadResume, predictResume, getAnalytics, getLatestSession, BASE } fro
 2. Earned familiarity - use established patterns, execute at higher level
 3. Density matches intent - dense for dashboards, breathing room for auth/landing
 4. Motion with purpose - 150-300ms, ease-out, never blocking
-5. Dark by default, readable always - 4.5:1 contrast minimum
+5. Light by default (warm copper theme), readable always - 4.5:1 contrast minimum
 
 ## Typography Rules
 - h1: Clash Display, 2.25rem, 700 weight

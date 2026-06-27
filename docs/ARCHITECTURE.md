@@ -26,9 +26,11 @@ CampusSync Edge is a three-tier web application: a React SPA frontend, a FastAPI
 │  └─────────────────────────────────────────────────────────────┘   │
 │                                                                     │
 │  ┌─────────────────────────────────────────────────────────────┐   │
-│  │ ROUTERS (9 routers, 48 endpoints)                             │   │
-│  │ analyze | inference | ml | data | ai_insight | interview      │   │
-│  │ feedback | content_feedback | project_generator               │   │
+│  │ ROUTERS (19 routers, 79 endpoints)                           │   │
+│  │ analyze inference ml data ai_insight interview feedback       │   │
+│  │ content_feedback project_generator assessment benchmark       │   │
+│  │ coding company_prep jd_match manual_profile onboarding_email  │   │
+│  │ quick_score resume_builder sandbox                            │   │
 │  └─────────────────────────────────────────────────────────────┘   │
 │                                                                     │
 │  ┌─────────────────────────────────────────────────────────────┐   │
@@ -277,13 +279,13 @@ contributions (submitted_by)
 ```
 Browser → Supabase Auth (email/password or Google OAuth)
   ↓
-Supabase returns JWT (HS256, audience: "authenticated")
+Supabase returns JWT (ES256/RS256, audience: "authenticated")
   ↓
 Browser sends Authorization: Bearer <token>
   ↓
 FastAPI auth.py:
-  ├── JWT_SECRET configured? → Verify signature + expiry + audience
-  └── JWT_SECRET missing (dev)? → Decode without verification (warning logged)
+  ├── Fetch signing key from Supabase JWKS (PyJWKClient, cached)
+  └── Verify signature (ES256/RS256) + expiry + audience (legacy HS256 fallback)
   ↓
 AuthUser(sub, email, role) → Passed to endpoint via Depends()
 ```
@@ -339,7 +341,7 @@ X-XSS-Protection: 1; mode=block
 
 - **At rest**: Fernet symmetric encryption for resume raw_text (optional, via RESUME_ENCRYPTION_KEY)
 - **In transit**: HTTPS enforced via HSTS header
-- **JWT**: HS256 with Supabase JWT secret
+- **JWT**: ES256/RS256 verified via Supabase JWKS (legacy HS256 fallback)
 
 ---
 
@@ -350,14 +352,21 @@ Defined in `frontend/src/config/features.ts`:
 | Flag | Default | Description |
 |---|---|---|
 | `ML_PREDICTIONS` | true | ONNX browser-side ML inference |
-| `RAG_STUDY_MATERIALS` | false | PGVector RAG-powered study content |
+| `RAG_STUDY_MATERIALS` | true | PGVector RAG-powered study content |
 | `VOICE_INTERVIEW` | true | Web Speech API voice input |
 | `SKILL_GRAPH` | true | React Flow skill dependency visualization |
 | `PROJECT_GENERATOR` | true | AI capstone project generation |
 | `PROJECT_VERIFIER` | true | GitHub repo verification |
-| `MARKET_FORECAST` | false | AI market forecast |
+| `MARKET_FORECAST` | true | AI market forecast |
 | `INDUSTRY_ALIGNMENT` | true | Industry alignment scores |
 | `RESUME_COMPARISON` | true | Side-by-side resume comparison |
+| `SHAREABLE_CERTIFICATE` | true | Shareable score badge |
+| `QUICK_SCORE` | true | Anonymous 30s public score |
+| `WHATSAPP_INTEGRATION` | true | Share results via WhatsApp |
+| `JD_MATCHING` | true | JD-specific resume matching |
+| `PEER_BENCHMARKING` | true | Percentile ranking vs peers |
+| `COMPANY_PREP` | true | Company-specific interview prep |
+| `CODING_PRACTICE` | true | Coding challenges |
 
 ---
 
