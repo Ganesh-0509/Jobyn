@@ -42,8 +42,9 @@ async function _doInit(): Promise<boolean> {
             'ort-wasm-simd-threaded.jsep.wasm': base + 'ort-wasm-simd-threaded.jsep.wasm',
             'ort-wasm-simd-threaded.wasm': base + 'ort-wasm-simd-threaded.wasm',
             'ort-wasm-simd-threaded.mjs': base + 'ort-wasm-simd-threaded.js',
-            'ort-wasm-simd-threaded.asyncify.mjs': base + 'ort-wasm-simd-threaded.asyncify.js',
-            'ort-wasm-simd-threaded.asyncify.wasm': base + 'ort-wasm-simd-threaded.asyncify.wasm',
+            // NOTE: the .asyncify build (25.8 MiB) is intentionally NOT shipped — it
+            // exceeds Cloudflare's 25 MiB per-file asset cap and isn't used with
+            // numThreads=1 (ORT selects the JSEP/SIMD build). See copy-onnx-assets.js.
             'ort-wasm-simd-threaded.jspi.mjs': base + 'ort-wasm-simd-threaded.jspi.js',
             'ort-wasm-simd-threaded.jspi.wasm': base + 'ort-wasm-simd-threaded.jspi.wasm',
             'ort-wasm.wasm': base + 'ort-wasm.wasm', // in case it falls back

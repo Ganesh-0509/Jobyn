@@ -92,12 +92,25 @@ async function syncAssets() {
     }
 
     // 2. Copy WebAssembly worker binaries from onnxruntime-web/dist/
+    // Cloudflare static assets cap each file at 25 MiB. The .asyncify build is
+    // 25.8 MiB (over the limit) and is not used at runtime (numThreads=1 -> ORT
+    // picks the JSEP/SIMD build), so we skip it. Keep onDevicePredictor.ts's
+    // wasmPaths in sync (the asyncify entries are removed there too).
+    const SKIP_OVERSIZED = new Set([
+        'ort-wasm-simd-threaded.asyncify.wasm',
+        'ort-wasm-simd-threaded.asyncify.js',
+        'ort-wasm-simd-threaded.asyncify.mjs',
+    ]);
     if (fs.existsSync(ortSourceDir)) {
         const ortFiles = fs.readdirSync(ortSourceDir);
         let copiedCount = 0;
         for (const file of ortFiles) {
             // We want ort-wasm* files (both .wasm and their loader .js/.mjs files)
             if (file.startsWith('ort-wasm')) {
+                if (SKIP_OVERSIZED.has(file)) {
+                    console.log(`[ONNX Asset Sync] Skipping oversized asset (>25 MiB Cloudflare cap): ${file}`);
+                    continue;
+                }
                 // Normalize some extensions so the dynamically imported module loader resolves them correctly
                 // as requested by the env.wasm.wasmPaths in onDevicePredictor.ts
                 const srcPath = path.join(ortSourceDir, file);
