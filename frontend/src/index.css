@@ -233,7 +233,7 @@
   background: linear-gradient(135deg, #4F46E5, #7C3AED);
 }
 .gradient-text {
-  background: linear-gradient(135deg, #312E81, #5B21B6); /* Sophisticated dark indigo gradient */
+  background: linear-gradient(135deg, #0F766E, #14B8A6); /* Brand teal gradient */
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -396,5 +396,54 @@
   transform: translateY(-1px) scale(1.02);
   background-color: rgba(194, 89, 63, 0.08) !important;
   color: var(--primary) !important;
+}
+
+/* ── Elevated Surface Boxes ───────────────────────────────────
+   A consistent raised "box" that lifts clearly off the warm
+   background on both white and tinted sections. The border gives
+   the edge; the dual terracotta/teal-tinted shadow gives the depth
+   so content stops merging into the page. */
+.surface-card {
+  background: var(--card);
+  border: 1px solid #E7E0D6;
+  border-radius: var(--radius-xl);
+  box-shadow:
+    0 1px 2px rgba(30, 27, 24, 0.04),
+    0 18px 40px -18px rgba(168, 72, 50, 0.16),
+    0 6px 16px -8px rgba(15, 118, 110, 0.06);
+}
+
+/* Subtle tinted surface for nested boxes inside a white card */
+.surface-inset {
+  background: #FBF8F4;
+  border: 1px solid #ECE5DB;
+  border-radius: var(--radius-lg);
+}
+
+/* Depth-only helper: keeps a card's own background, but warms the
+   border and adds the tinted lift so it stops merging into the page.
+   Apply alongside an existing bg-* / border / rounded card. */
+.lift {
+  border-color: #E7E0D6 !important;
+  box-shadow:
+    0 1px 2px rgba(30, 27, 24, 0.04),
+    0 18px 40px -18px rgba(168, 72, 50, 0.16),
+    0 6px 16px -8px rgba(15, 118, 110, 0.06);
+}
+
+/* Hero backdrop: faint warm dot-grid, masked to fade out at the
+   edges so the hero panel visibly sits ON a textured surface
+   instead of floating on flat color. */
+.hero-aura::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at center, rgba(30, 27, 24, 0.05) 1px, transparent 1px);
+  background-size: 26px 26px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 0%, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 0%, transparent 75%);
 }
 
