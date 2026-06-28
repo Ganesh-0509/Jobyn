@@ -297,6 +297,9 @@ export default function Landing() {
   const liveSkillsCount = useMemo(() => analysis?.detected_skills?.length ?? 12, [analysis])
   const liveCoverage = useMemo(() => analysis?.core_coverage_percent ?? 78, [analysis])
 
+  const activeDomain = SKILL_DOMAINS[activeDomainIdx]
+  const ActiveDomainIcon = activeDomain.icon
+
   const startVoiceSimulator = useCallback(() => {
     if (simIntervalRef.current) clearInterval(simIntervalRef.current)
     setIsSimulating(true)
@@ -523,7 +526,8 @@ export default function Landing() {
         <div className="mx-auto max-w-6xl space-y-14 px-6">
           <SectionHeading eyebrow="Skill Matrix" title="Engineered for absolute placement fit." sub="Ditch superficial bullet points. Interactive diagnostics verify real engineering capabilities that match actual firm constraints." center />
 
-          <div className="grid items-stretch gap-10 md:grid-cols-5">
+          <div className="grid items-stretch gap-8 md:grid-cols-5">
+            {/* domain selector */}
             <div className="space-y-3 md:col-span-2">
               {SKILL_DOMAINS.map((domain, index) => {
                 const Icon = domain.icon
@@ -532,62 +536,80 @@ export default function Landing() {
                   <button
                     key={domain.id}
                     type="button"
-                    className={`flex w-full items-start gap-4 rounded-2xl border p-5 text-left transition-all duration-200 ${isActive ? 'lift translate-x-1 border-primary/20 bg-white' : 'border-transparent bg-transparent hover:bg-stone-100/60'}`}
+                    aria-pressed={isActive}
+                    className={`group relative flex w-full items-center gap-4 overflow-hidden rounded-2xl border p-4 text-left transition-all duration-200 ${isActive ? 'lift border-primary/20 bg-white' : 'border-transparent bg-stone-50/70 hover:bg-stone-100/70'}`}
                     onClick={() => setActiveDomainIdx(index)}
                   >
-                    <div className={`shrink-0 rounded-xl p-2.5 transition-colors ${isActive ? 'bg-primary/10 text-primary' : 'bg-stone-200/50 text-stone-500'}`}>
+                    {isActive && <motion.span layoutId="skill-active-bar" className="absolute inset-y-2 left-0 w-1 rounded-full bg-gradient-to-b from-primary to-accent" />}
+                    <div className={`shrink-0 rounded-xl p-2.5 transition-colors ${isActive ? 'bg-primary/10 text-primary' : 'bg-white text-stone-400 group-hover:text-stone-600'}`}>
                       <Icon className="size-5" />
                     </div>
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2 text-base font-bold text-foreground">
-                        {domain.title}
-                        {isActive && <motion.span layoutId="active-indicator" className="size-1.5 rounded-full bg-primary" />}
-                      </div>
-                      <p className="text-[12px] font-medium leading-relaxed text-muted-foreground">{domain.desc}</p>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-bold text-foreground">{domain.title}</div>
+                      <p className="mt-0.5 truncate text-[12px] font-medium text-muted-foreground">{domain.desc}</p>
                     </div>
+                    <span className={`shrink-0 font-heading text-sm font-bold ${isActive ? 'text-primary' : 'text-stone-300'}`}>{domain.demand}</span>
                   </button>
                 )
               })}
             </div>
 
-            <div className="flex md:col-span-3">
-              <div className="lift relative flex w-full flex-col justify-between overflow-hidden rounded-2xl border border-stone-200 bg-white p-8">
-                <div className="pointer-events-none absolute right-0 top-0 p-8 text-primary opacity-[0.03]"><LogoMark size={140} /></div>
-                <div className="relative z-10 space-y-8">
-                  <div className="flex items-center justify-between border-b border-stone-200/60 pb-5">
-                    <div>
-                      <span className="text-xs font-bold uppercase tracking-wider text-stone-400">Verifying Pathway Gaps</span>
-                      <h3 className="mt-0.5 font-heading text-2xl font-bold text-foreground">{SKILL_DOMAINS[activeDomainIdx].title}</h3>
+            {/* diagnostic panel */}
+            <div className="md:col-span-3">
+              <div className="lift relative h-full overflow-hidden rounded-2xl border border-stone-200 bg-white p-8">
+                <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-primary/5 blur-3xl" />
+                <div aria-hidden className="pointer-events-none absolute -bottom-20 -left-12 size-56 rounded-full bg-accent/5 blur-3xl" />
+
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeDomain.id}
+                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    className="relative z-10 flex h-full flex-col"
+                  >
+                    <div className="flex items-start gap-4 border-b border-stone-200/60 pb-6">
+                      <div className="shrink-0 rounded-2xl bg-primary/10 p-3 text-primary"><ActiveDomainIcon className="size-6" /></div>
+                      <div className="flex-1">
+                        <span className="text-[11px] font-bold uppercase tracking-widest text-stone-400">Verifying pathway gaps</span>
+                        <h3 className="mt-0.5 font-heading text-2xl font-bold text-foreground">{activeDomain.title}</h3>
+                      </div>
                     </div>
-                    <Badge className="rounded-full border-transparent bg-primary/10 px-3 py-1 text-xs font-bold text-primary hover:bg-primary/10">{SKILL_DOMAINS[activeDomainIdx].demand} Placements Match</Badge>
-                  </div>
-                  <div className="space-y-4">
-                    <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Required Architectural Signatures</span>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <AnimatePresence>
-                        {SKILL_DOMAINS[activeDomainIdx].skills.map((subSkill, subIdx) => (
+
+                    <div className="space-y-2 pt-6">
+                      <div className="flex items-end justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Industry demand</span>
+                        <span className="font-heading text-lg font-bold text-primary">{activeDomain.demand}</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-stone-100">
+                        <motion.div className="h-full rounded-full bg-gradient-to-r from-primary to-accent" initial={{ width: 0 }} animate={{ width: activeDomain.demand }} transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }} />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-7">
+                      <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Required architectural signatures</span>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {activeDomain.skills.map((subSkill, subIdx) => (
                           <motion.div
                             key={subSkill}
-                            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-                            transition={{ duration: 0.3, delay: subIdx * 0.05, ease: [0.16, 1, 0.3, 1] }}
-                            className="flex items-center gap-2.5 rounded-xl border border-stone-200/50 bg-stone-50 px-4 py-3 text-xs font-semibold text-foreground shadow-sm"
+                            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 + subIdx * 0.06, ease: [0.16, 1, 0.3, 1] }}
+                            className="flex items-center gap-2.5 rounded-xl border border-stone-200/60 bg-stone-50 px-3.5 py-3 text-[13px] font-semibold text-foreground"
                           >
-                            <span className="size-1.5 rounded-full bg-accent" />{subSkill}
+                            <CheckCircle2 className="size-4 shrink-0 text-accent" />{subSkill}
                           </motion.div>
                         ))}
-                      </AnimatePresence>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <div className="relative z-10 mt-8 flex flex-col items-start justify-between gap-4 border-t border-stone-200/60 pt-6 sm:flex-row sm:items-center">
-                  <div>
-                    <div className="text-xs font-bold uppercase tracking-widest text-stone-400">Placements Advantage</div>
-                    <div className="mt-0.5 font-heading text-xl font-bold text-accent">{SKILL_DOMAINS[activeDomainIdx].advantage}</div>
-                  </div>
-                  <Link to="/signup" className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' rounded-full border-stone-200 px-5 py-4 text-xs font-bold hover:bg-stone-50'}>
-                    Audit My {SKILL_DOMAINS[activeDomainIdx].title.split(' ')[0]} Skills <ArrowRight className="ml-1.5 size-3.5" />
-                  </Link>
-                </div>
+
+                    <div className="mt-auto flex flex-col items-start justify-between gap-4 border-t border-stone-200/60 pt-7 sm:flex-row sm:items-center">
+                      <div>
+                        <div className="text-[11px] font-bold uppercase tracking-widest text-stone-400">Placement advantage</div>
+                        <div className="mt-0.5 font-heading text-xl font-bold text-accent">{activeDomain.advantage}</div>
+                      </div>
+                      <Link to="/signup" className={buttonVariants({ size: 'sm' }) + ' gap-1.5 rounded-full px-5 py-4 text-xs font-bold'}>
+                        Audit my {activeDomain.title.split(' ')[0]} skills <ArrowRight className="size-3.5" />
+                      </Link>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
               </div>
             </div>
           </div>
